@@ -1,0 +1,37 @@
+{
+	"name": "Form",
+	"fields": {
+		"form": {
+			"title": "Form",
+			"type": "section",
+			"items": {
+				"title": {
+					"type": "text",
+					"helper": "Optional."
+				},
+				"content": {
+					"type": "wysiwyg",
+					"helper": "Optional."
+				},
+				"button_label": {
+					"type": "text",
+					"default": "Send"
+				},
+				"success_message": {
+					"title": "Thank You Message",
+					"type": "text",
+					"default": "Thank you for your inquiry. We’ll be in touch shortly."
+				},
+				"form": {
+					"title": "Form",
+					"type": "form",
+					"default": "contact"
+				}
+			}
+		}
+	},
+
+	"wireframe": [
+		"section-form"
+	]
+}

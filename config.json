@@ -1,0 +1,339 @@
+{
+    "theme": {
+        "name": "Critic (A theme for testing new Sushi UI)",
+        "author": "The BentoBox Team"
+    },
+    "fields": {},
+    "navs": [
+        {
+          "name": "Main Navigation",
+          "slug": "main"
+        },
+        {
+          "name": "Footer Navigation",
+          "slug": "footer"
+        }
+    ],
+    "forms": [
+        {
+    		"name": "Default",
+    		"slug": "default",
+            "fields": [
+                {
+                    "slug": "text",
+                    "name": "Text",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "slug": "name",
+                    "name": "Name",
+                    "type": "name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "first_name",
+                    "name": "First Name",
+                    "type": "first_name"
+                },
+                {
+                    "slug": "last_name",
+                    "name": "Last Name",
+                    "type": "last_name"
+                },               
+                {
+                    "slug": "email",
+                    "name": "Email",
+                    "type": "email"
+                },
+                {
+                    "slug": "phone",
+                    "name": "Phone Number",
+                    "type": "phone"
+                },
+                {
+                    "slug": "dropdown",
+                    "name": "Dropdown",
+                    "type": "dropdown",
+                    "choices": ["Choice 1", "Choice 2"]
+                }, 
+                {
+                    "slug": "textarea",
+                    "name": "Textarea",
+                    "type": "textarea"
+                },
+                {
+                    "slug": "number",
+                    "name": "Number",
+                    "type": "number"
+                },
+                {
+                    "slug": "file",
+                    "name": "File",
+                    "type": "file"
+                },
+                {
+                    "slug": "jobs",
+                    "name": "Jobs",
+                    "type": "jobs"
+                },
+                {
+                    "slug": "locations",
+                    "name": "Locations",
+                    "type": "locations"
+                },
+                {
+                    "slug": "venues",
+                    "name": "Venues",
+                    "type": "venues"
+                },
+                {
+                    "slug": "event_type",
+                    "name": "Event Type",
+                    "type": "event_type"
+                },
+                {
+                    "slug": "date",
+                    "name": "Date",
+                    "type": "date"
+                },
+                {
+                    "slug": "time",
+                    "name": "Time",
+                    "type": "time"
+                }
+            ]
+        },
+        {
+            "name": "Private Events",
+            "slug": "private-events",
+            "engine": "newsletter",
+            "can_add_new_fields": false,
+            "fields": [
+                {
+                    "slug": "first_name",
+                    "name": "First Name",
+                    "type": "first_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "last_name",
+                    "name": "Last Name",
+                    "type": "last_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "email",
+                    "name": "Email",
+                    "type": "email",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                }
+            ]
+        },
+        {
+    		"name": "Private Dining Inquiry",
+    		"slug": "private-dining-inquiry",
+            "engine": "private_events",
+            "field_options": [{
+                "label": "Half-Width",
+                "slug": "half-width"
+            }],
+            "additional_field_types": [
+                "event_type",
+                "venues"
+            ],
+            "fields": [
+                {
+                    "slug": "email",
+                    "name": "Email",
+                    "type": "email",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "first_name",
+                    "name": "First Name",
+                    "type": "first_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "last_name",
+                    "name": "Last Name",
+                    "type": "last_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "phone",
+                    "name": "Phone Number",
+                    "type": "phone",
+                    "required": true
+                },
+                {
+                    "slug": "company",
+                    "name": "Company",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "slug": "venue",
+                    "name": "Which space are you interested in?",
+                    "type": "venues",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "event_date",
+                    "name": "Event Date",
+                    "type": "date",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "time",
+                    "name": "Time",
+                    "type": "time",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "event_type",
+                    "name": "Type of Event",
+                    "type": "event_type",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "number_people",
+                    "name": "Number of People",
+                    "type": "number",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "additional_information",
+                    "name": "Additional Information",
+                    "type": "textarea",
+                    "required": false,
+                    "removable": false,
+                    "editable": false
+                }
+            ]
+        },
+        {
+            "name": "Catering Inquiry",
+            "slug": "catering-inquiry",
+            "engine": "catered_events",
+            "field_options": [{
+                "label": "Half-Width",
+                "slug": "half-width"
+            }],
+            "additional_field_types": [
+                "event_type"
+            ],
+            "fields": [
+                {
+                    "slug": "email",
+                    "name": "Email",
+                    "type": "email",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "first_name",
+                    "name": "First Name",
+                    "type": "first_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "last_name",
+                    "name": "Last Name",
+                    "type": "last_name",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "phone",
+                    "name": "Phone Number",
+                    "type": "phone",
+                    "required": true
+                },
+                {
+                    "slug": "company",
+                    "name": "Company",
+                    "type": "text",
+                    "required": true
+                },
+                {
+                    "slug": "event_date",
+                    "name": "Event Date",
+                    "type": "date",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "time",
+                    "name": "Time",
+                    "type": "time",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "event_type",
+                    "name": "Type of Event",
+                    "type": "event_type",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "number_people",
+                    "name": "Number of People",
+                    "type": "number",
+                    "required": true,
+                    "removable": false,
+                    "editable": false,
+                    "default_option": "half-width"
+                },
+                {
+                    "slug": "additional_information",
+                    "name": "Additional Information",
+                    "type": "textarea",
+                    "required": false,
+                    "removable": false,
+                    "editable": false
+                }
+            ]
+        }
+    ]
+}

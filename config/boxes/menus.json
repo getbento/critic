@@ -1,0 +1,172 @@
+{
+	"name": "Menus",
+	"engine": {
+        "type": "menu",
+		"config": {
+			"layouts": {
+				"two_columns": ["column_one", "column_two"]
+			}
+		}
+	},
+	"has_featured": true,
+    "has_locations": true,
+    "has_categories": true,
+    "fields": {
+        "all_the_fields": {
+            "title": "All The Fields",            
+            "type": "section",
+            "items": {
+                "toggler": {
+                    "title": "Toggler",
+                    "type": "dropdown",
+                    "default": "all",
+                    "helper": "Toggle similarly functioning fields.",
+                    "options": [
+                        {"all": "All"},
+                        {"input": "Text, Textarea, Wysiwyg, Code"},
+                        {"check": "Boolean"},
+                        {"select": "Number, File, Dropdown, Color, Image"},
+                        {"repeater": "Repeater"}
+                    ]
+                },
+                "text": {
+                    "title": "Text",
+                    "type": "text",
+                    "default": "Populated value",
+                    "helper": "Choose the best words.",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "input" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "related": {
+                    "title": "Related",
+                    "type": "relationship",
+                    "box": "location",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]                    
+                },                
+                "textarea": {
+                    "title": "Textarea",
+                    "type": "textarea",
+                    "helper": "Write a long message.",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "input" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "number": {
+                    "title": "Number",
+                    "type": "number",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "boolean_defaulted_true": {
+                    "title": "Boolean",
+                    "type": "boolean",
+                    "default": true,
+                    "helper": "This option's default state is true.",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "check" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "file": {
+                    "title": "File",
+                    "type": "file",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "dropdown_field": {
+                    "title": "Dropdown",
+                    "type": "dropdown",
+                    "default": "option-1",
+                    "options": [
+                        {"option-1": "Option 1"},
+                        {"option-2": "Option 2"},
+                        {"option-3": "Option 3"}
+                    ],
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "color": {
+                    "title": "Color",
+                    "type": "color",
+                    "default": "#ab2828",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "image": {
+                    "title": "Image",
+                    "type": "image",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "select" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "wysiwyg": {
+                    "title": "Wysiwyg",
+                    "type": "wysiwyg",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "input" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "code": {
+                    "title": "Code",
+                    "type": "code",
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "input" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "relationship": "location",
+                "repeater_field": {
+                    "type": "repeater",
+                    "items": {
+                        "repeater_field_dropdown": {
+                            "title": "Dropdown",
+                            "type": "dropdown", 
+                            "default": "one",
+                            "options": [
+                                {"option-1": "Option 1"},
+                                {"option-2": "Option 2"},
+                                {"option-3": "Option 3"}
+                            ]
+                        }
+                    },
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "repeater" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                },
+                "repeater_field_inception": {
+                    "type": "repeater",
+                    "items": {
+                        "repeater_field": {
+                            "type": "repeater",
+                            "items": {
+                                "title": "Text",
+                                "type": "text"
+                            }
+                        }
+                    },
+                    "display_logic": [
+                        { "all_the_fields.toggler": { "value" : "repeater" } },
+                        { "all_the_fields.toggler": { "value" : "all" } }
+                    ]
+                }
+            }
+        }
+    }
+}
