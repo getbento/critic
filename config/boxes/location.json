@@ -199,5 +199,9 @@
                 }
             }
         }
-    }
+    },
+    "wireframe": [
+        "section-reservations",
+        "section-all_the_fields"
+    ]
 }

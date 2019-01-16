@@ -165,5 +165,9 @@
                 }
             }
         }
-	}
+    },
+    "wireframe": [
+        "section-external_link_button_label",
+        "section-all_the_fields"
+    ]    
 }

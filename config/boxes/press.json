@@ -162,5 +162,8 @@
                 }
             }
         }
-    }    
+    },
+    "wireframe": [
+        "section-all_the_fields"
+    ]    
 }
