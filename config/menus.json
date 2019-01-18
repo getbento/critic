@@ -1,0 +1,1542 @@
+{
+    "name":"Menus",
+    "icon":"restaurant",
+    "fields": {
+        "settings": {
+            "title":"Additional Page Settings",
+            "type":"section",
+            "items": {
+                "exclude_from_navigation": {
+                    "type": "boolean", "default": false
+                }
+                ,
+                "show_title": {
+                    "title": "Show Section Title", "type": "boolean", "default": true
+                }
+                ,
+                "title": {
+                    "title":"Section Title",
+                    "type":"text",
+                    "helper":"Optional. Displays instead of the default page title.",
+                    "display_logic": {
+                        "settings.show_title": {
+                            "value": true
+                        }
+                    }
+                }
+                ,
+                "use_background": {
+                    "title": "Enable Background and Section Padding", "type": "boolean", "default": false, "helper": "Enables section padding. When enabled, you can add a custom background using the fields below."
+                }
+                ,
+                "background_color": {
+                    "type":"color",
+                    "display_logic": {
+                        "settings.use_background": {
+                            "value": true
+                        }
+                    }
+                }
+                ,
+                "background_image": {
+                    "type":"image",
+                    "display_logic": {
+                        "settings.use_background": {
+                            "value": true
+                        }
+                    }
+                }
+            }
+        }
+        ,
+        "flexiblecontentbefore": {
+            "title":"Top Content",
+            "type":"section",
+            "items": {
+                "sections": {
+                    "type":"repeater",
+                    "items": {
+                        "content_type": {
+                            "type":"dropdown",
+                            "options":["one_column_text",
+                            "two_column_text",
+                            "two_column_freeform_thumbnails",
+                            "overlay_full",
+                            "overlay_split",
+                            "gallery",
+                            "instagram",
+                            "youtube_video",
+                            "vimeo_video",
+                            {
+                                "image_grid": "Logo Images"
+                            }
+                            ,
+                            "embed",
+                            "tabbed_content",
+                            "layout_spacer"],
+                            "default":"one_column_text"
+                        }
+                        ,
+                        "one_column_text": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "one_column_text"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title": "text", "content": "wysiwyg"
+                            }
+                        }
+                        ,
+                        "two_column_text": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "two_column_text"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title_one": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_one":"wysiwyg",
+                                "title_two": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_two":"wysiwyg"
+                            }
+                        }
+                        ,
+                        "youtube": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "youtube_video"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "video_id":"text",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": false
+                                }
+                            }
+                        }
+                        ,
+                        "vimeo": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "vimeo_video"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "video_id":"text",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": false
+                                }
+                            }
+                        }
+                        ,
+                        "gallery": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "gallery"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "images":"gallery",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": true
+                                }
+                            }
+                        }
+                        ,
+                        "embed": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "embed"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "code": "code"
+                            }
+                        }
+                        ,
+                        "overlay_full": {
+                            "title":"Full Overlay",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "overlay_full"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title":"text",
+                                "subtitle":"text",
+                                "text":"wysiwyg",
+                                "image":"image",
+                                "add_overlay": {
+                                    "type": "boolean", "default": true
+                                }
+                                ,
+                                "multibutton": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "overlay_split": {
+                            "title":"Split Overlay",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "overlay_split"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "alternate": {
+                                    "title": "Alternate on Mobile", "type": "boolean"
+                                }
+                                ,
+                                "left": {
+                                    "title":"Left Content",
+                                    "type":"section",
+                                    "items": {
+                                        "add_overlay":"boolean",
+                                        "use_alt_colors":"boolean",
+                                        "title":"text",
+                                        "content":"wysiwyg",
+                                        "image":"image",
+                                        "multibutton": {
+                                            "type":"section",
+                                            "title":" ",
+                                            "items": {
+                                                "button_type": {
+                                                    "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                                }
+                                                ,
+                                                "label": {
+                                                    "title":"Button Label",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url": {
+                                                    "title":"Button URL",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url_target": {
+                                                    "title":"Button Opens New Window",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic":[ {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                    ,
+                                                    {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "online_ordering"
+                                                        }
+                                                    }
+                                                    ]
+                                                }
+                                                ,
+                                                "file": {
+                                                    "title":"Button Opens File",
+                                                    "type":"file",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "file_target": {
+                                                    "title":"File Opens In New Window",
+                                                    "type":"boolean",
+                                                    "default":true,
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "scroll_target": {
+                                                    "title":"Scroll Target ID",
+                                                    "type":"text",
+                                                    "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "scroll_page"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "button_alt_colors": {
+                                                    "title":"Button Uses Alt Colors",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                ,
+                                "right": {
+                                    "title":"Right Content",
+                                    "type":"section",
+                                    "items": {
+                                        "add_overlay":"boolean",
+                                        "use_alt_colors":"boolean",
+                                        "title":"text",
+                                        "content":"wysiwyg",
+                                        "image":"image",
+                                        "multibutton": {
+                                            "type":"section",
+                                            "title":" ",
+                                            "items": {
+                                                "button_type": {
+                                                    "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                                }
+                                                ,
+                                                "label": {
+                                                    "title":"Button Label",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url": {
+                                                    "title":"Button URL",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url_target": {
+                                                    "title":"Button Opens New Window",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic":[ {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                    ,
+                                                    {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "online_ordering"
+                                                        }
+                                                    }
+                                                    ]
+                                                }
+                                                ,
+                                                "file": {
+                                                    "title":"Button Opens File",
+                                                    "type":"file",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "file_target": {
+                                                    "title":"File Opens In New Window",
+                                                    "type":"boolean",
+                                                    "default":true,
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "scroll_target": {
+                                                    "title":"Scroll Target ID",
+                                                    "type":"text",
+                                                    "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "scroll_page"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "button_alt_colors": {
+                                                    "title":"Button Uses Alt Colors",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "image_grid": {
+                            "title":"Mini Thumbnails",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "image_grid"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title":"text",
+                                "images": {
+                                    "type":"repeater",
+                                    "items": {
+                                        "image":"image",
+                                        "url":"text",
+                                        "url_target": {
+                                            "title": "Opens New Window", "type": "boolean", "default": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "two_column_freeform_thumbnails": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "two_column_freeform_thumbnails"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title_one": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_one":"wysiwyg",
+                                "image_one": {
+                                    "type": "image", "helper": "Optional."
+                                }
+                                ,
+                                "multibutton_one": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                ,
+                                "title_two": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_two":"wysiwyg",
+                                "image_two": {
+                                    "type": "image", "helper": "Optional."
+                                }
+                                ,
+                                "multibutton_two": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "tabbed_content": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "tabbed_content"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "section_title":"text",
+                                "tabs": {
+                                    "type":"repeater",
+                                    "items": {
+                                        "tab_type": {
+                                            "type": "dropdown", "options": ["one_column_text", "box_list"], "default": "one_column_text"
+                                        }
+                                        ,
+                                        "tab_title": {
+                                            "type": "text", "helper": "Required. Applied as the tab button label."
+                                        }
+                                        ,
+                                        "one_column_text": {
+                                            "type":"section",
+                                            "display_logic": {
+                                                "tab_type": "one_column_text"
+                                            }
+                                            ,
+                                            "items": {
+                                                "title": "text", "content": "wysiwyg"
+                                            }
+                                        }
+                                        ,
+                                        "box_list": {
+                                            "type":"section",
+                                            "display_logic": {
+                                                "tab_type": "box_list"
+                                            }
+                                            ,
+                                            "items": {
+                                                "box_type": {
+                                                    "type": "dropdown", "options": ["none", "careers", "events", "galleries", "location", "news", "press"], "default": "none"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        ,
+        "flexiblecontentafter": {
+            "title":"Bottom Content",
+            "type":"section",
+            "items": {
+                "sections": {
+                    "type":"repeater",
+                    "items": {
+                        "content_type": {
+                            "type":"dropdown",
+                            "options":["one_column_text",
+                            "two_column_text",
+                            "two_column_freeform_thumbnails",
+                            "overlay_full",
+                            "overlay_split",
+                            "gallery",
+                            "instagram",
+                            "youtube_video",
+                            "vimeo_video",
+                            {
+                                "image_grid": "Logo Images"
+                            }
+                            ,
+                            "embed",
+                            "tabbed_content",
+                            "layout_spacer"],
+                            "default":"one_column_text"
+                        }
+                        ,
+                        "one_column_text": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "one_column_text"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title": "text", "content": "wysiwyg"
+                            }
+                        }
+                        ,
+                        "two_column_text": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "two_column_text"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title_one": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_one":"wysiwyg",
+                                "title_two": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_two":"wysiwyg"
+                            }
+                        }
+                        ,
+                        "youtube": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "youtube_video"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "video_id":"text",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": false
+                                }
+                            }
+                        }
+                        ,
+                        "vimeo": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "vimeo_video"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "video_id":"text",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": false
+                                }
+                            }
+                        }
+                        ,
+                        "gallery": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "gallery"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "images":"gallery",
+                                "fullwidth": {
+                                    "title": "Display Full Width", "type": "boolean", "default": true
+                                }
+                            }
+                        }
+                        ,
+                        "embed": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "embed"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "code": "code"
+                            }
+                        }
+                        ,
+                        "overlay_full": {
+                            "title":"Full Overlay",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "overlay_full"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title":"text",
+                                "subtitle":"text",
+                                "text":"wysiwyg",
+                                "image":"image",
+                                "add_overlay": {
+                                    "type": "boolean", "default": true
+                                }
+                                ,
+                                "multibutton": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "overlay_full.multibutton.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "overlay_split": {
+                            "title":"Split Overlay",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "overlay_split"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "alternate": {
+                                    "title": "Alternate on Mobile", "type": "boolean"
+                                }
+                                ,
+                                "left": {
+                                    "title":"Left Content",
+                                    "type":"section",
+                                    "items": {
+                                        "add_overlay":"boolean",
+                                        "use_alt_colors":"boolean",
+                                        "title":"text",
+                                        "content":"wysiwyg",
+                                        "image":"image",
+                                        "multibutton": {
+                                            "type":"section",
+                                            "title":" ",
+                                            "items": {
+                                                "button_type": {
+                                                    "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                                }
+                                                ,
+                                                "label": {
+                                                    "title":"Button Label",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url": {
+                                                    "title":"Button URL",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url_target": {
+                                                    "title":"Button Opens New Window",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic":[ {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                    ,
+                                                    {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "online_ordering"
+                                                        }
+                                                    }
+                                                    ]
+                                                }
+                                                ,
+                                                "file": {
+                                                    "title":"Button Opens File",
+                                                    "type":"file",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "file_target": {
+                                                    "title":"File Opens In New Window",
+                                                    "type":"boolean",
+                                                    "default":true,
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "scroll_target": {
+                                                    "title":"Scroll Target ID",
+                                                    "type":"text",
+                                                    "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "scroll_page"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "button_alt_colors": {
+                                                    "title":"Button Uses Alt Colors",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic": {
+                                                        "overlay_split.left.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                ,
+                                "right": {
+                                    "title":"Right Content",
+                                    "type":"section",
+                                    "items": {
+                                        "add_overlay":"boolean",
+                                        "use_alt_colors":"boolean",
+                                        "title":"text",
+                                        "content":"wysiwyg",
+                                        "image":"image",
+                                        "multibutton": {
+                                            "type":"section",
+                                            "title":" ",
+                                            "items": {
+                                                "button_type": {
+                                                    "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                                }
+                                                ,
+                                                "label": {
+                                                    "title":"Button Label",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url": {
+                                                    "title":"Button URL",
+                                                    "type":"text",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "url_target": {
+                                                    "title":"Button Opens New Window",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic":[ {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "url"
+                                                        }
+                                                    }
+                                                    ,
+                                                    {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "online_ordering"
+                                                        }
+                                                    }
+                                                    ]
+                                                }
+                                                ,
+                                                "file": {
+                                                    "title":"Button Opens File",
+                                                    "type":"file",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "file_target": {
+                                                    "title":"File Opens In New Window",
+                                                    "type":"boolean",
+                                                    "default":true,
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "file"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "scroll_target": {
+                                                    "title":"Scroll Target ID",
+                                                    "type":"text",
+                                                    "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "scroll_page"
+                                                        }
+                                                    }
+                                                }
+                                                ,
+                                                "button_alt_colors": {
+                                                    "title":"Button Uses Alt Colors",
+                                                    "type":"boolean",
+                                                    "default":false,
+                                                    "display_logic": {
+                                                        "overlay_split.right.multibutton.button_type": {
+                                                            "value": "none", "operator": "!="
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "image_grid": {
+                            "title":"Mini Thumbnails",
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "image_grid"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title":"text",
+                                "images": {
+                                    "type":"repeater",
+                                    "items": {
+                                        "image":"image",
+                                        "url":"text",
+                                        "url_target": {
+                                            "title": "Opens New Window", "type": "boolean", "default": true
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "two_column_freeform_thumbnails": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "two_column_freeform_thumbnails"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "title_one": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_one":"wysiwyg",
+                                "image_one": {
+                                    "type": "image", "helper": "Optional."
+                                }
+                                ,
+                                "multibutton_one": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_one.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                ,
+                                "title_two": {
+                                    "type": "text", "helper": "Optional."
+                                }
+                                ,
+                                "column_two":"wysiwyg",
+                                "image_two": {
+                                    "type": "image", "helper": "Optional."
+                                }
+                                ,
+                                "multibutton_two": {
+                                    "type":"section",
+                                    "title":"Multi Button",
+                                    "items": {
+                                        "button_type": {
+                                            "type": "dropdown", "default": "none", "options": ["none", "url", "file", "email_signup", "reservations", "online_ordering", "scroll_page"]
+                                        }
+                                        ,
+                                        "label": {
+                                            "title":"Button Label",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url": {
+                                            "title":"Button URL",
+                                            "type":"text",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "url_target": {
+                                            "title":"Button Opens New Window",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic":[ {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "url"
+                                                }
+                                            }
+                                            ,
+                                            {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "online_ordering"
+                                                }
+                                            }
+                                            ]
+                                        }
+                                        ,
+                                        "file": {
+                                            "title":"Button Opens File",
+                                            "type":"file",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "file_target": {
+                                            "title":"File Opens In New Window",
+                                            "type":"boolean",
+                                            "default":true,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "file"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "scroll_target": {
+                                            "title":"Scroll Target ID",
+                                            "type":"text",
+                                            "helper":"A valid uri, css id or class to an existing page element. The first valid match will be used. If a uri is provided, the browser address bar will not update.",
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "scroll_page"
+                                                }
+                                            }
+                                        }
+                                        ,
+                                        "button_alt_colors": {
+                                            "title":"Button Uses Alt Colors",
+                                            "type":"boolean",
+                                            "default":false,
+                                            "display_logic": {
+                                                "two_column_freeform_thumbnails.multibutton_two.button_type": {
+                                                    "value": "none", "operator": "!="
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        ,
+                        "tabbed_content": {
+                            "type":"section",
+                            "display_logic": {
+                                "content_type": {
+                                    "value": "tabbed_content"
+                                }
+                            }
+                            ,
+                            "items": {
+                                "section_title":"text",
+                                "tabs": {
+                                    "type":"repeater",
+                                    "items": {
+                                        "tab_type": {
+                                            "type": "dropdown", "options": ["one_column_text", "box_list"], "default": "one_column_text"
+                                        }
+                                        ,
+                                        "tab_title": {
+                                            "type": "text", "helper": "Required. Applied as the tab button label."
+                                        }
+                                        ,
+                                        "one_column_text": {
+                                            "type":"section",
+                                            "display_logic": {
+                                                "tab_type": "one_column_text"
+                                            }
+                                            ,
+                                            "items": {
+                                                "title": "text", "content": "wysiwyg"
+                                            }
+                                        }
+                                        ,
+                                        "box_list": {
+                                            "type":"section",
+                                            "display_logic": {
+                                                "tab_type": "box_list"
+                                            }
+                                            ,
+                                            "items": {
+                                                "box_type": {
+                                                    "type": "dropdown", "options": ["none", "careers", "events", "galleries", "location", "news", "press"], "default": "none"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    ,
+    "wireframe":["section-flexiblecontentbefore",
+    "link-menus",
+    "section-flexiblecontentafter"]
+}
