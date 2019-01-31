@@ -898,7 +898,8 @@
                             width: "columns-6"
                         },                        
                         "boxes-news": {
-                            "width": "columns-6"
+                            "width": "columns-6",
+                            "height": "600px"
                         }
                     }
                 ]
