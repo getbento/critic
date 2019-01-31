@@ -904,6 +904,7 @@
                 ]
             }            
         },
+        "placeholder-title",
         "link-location",
         "engine",        
         "section-all_the_fields",
