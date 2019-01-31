@@ -905,9 +905,9 @@
             }            
         },
         "link-location",
+        "engine",        
         "section-all_the_fields",
         "section-flexiblecontent",
-        "engine",
         "section-footer"
     ]
 }
