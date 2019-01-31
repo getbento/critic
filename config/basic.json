@@ -879,19 +879,35 @@
     },
     "wireframe": [
         "section-header",
-        "section-all_the_fields",
-        "section-flexiblecontent",        
-        "section-footer",
-        "link-events",
-        "link-faqs",
-        "link-galleries",
-        "link-jobs",
+        {
+            "boxes-location": {
+                width: "columns-6"
+            }
+        },
+        {
+            "box-location-mcdonalds": {
+                width: "columns-12"
+            }
+        },
+        {
+            "container": {
+                "width": "columns-12",
+                "contents": [
+                    {
+                        "placeholder-description": {
+                            width: "columns-6"
+                        },                        
+                        "boxes-news": {
+                            "width": "columns-6"
+                        }
+                    }
+                ]
+            }            
+        },
         "link-location",
-        "link-menus",
-        "link-news",
-        "link-press",
-        "link-smartphones",
-        "link-team",
-        "link-venues"
+        "section-all_the_fields",
+        "section-flexiblecontent",
+        "engine",
+        "section-footer"
     ]
 }
