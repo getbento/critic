@@ -1,3 +1,3 @@
 # Sushi Critic
 
-Just a theme to test out new Sushi
+Just a theme to test out new UI.
