@@ -1,0 +1,5 @@
+{
+  "name": "Cart",
+  "feature": "store",
+  "exclude_from_nav": true
+}

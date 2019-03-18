@@ -1,0 +1,75 @@
+{
+	"name": "Store Landing Page",
+    "feature": "store",
+	"fields": {
+		"herobasic": {
+			"title": "Header",
+			"type": "section",
+			"items": {
+				"title": "text",
+				"text": "wysiwyg",
+				"background_type": {
+					"type": "dropdown",
+					"default": "none",
+					"options": [
+						"none",
+						"color",
+						"images",
+						"instagram",
+						"youtube",
+						"vimeo"
+					]
+				},
+				"color": {
+					"title": "Background Color",
+					"type": "color",
+					"helper": "Optional.",
+					"display_logic": { "herobasic.background_type": { "value" : "color" } }
+				},
+				"images": {
+					"type": "gallery",
+					"default": [],
+					"display_logic": { "herobasic.background_type": { "value" : "images" } }
+				},
+				"youtube_video_title": {
+					"type": "text",
+					"display_logic": { "herobasic.background_type": { "value" : "youtube" } }
+				},		
+				"youtube_video_id": {
+					"type": "text",
+					"display_logic": { "herobasic.background_type": { "value" : "youtube" } }
+				},
+				"vimeo_video_title": {
+					"type": "text",
+					"display_logic": { "herobasic.background_type": { "value" : "vimeo" } }
+				},		
+				"vimeo_video_id": {
+					"type": "text",
+					"display_logic": { "herobasic.background_type": { "value" : "vimeo" } }
+				},
+				"darken": {
+					"type": "boolean",
+					"default": "true",
+					"display_logic": [
+						{ "herobasic.background_type": { "value": "images" } },
+						{ "herobasic.background_type": { "value": "instagram" } },
+						{ "herobasic.background_type": { "value": "youtube" } },
+						{ "herobasic.background_type": { "value": "vimeo" } }
+					]
+				}
+			}
+		},
+		"introbasic": {
+			"title": "Intro",
+			"type": "section",
+			"items": {
+				"title": "text",
+				"content": "wysiwyg"
+			}
+		}
+	},
+	"wireframe": [
+		"section-herobasic",
+		"section-introbasic"
+	]
+}
