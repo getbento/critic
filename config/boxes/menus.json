@@ -4,7 +4,7 @@
         "type": "menu",
 		"config": {
 			"layouts": {
-				"two_columns": ["column_one", "column_two"]
+				"two_columns": ["column_one", "column_two", "column_three", "column_four"]
 			}
 		}
 	},
