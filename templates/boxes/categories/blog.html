@@ -11,6 +11,9 @@
             </li>
         {% endfor %}
     </ol>
+    {% if current.not_featured|length < 1 %}
+        <p><em>None</em></p>
+    {% endif %}
     <h2>The rest of the {{ current.name }} posts</h2>
     <ol>
         {% for blog in current.not_featured %}
