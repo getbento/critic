@@ -1,0 +1,22 @@
+<div>
+    <h1 class="entry-title">{{ current.name }}</h1>
+    <h2>Featured {{ current.name}} posts</h2>
+    {% if current.featured|length < 1 %}
+        <p><em>None</em></p>
+    {% endif %}
+    <ol>
+        {% for blog in current.featured %}
+            <li>
+                <p><strong>{{ blog.title }}</strong> (slug: {{ blog.slug }})</p>
+            </li>
+        {% endfor %}
+    </ol>
+    <h2>The rest of the {{ current.name }} posts</h2>
+    <ol>
+        {% for blog in current.not_featured %}
+            <li>
+                <p><strong>{{ blog.title }}</strong> (slug: {{ blog.slug }})</p>
+            </li>
+        {% endfor %}
+    </ol>
+</div>
