@@ -1,0 +1,6 @@
+<h1>Smartphone category page</h1>
+<ol>
+    {% for smartphone in current.all %}
+        <li>{{ smartphone.slug }}</li>
+    {% endfor %}
+</ol>
