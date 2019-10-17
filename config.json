@@ -15,16 +15,50 @@
         }
     ],
     "forms": [
-        {
-    		"name": "Default",
-    		"slug": "default",
+    	{
+    		"name": "Contact",
+    		"slug": "contact",
             "fields": [
                 {
-                    "slug": "text",
-                    "name": "Text",
+                    "slug": "name",
+                    "name": "Name",
                     "type": "text",
                     "required": true
                 },
+                {
+                    "slug": "email",
+                    "name": "Email",
+                    "type": "email",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
+                },
+                {
+                    "slug": "phone",
+                    "name": "Phone Number",
+                    "type": "phone",
+                    "required": true
+                },
+                {
+                    "slug": "reason",
+                    "name": "What are you getting in touch about?",
+                    "type": "dropdown",
+                    "choices": ["General Inquiry", "Press Inquiry"],
+                    "required": false
+                },
+                {
+                    "slug": "message",
+                    "name": "Your Message",
+                    "type": "textarea",
+                    "required": true
+                }
+            ]
+    	},
+    	{
+    		"name": "Careers",
+    		"slug": "careers",
+            "additional_field_types": ["jobs"],
+            "fields": [
                 {
                     "slug": "name",
                     "name": "Name",
@@ -34,81 +68,45 @@
                     "editable": false
                 },
                 {
-                    "slug": "first_name",
-                    "name": "First Name",
-                    "type": "first_name"
-                },
-                {
-                    "slug": "last_name",
-                    "name": "Last Name",
-                    "type": "last_name"
-                },               
-                {
                     "slug": "email",
                     "name": "Email",
-                    "type": "email"
+                    "type": "email",
+                    "required": true,
+                    "removable": false,
+                    "editable": false
                 },
                 {
                     "slug": "phone",
                     "name": "Phone Number",
-                    "type": "phone"
+                    "type": "phone",
+                    "removable": false,
+                    "required": true
                 },
                 {
-                    "slug": "dropdown",
-                    "name": "Dropdown",
-                    "type": "dropdown",
-                    "choices": ["Choice 1", "Choice 2"]
-                }, 
-                {
-                    "slug": "textarea",
-                    "name": "Textarea",
-                    "type": "textarea"
+                    "slug": "position",
+                    "name": "Position",
+                    "type": "jobs",
+                    "required": false
                 },
                 {
-                    "slug": "number",
-                    "name": "Number",
-                    "type": "number"
+                    "slug": "cover_letter",
+                    "name": "Cover Letter",
+                    "type": "textarea",
+                    "removable": false,
+                    "required": true
                 },
                 {
-                    "slug": "file",
-                    "name": "File",
-                    "type": "file"
-                },
-                {
-                    "slug": "jobs",
-                    "name": "Jobs",
-                    "type": "jobs"
-                },
-                {
-                    "slug": "locations",
-                    "name": "Locations",
-                    "type": "locations"
-                },
-                {
-                    "slug": "venues",
-                    "name": "Venues",
-                    "type": "venues"
-                },
-                {
-                    "slug": "event_type",
-                    "name": "Event Type",
-                    "type": "event_type"
-                },
-                {
-                    "slug": "date",
-                    "name": "Date",
-                    "type": "date"
-                },
-                {
-                    "slug": "time",
-                    "name": "Time",
-                    "type": "time"
+                    "slug": "resume",
+                    "name": "Resumé",
+                    "type": "file",
+                    "removable": false,
+                    "required": true
                 }
             ]
-        },
-        {
-            "name": "Private Events",
-            "slug": "private-events",
+    	},
+    	{
+    		"name": "Newsletter",
+    		"slug": "newsletter",
             "engine": "newsletter",
             "can_add_new_fields": false,
             "fields": [
@@ -137,9 +135,9 @@
                     "editable": false
                 }
             ]
-        },
-        {
-    		"name": "Private Dining Inquiry",
+    	},
+    	{
+    		"name": "Private Events",
     		"slug": "private-dining-inquiry",
             "engine": "private_events",
             "field_options": [{
@@ -240,9 +238,9 @@
                     "editable": false
                 }
             ]
-        },
+    	},
         {
-            "name": "Catering Inquiry",
+            "name": "Catered Events",
             "slug": "catering-inquiry",
             "engine": "catered_events",
             "field_options": [{
