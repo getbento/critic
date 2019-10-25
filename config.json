@@ -3,6 +3,10 @@
         "name": "Critic (A theme for testing new Sushi UI)",
         "author": "The BentoBox Team"
     },
+    "box_slugs": {
+        "dumbphones": "smartphones",
+        "phones": "smartphones"
+    },
     "fields": {},
     "navs": [
         {
