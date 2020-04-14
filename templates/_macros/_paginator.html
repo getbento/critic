@@ -1,0 +1,56 @@
+{# ============================================================================
+================== PAGINATOR ==================================================
+============================================================================= #}
+{#
+	Creates a container and "load more" pagination element that JavaScript can 
+	then find, configure, and use to enable AJAX loading of subsequent pages. 
+	Important, this macro is only intended to create the required elements on 
+	first non-ajax page load. For ajax responses, please use the ajax() macro.
+	
+	@access public
+	@param {Paginator} pager 		- The paginator object returned by paginate()
+	@param {String} id 				- The target id of the container to load items into.
+	@param {List} list 				- An array of objects (list of dicts). (ex: boxes.gallery.all)
+	@param {Int} per_page 			- The number of entries to load per page.
+	@param {String} query_param 	- Query parameter to use for this paginator.
+	@param {String} label 			- Optional label that will be available to screen readers (load more [label])
+	@param {String} tag 			- The html tag to use for the container.
+	@param {String} classlist 		- Additional classes to append to the container.
+	@returns {HTML}
+#}
+{% macro make(pager, id, list, per_page, query_param="p", label="", tag="div", classlist="") %}
+	{%- if pager and list and list|length > 0 %}
+		{%- set prev_url = (current.url ~ "?" ~ query_param ~ "=" ~ pager.previous_page_number()) if pager.has_previous() else ""%}
+		{%- set next_url = (current.url ~ "?" ~ query_param ~ "=" ~ pager.next_page_number()) if pager.has_next() else "" %}
+
+		<{{ tag }}{% if classlist %} class="{{ classlist }}"{% endif %} data-paginator-id="{{ id }}">
+			{{ caller() }}
+		</{{ tag }}>
+		<div class="paginator" data-paginator-target="{{ id }}" {% if next_url %}data-paginator-next-url="{{ next_url }}"{% endif %}>
+			{% if next_url %}<a class="paginator__prev" href="{{ next_url }}" aria-label="Go to Previous Page">Previous</a>{% endif %}
+            {% if prev_url %}<a class="paginator__next" href="{{ prev_url }}" aria-label="Go to Next Page">Next</a>{% endif %}
+            <button class="paginator__ajax btn btn-brand">Load More{% if label %} <span class="sr-only">{{ label }}</span>{% endif %}</button>
+		</div>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates a required paginator-meta element to be returned with an AJAX pagination 
+	request. This element allows the JavaScript to update properly by knowing whether 
+	or not there is a "next page". Once the JavaScript has used this element, it is 
+	immediately removed and does not appear in the DOM.
+	
+	@access public
+	@param {Paginator} pager 		- The paginator object returned by paginate()
+	@param {String} query_param 	- Query parameter to use for this paginator.
+	@returns {HTML}
+#}
+{% macro ajax(pager, query_param="p") %}
+	{%- if pager %}
+		{%- set next_url = (current.url ~ "?" ~ query_param ~ "=" ~ pager.next_page_number()) if pager.has_next() else "" %}
+			{%- if next_url %}
+				<div class="paginator-meta" data-paginator-next-url="{{ next_url }}"></div>
+			{%- endif %}
+			{{ caller() }}
+	{%- endif %}
+{% endmacro %}

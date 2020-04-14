@@ -1,0 +1,178 @@
+////
+/// @group components-menus
+/// @access public
+////
+
+// ============================================================================================================
+// =============== MENUS : VARS ===============================================================================
+// ============================================================================================================
+/// Generic margin-bottom applied to menu descriptions, sections, headers, items, etc.
+/// @type Number
+$menu-section-spacer-y: 2.5rem !default;
+
+
+/// Font family stack applied to `.menu-item__heading` instances.
+/// @type String
+$menu-item-heading-font-family: $font-family-base !default;
+
+/// Font size applied to `.menu-item__heading` instances.
+/// @type Number
+$menu-item-heading-font-size: 1.25rem !default;
+
+/// Font weight applied to `.menu-item__heading` instances. (ex: bold)
+/// @type String
+$menu-item-heading-font-weight: bold !default;
+
+/// Font style applied to `.menu-item__heading` instances. (ex: italic)
+/// @type String
+$menu-item-heading-font-style: null !default;
+
+/// Text transform applied to `.menu-item__heading` instances. (ex: uppercase)
+/// @type String
+$menu-item-heading-text-transform: uppercase !default;
+
+/// Line height applied to `.menu-item__heading` instances. This is useful to keep menu items nice and tight
+/// and allow for a little extra visual separation between menu sections. Please note, this value is generally
+/// a **unitless** number.
+/// @type Number
+$menu-item-heading-line-height: $line-height !default;
+
+
+/// Should we add dividers between menu sections? Setting this value to `false` will not export any menu
+/// divider classes.
+///
+/// **IMPORTANT**: Currently, menu section dividers inherit the settings and styles applied in **Theme Options >
+/// Navigation > Divider** for consistency. If at any point, menu-specific divider settings are added to
+/// Theme Options, we can remove the site header navigation dependencies.
+///
+/// @type Bool
+$menu-section-use-dividers: true !default;
+
+/// Should we use a double or single divider line? Setting this value to `false` will use a single line.
+///
+/// **IMPORTANT**: Currently, menu section dividers inherit the settings and styles applied in **Theme Options >
+/// Navigation > Divider** for consistency. If at any point, menu-specific divider settings are added to
+/// Theme Options, we can remove the site header navigation dependencies.
+///
+/// @type Bool
+$menu-section-divider-double: $site-header-divider-double !default;
+
+/// Color applied to `.menu-section` dividers.
+///
+/// **IMPORTANT**: Currently, menu section dividers inherit the settings and styles applied in **Theme Options >
+/// Navigation > Divider** for consistency. If at any point, menu-specific divider settings are added to
+/// Theme Options, we can remove the site header navigation dependencies.
+///
+/// @type Color
+$menu-section-divider-border-color: $site-header-border-color !default;
+
+/// If `$menu-section-divider-double` is set to `true`, this value will set the overall height occupied by
+/// the double `.menu-section` dividers.
+///
+/// **IMPORTANT**: Currently, menu section dividers inherit the settings and styles applied in **Theme Options >
+/// Navigation > Divider** for consistency. If at any point, menu-specific divider settings are added to
+/// Theme Options, we can remove the site header navigation dependencies.
+///
+/// @type Number
+$menu-section-divider-border-spacing: $site-header-divider-double-spacing !default;
+
+/// Stroke weight applied to `.menu-section` dividers.
+///
+/// **IMPORTANT**: Currently, menu section dividers inherit the settings and styles applied in **Theme Options >
+/// Navigation > Divider** for consistency. If at any point, menu-specific divider settings are added to
+/// Theme Options, we can remove the site header navigation dependencies.
+///
+/// @type Number
+$menu-section-divider-border-width: $site-header-divider-width !default;
+
+/// Max-width applied to `.menu-section` dividers. This can be useful to add a little extra visual style by
+/// limiting the divider widths to something less than the full size of its container.
+/// @type Number
+$menu-section-divider-max-width: 12rem !default;
+
+/// Should we show the currency symbol *(ie...$)* in menu item prices? If this value is set to `false`, only the
+/// numeric values will be visible.
+/// @type Bool
+$menu-item-price-use-currency: false !default;
+
+// ============================================================================================================
+// =============== MENUS : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-menus() {
+
+	.menu-description {
+		margin-bottom: $menu-section-spacer-y;
+	}
+
+	// Note: The intended use of this class is when the gallery IS NOT positioned at the end of a menu section.
+	// Right now, it is positioned at the end, so we don't need this class and the extra margin-bottom.
+	// .menu-gallery {
+	// 	margin-bottom: $menu-section-spacer-y;
+	// }
+
+	.menu-section {
+		margin-bottom: $menu-section-spacer-y;
+
+		// immediate child
+		& > div {
+			margin-bottom: $menu-section-spacer-y;
+		}
+
+		// immediate child
+		& > ul {
+			@include list-unstyled;
+		}
+
+		// modifier: .menu-section + .menu-section
+		& + & {
+			@include bb-position($position: relative, $z-index: 0);
+			padding-top: $menu-section-spacer-y;
+
+			@if $menu-section-use-dividers {
+				&:before {
+					$topoffset: (($menu-section-divider-border-spacing / 2) * -1);
+					@include bb-position($position: absolute, $top: $topoffset, $left: 0, $right: 0, $z-index: 0);
+					@include bb-size($max-width: $menu-section-divider-max-width);
+					@include bb-hmargins-auto;
+					content: "";
+					display: block;
+					border-bottom: $menu-section-divider-border-width solid $menu-section-divider-border-color;
+
+					@if $menu-section-divider-double {
+						@include bb-size($height: $menu-section-divider-border-spacing);
+						border-top: $menu-section-divider-border-width solid $menu-section-divider-border-color;
+					}
+				}
+			}
+		}
+	}
+
+	// block
+	.menu-item {
+		margin-bottom: $menu-section-spacer-y;
+
+		// element
+		&__heading {
+			font-family: $menu-item-heading-font-family;
+			font-size: $menu-item-heading-font-size;
+			font-weight: $menu-item-heading-font-weight;
+			font-style: $menu-item-heading-font-style;
+			text-transform: $menu-item-heading-text-transform;
+			line-height: $menu-item-heading-line-height;
+			margin-bottom: 0;
+		}
+
+		// element: if -use-currency==false, we are setting it the the equivalent of .sr-only.
+		&__currency {
+			@if $menu-item-price-use-currency == false {
+				@include sr-only;
+			}
+		}
+
+		// child
+		p {
+			margin-bottom: 0;
+		}
+	}
+}

@@ -1,0 +1,466 @@
+////
+/// @group components-popup
+/// @access public
+////
+
+// ============================================================================================================
+// =============== POPUP : VARS ===============================================================================
+// ============================================================================================================
+/// Generic text alignment applied to all `.popup` types. (ex: left, right, center)
+/// @type String
+$popup-text-align: center !default;
+
+/// Generic max-width to apply to `.popup` inner containers. This value can either be a container key available
+/// in `$additional-containers` – in which case all breakpoint values will also be used, or you can set this
+/// value as a Number – in which case only a single max-width will be set for all breakpoints.
+/// @type String | Number
+$popup-max-width: 'container-sm' !default;
+
+/// Generic background color applied to various `.popup` inner containers.
+/// @type Color
+$popup-bg-color: null !default;
+
+/// Generic vertical spacer applied to various `.popup` elements include `.popup img`.
+/// @type Number
+$popup-spacer-y: 1rem !default;
+
+/// Generic padding shorthand applied to `.popup` instances.
+/// @type Number | Shorthand
+$popup-inner-padding: bb-calc-gutter($breakpoint: sm, $divisor: 4) !default; // magic number!
+
+/// Padding shorthand applied to `.popup__content` instances. Please note, we have to account for `margin-bottom`
+/// that is applied to `<p>` instances inside our popup content.
+/// @type Number | Shorthand
+$popup-content-padding: 2rem 2rem $popup-spacer-y !default;
+
+/// Vertical margins applied to `.popup .btn` instances.
+/// @type Number
+$popup-btn-vmargin: $btn-spacer-y !default;
+
+/// Transition shorthand applied to the popup in/out transitions.
+/// @type String | Shorthand
+$popup-transition: all 0.3s ease 0s !default;
+
+/// Width and height of the popup close button when the button is positioned outside any inner container.
+/// For example – when the button is positioned in the extreme upper right.
+/// @type Number
+$popup-close-outside-size: 70px !default; // ~ 50px
+
+/// Font-size of the actual popup close button icon (which controls the relative sizing of the icon) when
+/// the button is positioned outside any inner container. For example – when the button is positioned in the
+/// extreme upper right.
+/// @type Number
+$popup-close-outside-font-size: 60px !default; // ~ 40px
+
+/// Width and height of the popup close button when the button is positioned inside the inner container.
+/// @type Number
+$popup-close-inside-size: 3.125rem !default; // ~ 50px
+
+/// Font-size of the actual popup close button icon (which controls the relative sizing of the icon) when
+/// the button is positioned inside the inner container.
+/// @type Number
+$popup-close-inside-font-size: 2.5rem !default; // ~ 40px
+
+/// Font family stack to apply to the popup close button. This button uses the generic `&times;` html entity,
+/// which looks the most symmetrical in Helvetica/sans-serif variants.
+/// @type String
+$popup-close-font-stack: ('Helvetica Neue', Helvetica, Arial, sans-serif)
+	!default;
+
+/// Color applied to the popup backdrop. Please note, you should not use an `rgba()` value here because there
+/// is a separate `$popup-overlay-opacity` variable available for that specific purpose.
+/// @type Color
+$popup-overlay-color: $modal-backdrop-bg !default;
+
+/// Opacity applied to the popup backdrop.
+/// @type Number
+$popup-overlay-opacity: $modal-backdrop-opacity !default;
+
+/// The z-index order of the popup elements relative to other site elements. For most usages, you should never
+/// have to change/edit this value.
+/// @access private
+/// @type Number
+$popup-z-index: 1040 !default;
+
+/// Max-width(s) to apply to `.popup--modal` instances. This value can either be a container key available
+/// in `$additional-containers` – in which case all breakpoint values will also be used, or you can set this
+/// value as a Number – in which case only a single max-width will be set for all breakpoints.
+/// @type String | Number
+$popup-modal-container-max-width: $popup-max-width !default;
+
+/// Text color applied to `.popup--modal, .popup--product` instances and any children set to `inherit`.
+/// @type Color
+$popup-modal-color: null !default;
+
+/// H1 heading color applied to `.popup--modal` instances.
+/// @type Color
+$popup-modal-h1-color: null !default;
+
+/// Text link color applied to `.popup--modal` instances.
+/// @type Color
+$popup-modal-link-color: null !default;
+
+/// Text link color applied to `.popup--modal` instances' `:hover` state.
+/// @type Color
+$popup-modal-link-active-color: null !default;
+
+/// Background color applied to `.popup--modal, .popup--product` instances' inner containers.
+/// @type Color
+$popup-modal-bg-color: #ffffff !default;
+
+/// Text alignment applied to `.popup--modal` instances. (ex: left, right, center)
+/// @type String
+$popup-modal-text-align: $popup-text-align !default;
+
+/// Padding shorthand applied to `.popup--modal` instances.
+/// @type Number
+$popup-modal-inner-padding: $popup-inner-padding !default; // magic number!
+
+/// Max-width(s) to apply to `.popup--team` instances. This value can either be a container key available
+/// in `$additional-containers` – in which case all breakpoint values will also be used, or you can set this
+/// value as a Number – in which case only a single max-width will be set for all breakpoints.
+/// @type String | Number
+$popup-team-container-max-width: $popup-max-width !default;
+
+/// Text color applied to `.popup--team` instances and any children set to `inherit` such as `.social-accounts`.
+/// @type Color
+$popup-team-color: $body-alt-color !default;
+
+/// H1 heading color applied to `.popup--team` instances.
+/// @type Color
+$popup-team-h1-color: $headings-h1-alt-color !default;
+
+/// Text link color applied to `.popup--team` instances.
+/// @type Color
+$popup-team-link-color: $link-alt-color !default;
+
+/// Text link color applied to `.popup--team` instances' `:hover` state.
+/// @type Color
+$popup-team-link-active-color: $link-alt-active-color !default;
+
+/// Background color applied to `.popup--team` instances' inner containers. By default, there is no background
+/// color to apply.
+/// @type Color
+$popup-team-bg-color: $popup-bg-color !default;
+
+/// Text alignment applied to `.popup--team` instances. (ex: left, right, center)
+/// @type String
+$popup-team-text-align: $popup-text-align !default;
+
+/// Padding shorthand applied to `.popup--team` instances.
+/// @type Number
+$popup-team-inner-padding: $popup-inner-padding !default; // magic number!
+
+/// Margin-bottom applied to `.popup--team > .popup__header` instances.
+/// @type Number
+$popup-team-header-margin-bottom: 2rem !default;
+
+/// Margin-bottom applied to `.popup--team > .social-accounts` instances.
+/// @type Number
+$popup-team-social-margin-bottom: 2rem !default;
+
+/// Max-width(s) to apply to `.popup--product` instances. This value can either be a container key available
+/// in `$additional-containers` – in which case all breakpoint values will also be used, or you can set this
+/// value as a Number – in which case only a single max-width will be set for all breakpoints.
+/// @type String | Number
+$popup-product-container-max-width: 'container-xxs' !default;
+
+/// At which breakpoint should the `.popup--product` elements go from stacked to side-by-side? Please note,
+/// the breakpoint key must match a key available in `$grid-breakpoints`.
+/// @type String
+$popup-product-expand-breakpoint: sm !default;
+
+/// Padding shorthand applied to `.popup--product` instances and various child elements including details,
+/// actions, and columns.
+/// @type Number | Shorthand
+$popup-product-inner-padding: $popup-inner-padding !default;
+
+/// Generic vertical margins applied to various `.popup--product` child elements including buttons and image
+/// thumbnails.
+/// @type Number
+$popup-product-spacer-y: $popup-spacer-y !default;
+
+/// Applied to `.popup--product` inner content. The intention is to move the content down on mobile and
+/// pinches in the right on desktop to keep content away from the close button.
+/// @type Number
+$popup-product-padding-shift-for-close: 2.5rem !default;
+
+/// Height applied to the `.popup--product` images at and above the `$popup-product-expand-breakpoint`.
+/// @type Number
+$popup-product-expanded-image-height: null !default;
+
+/// Font family stack applied to `.popup--product` headings. Please note, by default, popup headings are an
+/// `<h2>` element. If you leave this value set to `null`, nothing will be exported unnecessarily.
+/// @type String
+$popup-product-heading-font-family: null !default;
+
+/// Font size applied to `.popup--product` headings. Please note, by default, popup headings are an
+/// `<h2>` element. If you leave this value set to `null`, nothing will be exported unnecessarily.
+/// @type Number
+$popup-product-heading-font-size: null !default;
+
+/// Font style applied to `.popup--product` headings. (ex: italic) Please note, by default, popup headings
+/// are an `<h2>` element. If you leave this value set to `null`, nothing will be exported unnecessarily.
+/// @type String
+$popup-product-heading-font-style: null !default;
+
+/// Text-transform applied to `.popup--product` headings. (ex: uppercase) Please note, by default, popup headings
+/// are an `<h2>` element. If you leave this value set to `null`, nothing will be exported unnecessarily.
+/// @type String
+$popup-product-heading-text-transform: null !default;
+
+/// Letter-spacing applied to `.popup--product` headings. (ex: uppercase) Please note, by default, popup headings
+/// are an `<h2>` element. If you leave this value set to `null`, nothing will be exported unnecessarily.
+/// @type String
+$popup-product-heading-letter-spacing: null !default;
+
+/// Text alignment applied to `.popup--product` instances. (ex: left, right, center)
+/// @type String
+$popup-product-text-align: left !default;
+
+/// Max-width(s) to apply to `.popup--popup-config` instances. This value can either be a container key available
+/// in `$additional-containers` – in which case all breakpoint values will also be used, or you can set this
+/// value as a Number – in which case only a single max-width will be set for all breakpoints.
+/// @type String | Number
+$popup-product-config-container-max-width: 'container-xxs' !default;
+
+/// Text alignment applied to `.popup__message` instances. (ex: left, right, center) This is currently only used
+/// in `.popup--store-alert`.
+/// @type String
+$popup-message-text-align: center !default;
+
+/// Color applied to `.popup__message--error` instances.
+/// @type Color
+$popup-message-error-color: $brand-danger !default;
+
+// ============================================================================================================
+// =============== POPUP : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-popup() {
+	// block: base
+	.popup {
+		@include bb-position($position: relative, $z-index: 0);
+		margin: 2rem auto;
+		-webkit-flex: 1; /* Safari 6.1+ */
+		-ms-flex: 1; /* IE 10 */
+		flex: 1;
+
+		// element
+		&__content {
+			padding: $popup-content-padding;
+		}
+
+		// child
+		& .btn {
+			margin-top: $popup-btn-vmargin;
+			margin-bottom: $popup-btn-vmargin;
+		}
+
+		// child
+		& img {
+			@include bb-size($width: 100%, $height: auto);
+			display: block;
+			margin-top: $popup-spacer-y;
+			&:first-child {
+				margin-top: 0;
+			}
+		}
+	}
+
+	// modifier
+	.popup--modal {
+		@include bb-popup-variant(
+			$max-width: $popup-modal-container-max-width,
+			$color: $popup-modal-color,
+			$h1-color: $popup-modal-h1-color,
+			$link-color: $popup-modal-link-color,
+			$link-active-color: $popup-modal-link-active-color,
+			$text-align: $popup-modal-text-align,
+			$bg-color: $popup-modal-bg-color,
+			$padding: $popup-modal-inner-padding
+		);
+	}
+
+	// modifier
+	.popup--team {
+		@include bb-popup-variant(
+			$max-width: $popup-team-container-max-width,
+			$color: $popup-team-color,
+			$h1-color: $popup-team-h1-color,
+			$link-color: $popup-team-link-color,
+			$link-active-color: $popup-team-link-active-color,
+			$text-align: $popup-team-text-align,
+			$bg-color: $popup-team-bg-color,
+			$padding: $popup-team-inner-padding
+		);
+		margin-top: 5rem;
+		margin-bottom: 5rem;
+
+		// immediate child
+		& > .popup__header {
+			margin-bottom: $popup-team-header-margin-bottom;
+		}
+
+		// immediate child
+		& > .social-accounts {
+			margin-bottom: $popup-team-social-margin-bottom;
+
+			// modifier: variant
+			@include bb-social-accounts-variant(
+				$color: $social-accounts-popup-team-color,
+				$bg-color: $social-accounts-popup-team-bg-color,
+				$active-color: $social-accounts-popup-team-active-color,
+				$active-bg-color: $social-accounts-popup-team-active-bg-color,
+				$hspacing: $social-accounts-hspacing,
+				$vspacing: $social-accounts-vspacing,
+				$is-circle-icon: $social-accounts-popup-team-circle-icon
+			);
+		}
+	}
+
+	// modifier
+	.popup--gallery {
+		@include bb-size($height: 100%);
+		margin: auto;
+	}
+
+	// modifier
+	.popup--form {
+		margin-top: 5rem;
+		margin-bottom: 5rem;
+	}
+
+	// modifier: important, this is specifically for product forms inside modals.
+	.popup--product-config {
+		@include bb-popup-variant(
+			$max-width: $popup-product-config-container-max-width,
+			$color: $popup-modal-color,
+			$h1-color: null,
+			$link-color: null,
+			$link-active-color: null,
+			$text-align: $popup-product-text-align,
+			$bg-color: $popup-modal-bg-color,
+			$padding: $popup-modal-inner-padding
+		);
+	}
+
+	// modifier: the shared modal alert inside all store templates. Please note, most of the
+	// layout styles are defined below and shared with `popup--product` for continuity.
+	.popup--store-alert {
+		// child: message
+		& .popup__message {
+			text-align: $popup-message-text-align;
+
+			// modifier: error color
+			&--error {
+				color: $popup-message-error-color;
+			}
+		}
+	}
+
+	// modifiers:
+	// IMPORTANT:
+	// - `.popup--product` is specifically for the "added to cart" modal and not a product form
+	//   in a modal! The javascript is expecting a maximum of `.popup--product` per page. DO NOT
+	//   add it multiple times.
+	// - For continuity, the `popup--store-alert` shares the same styles as the add to cart. But,
+	//   for the reason above, we can't use the same class for both.
+	.popup--product,
+	.popup--store-alert {
+		@include bb-popup-variant(
+			$max-width: $popup-product-container-max-width,
+			$color: $popup-modal-color,
+			$h1-color: null,
+			$link-color: null,
+			$link-active-color: null,
+			$text-align: $popup-product-text-align,
+			$bg-color: $popup-modal-bg-color,
+			$padding: $popup-product-inner-padding
+		);
+
+		// immediate children elements
+		& > .popup__details,
+		& > .popup__actions {
+			@include make-row($gutter: $popup-product-inner-padding);
+		}
+
+		// immediate child elements
+		& > .popup__details {
+			padding-top: $popup-product-padding-shift-for-close;
+		}
+
+		// element
+		& .popup__col {
+			@include make-col($gutter: $popup-product-inner-padding);
+			@include bb-size($width: 100%);
+
+			// modifier: hides the column. note, this happens in modal windows that don't have an
+			// associated media element, but are still provided two columns.
+			&--collapse {
+				display: none;
+			}
+		}
+
+		// element
+		// note: if these are null, nothing will be output.
+		& .popup__heading {
+			font-family: $popup-product-heading-font-family;
+			font-size: $popup-product-heading-font-size;
+			font-style: $popup-product-heading-font-style;
+			text-transform: $popup-product-heading-text-transform;
+			letter-spacing: $popup-product-heading-letter-spacing;
+		}
+
+		.popup__categories {
+			font-size: 1rem;
+			text-transform: capitalize;
+		}
+
+		// element modifier
+		& .popup__options:empty {
+			display: none;
+		}
+
+		// child
+		& .btn {
+			margin-top: $popup-product-spacer-y;
+			margin-bottom: 0;
+		}
+
+		// child
+		& .image-thumbnail {
+			margin-bottom: $popup-product-spacer-y;
+		}
+
+		// breakpoint
+		@include media-breakpoint-up($popup-product-expand-breakpoint) {
+			// immediate child element
+			& > .popup__details {
+				padding-top: 0;
+
+				// modifier: immediate last child
+				& > .popup__col:last-child {
+					padding-right: $popup-product-padding-shift-for-close;
+				}
+			}
+
+			// element
+			& .popup__col {
+				@include make-col-span(6);
+
+				// element modifier: if its the only column, or if its preceeded by a collapsed column
+				&--collapse + .popup__col,
+				&:only-child {
+					@include bb-size($width: 100%);
+				}
+			}
+
+			// child
+			& .image-thumbnail {
+				height: $popup-product-expanded-image-height;
+				margin-bottom: 0;
+			}
+		}
+	}
+}

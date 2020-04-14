@@ -1,0 +1,544 @@
+////
+/// @group components-content
+/// @access public
+////
+
+// ============================================================================================================
+// =============== CONTENT : VARS =============================================================================
+// ============================================================================================================
+/// Text alignment to apply to all `.content` elements.
+/// @type String
+$content-text-align: center !default;
+
+/// Top and bottom padding to apply to all `.content` elements per breakpoint. Please note, the map key must
+/// match a key available in `$grid-breakpoints` and the value is a Map with `top` and `bottom` parameters. At
+/// a minimum, you should include values at the `xs` breakpoint.
+/// @type Map
+$content-vpadding: (xs: (top: 5rem, bottom: 4.5rem)) !default;
+
+/// Margin-bottom to apply to `.content` headings when they are the **direct child** of the `.content` element
+/// and not nested inside a child column. This allows us to keep child column headings tighter to their content,
+/// and provide a little extra vertical separation when the heading spans multiple columns.
+/// @type Number
+$content-heading-margin-alt: 1.5rem !default;
+
+/// The minimum width to apply to `.btn-brand` elements when they are nested inside a `.c-intro` element. The
+/// intended usage is to attempt to get multiple side-by-side buttons to have a similar width without resorting
+/// to `max-width`.
+/// @type Number
+$content-intro-button-min-width: 12rem !default;
+
+/// Text color to apply to `.c-tout-overlay` instances.
+/// @type Color
+$content-tout-overlay-color: $overlay-text-color;
+
+/// Heading color to apply to `.c-tout-overlay` instances.
+/// @type Color
+$content-tout-overlay-heading-color: $overlay-h1-color !default;
+
+/// Background color to apply to `.c-tout-overlay` instances.
+/// @type Color
+$content-tout-overlay-bg-color: $hidden-bg-color !default;
+
+/// Text alignment to apply to `.c-tout-overlay` instances. (ex: left, right, center)
+/// @type String
+$content-tout-overlay-text-align: $content-text-align !default;
+
+/// Vertical padding to apply to the inside of `.c-tout-overlay` instances.
+/// @type Number
+$content-tout-overlay-inner-vpadding: 4rem !default;
+
+/// Color to apply to the image overlay inside of `.c-tout-overlay` instances. Please note, you should be using
+/// an `rgba()` color with a defined alpha/opacity...or else you won't see the image.
+/// @type Color
+$content-tout-overlay-dim-color: $overlay-darken-color !default;
+
+/// `.c-tout-overlay` aspect ratio to attempt to maintain as long as the content has enough vertical space to
+/// fit without overflowing the container. The ratio is the height relative to the width. By default, this
+/// value will result in a **16:9** aspect ratio. (1000px wide X 56.25% = 562.25px high)
+/// @type Number
+$content-tout-overlay-aspect-ratio: 56.25% !default;
+
+/// Margin-top to apply to `.btn-*` instances inside a `.c-tout-overlay` instance. This allows for extra
+/// vertical separation between the content and the button.
+/// @type Number
+$content-tout-overlay-btn-spacing-y: $btn-spacer-y !default;
+
+/// Min-height applied to `.c-tout-overlay` instances. This value is enforced if the aspect ratio causes the
+/// height to drop below this value and the content still fits comfortably without any overflow. This is useful
+/// if you have something like multiple short phrase `.c-tout-overlay` instances that you are using as
+/// *section headers* and you want to maintain a consistent height.
+/// @type Number
+$content-tout-overlay-min-height: 20rem !default;
+
+/// Alternate color to apply to text links within a `.c-tout-overlay` instance. Please note, this value is ignored
+/// if the `$content-tout-overlay-color` matches the `$body-color` – in which case we should be using the standard
+/// link color styles anyways.
+/// @type Color
+$content-tout-overlay-link-color: $link-alt-color !default;
+
+/// Alternate `:hover` color to apply to text links within a `.c-tout-overlay` instance. Please note, this value
+/// is ignored if the `$content-tout-overlay-color` matches the `$body-color` – in which case we should be using
+/// the standard link color styles anyways.
+/// @type Color
+$content-tout-overlay-link-active-color: $link-alt-active-color !default;
+
+/// At what breakpoint should `.c-split` elements expand? For example – when should the content boxes go from
+/// being stacked to side-by-side?
+/// @access private
+/// @type String
+$content-split-expand-breakpoint: md !default;
+
+/// Text alignment applied to all `.c-split` elements.
+/// @type String
+$content-split-text-align: $content-text-align !default;
+
+/// Background color applied to all `.c-split` instances. Please note, this can be overidden per `.c-spit__col`
+/// by assigning `$content-split-column-one-bg-color` and/or `$content-split-column-two-bg-color`.
+///
+/// **Theme Option:** Miscellaneous Settings > Split Overlay Background Color
+///
+/// @type Color
+$content-split-bg-color: null !default;
+
+/// Background image applied to all `.c-split` instances. Please note, this can be overidden per `.c-spit__col`
+/// by assigning `$content-split-column-one-bg-image` and/or `$content-split-column-two-bg-image`.
+///
+/// **Theme Option:** Miscellaneous Settings > Split Overlay Background Texture
+///
+/// @type String
+$content-split-bg-image: null !default;
+
+/// Minimum height applied to all `.c-split__col` instances. Please note, if `.c-split__col--empty` is applied,
+/// an intrinsic aspect ratio will also be applied, and whichever is taller – wins.
+///
+/// **Theme Option:** Miscellaneous Settings > Split Overlay Minimum Height
+///
+/// @type Number
+$content-split-column-min-height: 30rem !default;
+
+/// Aspect ratio applied to `.c-split__col--empty` elements. This occurs only when a column only has an image
+/// and no content is present. In this scenario, we want to maintain some aspect ratio for the image to fill so
+/// it doesn't collapse itself to zero height. If content is present, then the size of the box is determined by
+/// the content height plus the top and bottom padding – and this setting will have no direct effect.
+/// @type Number
+$content-split-column-empty-aspect-ratio: $image-thumbnail-aspect-ratio !default;
+
+/// Color to apply to the image overlay inside of `.c-split__col--dimmed` instances. Please note, you should be
+/// using an `rgba()` color with a defined alpha/opacity...or else you won't see the image.
+/// @type Color
+$content-split-column-dim-color: $overlay-darken-color !default;
+
+/// Heading color applied to all `.c-split__heading` elements when they are inside a `.c-split__col--dimmed`
+/// element. The assumption is, if you are dimming the image and making it darker, then we have to make the
+/// text more contrast-y by making the text lighter.
+/// @type Color
+$content-split-column-dim-heading-color: $overlay-h1-color !default;
+
+/// Color applied to all `.c-split__content` elements when they are inside a `.c-split__col--dimmed` element.
+/// The assumption is, if you are dimming the image and making it darker, then we have to make the text more
+/// contrast-y by making the text lighter. Please note, `.c-split__heading` has its own color setting which
+/// allows us to differentiate heading colors and body colors.
+/// @type Color
+$content-split-column-dim-content-color: $overlay-text-color !default;
+
+/// Max width applied to `.c-split__content` element when it has passed the `$content-split-expand-breakpoint`
+/// breakpoint. This allows us to add some separation and center the content, moving it away from the sides of
+/// its parent column box.
+/// @type Number
+$content-split-expand-content-max-width: 50% !default;
+
+/// Alternate color to apply to text links within a `.c-split__content` instance when the parent modifier
+/// `c-split__col--dimmed` is present. Please note, this value is ignored if the
+/// `$content-split-column-dim-content-color` matches the `$body-color` – in which case we should be using the
+/// standard link color styles anyways.
+/// @type Color
+$content-split-column-dim-content-link-color: $link-alt-color !default;
+
+/// Alternate `:hover` color to apply to text links within a `.c-split__content` instance when the parent modifier
+/// `c-split__col--dimmed` is present. Please note, this value is ignored if the
+/// `$content-split-column-dim-content-color` matches the `$body-color` – in which case we should be using the
+/// standard link color styles anyways.
+/// @type Color
+$content-split-column-dim-content-link-active-color: $link-alt-active-color
+	!default;
+
+/// Background color applied to all `.c-split__col:first-child` instances. Please note, if the current Split
+/// Overlay has Alternate Columns enabled, the columns will be output in reverse, and this `background-color` will
+/// be applied to `.c-split__col:last-child` instead.
+/// @type Color
+$content-split-column-one-bg-color: null !default;
+
+/// Background image applied to all `.c-split__col:first-child` instances. Please note, if the current Split
+/// Overlay has Alternate Columns enabled, the columns will be output in reverse, and this `background-image` will
+/// be applied to `.c-split__col:last-child` instead.
+/// @type String
+$content-split-column-one-bg-image: null !default;
+
+/// Background color applied to all `.c-split__col:last-child` instances. Please note, if the current Split
+/// Overlay has Alternate Columns enabled, the columns will be output in reverse, and this `background-color` will
+/// be applied to `.c-split__col:first-child` instead.
+/// @type Color
+$content-split-column-two-bg-color: null !default;
+
+/// Background image applied to all `.c-split__col:last-child` instances. Please note, if the current Split
+/// Overlay has Alternate Columns enabled, the columns will be output in reverse, and this `background-image` will
+/// be applied to `.c-split__col:first-child` instead.
+/// @type String
+$content-split-column-two-bg-image: null !default;
+
+// ============================================================================================================
+// =============== CONTENT : EXPORT ===========================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-content() {
+	// =========== BASE CONTENT STYLES ========================================================================
+	// Note: This is only for vertical padding and text alignment. For this reason, we should be able to
+	// reuse this class in multiple places.
+	.content {
+		text-align: $content-text-align;
+
+		// create vpadding by breakpoints
+		@each $breakpoint, $obj in $content-vpadding {
+			@if map-has-key($grid-breakpoints, $breakpoint) {
+				// if breakpoint is zero, we don't need a media query
+				@if map-get($grid-breakpoints, $breakpoint) == 0 {
+					padding-top: map-get($obj, top);
+					padding-bottom: map-get($obj, bottom);
+				}
+				// if larger than zero, we need a media query
+				@else {
+					@include media-breakpoint-up($breakpoint) {
+						padding-top: map-get($obj, top);
+						padding-bottom: map-get($obj, bottom);
+					}
+				}
+			}
+		}
+
+		// immediate same sibling
+		& + & {
+			padding-top: 0;
+		}
+
+		// immeidate child: immediate <h2> have larger margin than <h2> nested in their own columns
+		& > h2 {
+			margin-bottom: $content-heading-margin-alt;
+		}
+
+		// child
+		& .btn {
+			margin: $btn-spacer-y $btn-spacer-x;
+		}
+	}
+
+	// =========== INDIVIDUAL CONTENT TYPES ===================================================================
+	// Note: We are only adding classes when we need to target a specific type.
+
+	// We need to add some extra spacing to the internal columns (only when columns are stacked) without
+	// effecting the vertical rhythm between sections or other elements.
+	.c-intro {
+		// children: h1 and .h1 need more spacing than h2, etc
+		& h1,
+		& .h1 {
+			margin-bottom: $content-heading-margin-alt;
+		}
+
+		// child: because multiple buttons can happen.
+		& .btn {
+			@include bb-size($min-width: $content-intro-button-min-width);
+		}
+
+		// whe stacked, add more spacing between columns
+		& [class^='col-']:not(:last-child) {
+			margin-bottom: 2rem;
+		}
+
+		// If you change this breakpoint, you also need to adjust the
+		// class (ie...col-md-6) associated with the html element.
+		@include media-breakpoint-up(md) {
+			& [class^='col-']:not(:last-child) {
+				margin-bottom: 0;
+			}
+		}
+	}
+
+	// We need to add some extra spacing to the internal columns (only when columns are stacked) without
+	// effecting the vertical rhythm between sections or other elements.
+	.c-two-col-thumbs {
+		margin-bottom: -1rem;
+
+		& [class^='col-'] {
+			margin-bottom: 2rem;
+		}
+
+		// If you change this breakpoint, you also need to adjust the
+		// class (ie...col-md-6) associated with the html element.
+		@include media-breakpoint-up(md) {
+			margin-bottom: 0;
+
+			& [class^='col-'] {
+				margin-bottom: 0;
+			}
+		}
+	}
+
+	// This has a javascript component. When JS is enabled, the aspect ratio will be maintained
+	// until the content is too tall. At that point, JS will set the height explicitly to the
+	// size of the content...never allowing it to get clipped. When .no-js, we get rid of the
+	// aspect ratio sizing entirely and just let the content "do its thing".
+	.c-tout-overlay {
+		@include bb-background-cover-base;
+		@include bb-position($position: relative, $z-index: 0);
+		@include bb-size($min-height: $content-tout-overlay-min-height);
+		text-align: $content-tout-overlay-text-align;
+		color: $content-tout-overlay-color;
+		background-color: $content-tout-overlay-bg-color;
+		padding-top: $content-tout-overlay-aspect-ratio;
+		overflow: hidden;
+
+		// immediate child
+		& > div {
+			@include bb-position($position: absolute, $top: 50%, $right: 0, $left: 0, $z-index: 1);
+			@include bb-size($width: 100%);
+			@include bb-prefix-transform(translateY(-50%));
+			padding-top: $content-tout-overlay-inner-vpadding;
+			padding-bottom: $content-tout-overlay-inner-vpadding;
+		}
+
+		// child
+		& h1,
+		& .h1 {
+			color: $content-tout-overlay-heading-color;
+		}
+
+		// child: anchors
+		@if $content-tout-overlay-color != $body-color {
+			@include bb-anchor-variant(
+				$color: $content-tout-overlay-link-color, 
+				$active-color: $content-tout-overlay-link-active-color
+			);
+		}
+
+		// child
+		& .btn {
+			margin-top: $content-tout-overlay-btn-spacing-y;
+		}
+
+		// modifier
+		&--dimmed {
+			&:after {
+				@include bb-size($width: 100%, $height: 100%);
+				@include bb-position($position: absolute, $top: 0, $left: 0, $z-index: 0);
+				content: '';
+				display: block;
+				background-color: $content-tout-overlay-dim-color;
+			}
+		}
+
+		// modifier
+		.no-js & {
+			@include bb-size($min-height: 1px);
+			padding-top: 0;
+
+			// immediate child
+			& > div {
+				@include bb-position($position: relative);
+				@include bb-prefix-transform(none);
+			}
+		}
+	}
+
+	// This component is the split side-by-side content image overlay. Each column can optional contain
+	// text, and when side-by-side, should be exactly the same height.
+	.c-split {
+		@include bb-size($width: 100%);
+		@include bb-background-pattern-base($color: $content-split-bg-color, $image: $content-split-bg-image);
+		display: block;
+		overflow: hidden;
+
+		// if the two columns have the same non-null background image, apply it to the main container
+		// instead of per column so there is no seam in the middle of the repeating texture. This will
+		// obviously override the $content-split-bg-image
+		@if $content-split-column-one-bg-image == $content-split-column-two-bg-image {
+			@if $content-split-column-one-bg-image != null {
+				@at-root {
+					& {
+						@include bb-background($image: $content-slit-column-one-bg-image);
+					}
+				}
+			}
+		}
+
+		// element
+		&__col {
+			@include bb-position($position: relative, $z-index: 0);
+			@include bb-size($min-height: $content-split-column-min-height);
+			@include bb-background-pattern-base;
+			@include bb-gutters;
+			text-align: $content-split-text-align;
+			vertical-align: top;
+			overflow: hidden;
+
+			// if the two columns have the same background color, set it directly on &__col. If not,
+			// we need to apply each color (respectively) to :first-child and :last-child
+			@if $content-split-column-one-bg-color == $content-split-column-two-bg-color {
+				background-color: $content-split-column-one-bg-color;
+			} @else {
+				&:first-child {
+					background-color: $content-split-column-one-bg-color;
+				}
+				&:last-child {
+					background-color: $content-split-column-two-bg-color;
+				}
+
+				// parent modifier: if we are alternating the columns, then column 2 is first. So, we
+				// have to flip the background colors to the result is expected.
+				.c-split--alternate & {
+					&:first-child {
+						background-color: $content-split-column-two-bg-color;
+					}
+					&:last-child {
+						background-color: $content-split-column-one-bg-color;
+					}
+				}
+			}
+
+			// if the two columns have different background images, we apply each (respectively) to
+			// :first-child and :last-child. if they are the same, we are applying directly to the
+			// parent &__col so there are no seams in the middle of the repeating texture.
+			@if $content-split-column-one-bg-image != $content-split-column-two-bg-image {
+				&:first-child {
+					@include bb-background($image: $content-slit-column-one-bg-image);
+				}
+				&:last-child {
+					@include bb-background($image: $content-slit-column-two-bg-image);
+				}
+
+				// parent modifier: if we are alternating the columns, then column 2 is first. So, we
+				// have to flip the background images to the result is expected.
+				.c-split--alternate & {
+					&:first-child {
+						@include bb-background($image: $content-slit-column-two-bg-image);
+					}
+					&:last-child {
+						@include bb-background($image: $content-slit-column-one-bg-image);
+					}
+				}
+			}
+
+			// block element: .c-split__col-inner
+			// bugfix: IE11 requires this in order for columns to match heights properly as well as
+			// vertical center!
+			&-inner {
+				@include bb-size($width: 100%);
+			}
+
+			// modifier: if the dim/darken option is turned on for a box
+			&--dimmed {
+				&:before {
+					@include bb-position($position: absolute, $top: 0, $left: 0, $z-index: -1);
+					@include bb-size($width: 100%, $height: 100%);
+					content: '';
+					display: block;
+					background-color: $content-split-column-dim-color;
+				}
+			}
+
+			// modifier: if we should use alternate colors.
+			&--alt {
+				// modified child: heading
+				& .c-split__heading {
+					color: $content-split-column-dim-heading-color;
+				}
+
+				// modified child: content
+				& .c-split__content {
+					color: $content-split-column-dim-content-color;
+
+					@if $content-split-column-dim-content-color != $body-color {
+						// child: anchors
+						@include bb-anchor-variant(
+							$color: $content-split-column-dim-content-link-color, 
+							$active-color: $content-split-column-dim-content-link-active-color
+						);
+					}
+				}
+			}
+		}
+
+		// element
+		&__content {
+			@include bb-hmargins-auto;
+		}
+
+		// element
+		&__image {
+			@include bb-position($position: absolute, $top: 0, $left: 0, $z-index: -2);
+			@include bb-size($width: 100%, $height: 100%);
+			@include bb-background-cover-base;
+		}
+
+		// modifier: vertically center the content with the column
+		&--vcenter {
+			// modified child
+			// note: IE11 bugfix where `vertical-align` and `table-cell` don't work on mobile/stacked.
+			// important: we only want the flex values to apply to mobile! we have to get rid of them
+			// (override) when expanded (side-by-side) or else there may be unexpected results.
+			& .c-split__col {
+				@include bb-prefix-display-flex;
+				@include bb-prefix-flex-align-items(center);
+				@include bb-size($width: 100%);
+				vertical-align: middle;
+			}
+		}
+
+		// breakpoint: stacked to side-by-side
+		@include media-breakpoint-up($content-split-expand-breakpoint) {
+			display: table;
+			table-layout: fixed;
+
+			// element
+			// note: table-cells expand even when height is set, so essentially height=min-height.
+			&__col {
+				// shared: .c-split__col, .c-split--vcenter .c-split__col
+				// important: we have to make sure we're removing/overriding the vcenter flex display
+				// values that were applied as defaults to avoid unexpected results with display/widths.
+				&,
+				.c-split--vcenter & {
+					@include bb-size($width: 50%, $height: $content-split-column-min-height);
+					display: table-cell;
+				}
+
+				// parent modifier: if we are alternating columns, we need to re-order/reverse the
+				// columns. The best way to do that is to changing their relative positioning.
+				.c-split--alternate & {
+					&:first-child {
+						@include bb-position($left: 50%);
+					}
+					&:last-child {
+						@include bb-position($left: -50%);
+					}
+				}
+			}
+
+			// element: .c-split__col-inner
+			// bugfix: IE11 requires this in order for columns to match heights properly as well as
+			// vertical center!
+			&__col-inner {
+				@include bb-prefix-display-flex;
+				@include bb-size($height: 100%);
+
+				// modified element: .c-split--vcenter .c-split__col-inner
+				.c-split--vcenter & {
+					@include bb-prefix-flex-align-items(center);
+				}
+			}
+
+			// element
+			&__content {
+				@include bb-size($max-width: $content-split-expand-content-max-width);
+			}
+		}
+	}
+}

@@ -1,0 +1,215 @@
+////
+/// @group components-store-checkout
+/// @access public
+////
+
+// ============================================================================================================
+// =============== STORE : VARS ===============================================================================
+// ============================================================================================================
+/// At which breakpoint should `.checkout` elements change from their mobile layouts to their desktop layouts?
+/// For example, when should a `.checkout-item` details go from being stacked to displayed in a row with
+/// columns? Please note, this value must match a key available in `$grid-breakpoints`.
+/// @type String
+$store-checkout-expand-breakpoint: lg !default;
+
+/// Generic `margin-bottom` applied to various `.checkout` elements including the table body, table footer, and
+/// checkout item images.
+/// @type Number
+$store-checkout-vspacer: 1rem;
+
+/// Should be display a product image along with the product details? If this value is set to `true` a
+/// product thumbnail image will be displayed to the extreme left of the product details row.
+/// @type Bool
+$store-checkout-item-use-images: false !default;
+
+/// Padding-top applied to each `.checkout-item` instance.
+/// @type Number
+$store-checkout-item-padding-top: 3rem !default;
+
+/// Padding-bottom applied to each `.checkout-item` instance.
+/// @type Number
+$store-checkout-item-padding-bottom: 2rem !default;
+
+/// Border color applied to each `.checkout-item` divider.
+/// @type Color
+$store-checkout-item-border-color: $hr-border-color !default;
+
+// ============================================================================================================
+// =============== STORE : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-store-checkout() {
+	// =============== CHECKOUT ===============================================================================
+	// block
+	.checkout {
+		text-align: left;
+
+		& span.checkout-ticket--details {
+			margin-bottom: 0.25rem;
+			padding-left: 2rem;
+		}
+
+		// child
+		& span {
+			display: block;
+			margin-bottom: $store-checkout-vspacer;
+		}
+
+		// child: .checkout-header
+		&-header {
+			@include make-row;
+			display: none;
+
+			// breakpoint: expand
+			@include media-breakpoint-up($store-checkout-expand-breakpoint) {
+				display: block;
+			}
+		}
+
+		// child: .checkout-body
+		&-body {
+			margin-bottom: $store-checkout-vspacer;
+		}
+
+		// child: .checkout-footer
+		&-footer {
+			@include make-row;
+			margin-bottom: $store-checkout-vspacer;
+
+			// child: equal columns
+			&__col {
+				@include make-col;
+				@include make-col-span(6);
+
+				&:last-child {
+					text-align: right;
+				}
+			}
+		}
+
+		// child: .checkout-action
+		&-action {
+			// child element: action message
+			&__msg {
+				font-weight: bold;
+				text-align: center;
+			}
+
+			// immediate child
+			& > .btn {
+				display: block;
+				margin: 0;
+			}
+
+			// breakpoint: mobile up
+			@include bb-mobi-breakpoint-up() {
+				&__msg {
+					text-align: left;
+				}
+
+				& > .btn {
+					display: inline-block;
+				}
+			}
+
+			// breakpoint: expand
+			@include media-breakpoint-up($store-checkout-expand-breakpoint) {
+				text-align: right;
+
+				// child element: action message
+				&__msg {
+					text-align: center;
+				}
+			}
+		}
+	}
+
+	// block
+	.checkout-item {
+		padding-top: $store-checkout-item-padding-top;
+		padding-bottom: $store-checkout-item-padding-bottom;
+		border-bottom: 1px solid $store-checkout-item-border-color;
+
+		// modifier: first child gets a top border
+		&:first-child {
+			border-top: 1px solid $store-checkout-item-border-color;
+		}
+
+		// immediate child: unfortunately, we need a wrapper
+		& > div {
+			@include make-row;
+		}
+
+		// element: .checkout-item__image
+		&__image {
+			margin-bottom: $store-checkout-vspacer;
+			// do we even want to show images?
+			@if $store-checkout-item-use-images != true {
+				display: none;
+			}
+
+			// breakpoint: expand
+			@include media-breakpoint-up($store-checkout-expand-breakpoint) {
+				@include bb-size($width: 50%);
+			}
+		}
+	}
+
+	// block: layout columns
+	// Note: This is probably more complicated than it should be due to the nested rows and columns.
+	// The intention here is to keep things as organized as possible so our header updates along with
+	// our items because putting classes (.col-md-6) isn't maintainable in this context.
+	.checkout-col {
+		@include make-col;
+
+		// modifer: top-level column
+		&--details {
+			@include make-col-span(8);
+		}
+
+		// modifer: top-level column
+		&--total {
+			text-align: right;
+			@include make-col-span(4);
+		}
+
+		// modifers: these columns should be nested inside of .checkout-col--details. Before our
+		// expand breakpoint, these should be stacked.
+		&--info,
+		&--price,
+		&--quantity {
+			float: none;
+		}
+
+		@include media-breakpoint-up($store-checkout-expand-breakpoint) {
+			// modifer: top-level column
+			&--details {
+				@include make-col-span(10);
+			}
+
+			// modifer: top-level column
+			&--total {
+				@include make-col-span(2);
+			}
+
+			// modifers: these columns (below) should be nested inside of .checkout-col--details
+			&--info,
+			&--price,
+			&--quantity {
+				float: left;
+			}
+
+			&--info {
+				@include make-col-span(6);
+			}
+
+			&--price {
+				@include make-col-span(3);
+			}
+
+			&--quantity {
+				@include make-col-span(3);
+			}
+		}
+	}
+}

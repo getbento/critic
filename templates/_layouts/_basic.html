@@ -1,0 +1,137 @@
+{% extends "_layouts/_base.html" %}
+
+{# ============================================================================
+================== NOTES ======================================================
+============================================================================= #}
+{# 	The intention of this template is to limit the amount of duplication across
+	sub-templates pertaining specifically to "page-level" elements and content.
+	Any "site-level" elements (such as your Newsletter Popup Form) will be
+	defined in _layouts/_base.html.
+
+	This template attempts to find and render a few of the more common type of
+	elements and content – Alerts, Basic Heros, Landing Heros, Intros, and
+	Flexible Content Repeaters. These elements (if they exist) generally appear
+	in exactly the same order for each page with a few exceptions. Those
+	exceptions can be handled and overriden using the autorender_*  variables
+	in your sub-templates – allowing you render those elements (or not) wherever
+	you wish.
+#}
+{# ============================================================================
+================== IMPORTS: MACROS ============================================
+============================================================================= #}
+{#
+	Special Case: We need these macros to set variables (outside of a block)
+	which means that the auto-imported macros in `_layouts/_base.html` are not
+	available yet...so, we have to manually import this here for it to be used.
+#}
+{% import "_macros/_hero.html" as bbHero with context %}
+
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{# shortcuts #}
+{% set alert = current.fields.alert %}
+{% set herobasic = current.fields.herobasic %}
+{% set herolanding = current.fields.herolanding %}
+{% set flexiblecontent = current.fields.flexiblecontent %}
+{% set intro = current.fields.introbasic %}
+{% set h1_used_in_hero = true if herobasic and herobasic.title else false %}
+
+{# autorender if exists. these can be overriden by sub templates #}
+{% set autorender_alert = autorender_alert|default(true) %}
+{% set autorender_hero = autorender_hero|default(true) %}
+{% set autorender_flexiblecontent = autorender_flexiblecontent|default(true) %}
+{% set autorender_intro = autorender_intro|default(true) %}
+
+{#
+	Special Case: Checks if a valid hero (basic or landing) exists. Please note,
+	heros set to `background_type="none"` are not considered a "valid intent"
+	because they are either completely empty or will be rendered as an "intro".
+	This variable can be overriden by child templates to force the "intent"
+	and the set value will be passed on to the parent template where it will be
+	put to use.
+#}
+{% set page_has_hero_intent = page_has_hero_intent|default(true if ((bbHero.basic_exists(obj=herobasic, include_none=false) == "1") or (bbHero.basic_exists(obj=herolanding, include_none=false) == "1")) else false) %}
+
+{# ============================================================================
+================== BLOCK : NOTIFICATIONS ======================================
+============================================================================= #}
+{#
+	This block allows us to render at the very top and before our header and
+	content. Please note, current uses are limited to Landing Page Alerts.
+#}
+{% block notifications %}
+    {%- if autorender_alert and alert and alert.simple_enabled %}
+        {{ bbAlert.simple(content=alert.simple.text ) }}
+    {%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : MAIN PREPEND =======================================
+============================================================================= #}
+{#
+	This block attempts to autorender a herobasic, herolanding, and intro. If
+	their autorender_* is turned off or they don't exist, nothing will happen.
+	Its also important to note, there isn't a situation (yet) where both a
+	herobasic and herolanding appear on the same page (same wireframe), so it
+	is perfectly acceptable to check for both here.
+#}
+{% block main_prepend %}
+	{%- if autorender_hero and herobasic %}
+		{{ bbHero.basic(herobasic) }}
+	{%- endif %}
+	{%- if autorender_hero and herolanding %}
+		{{ bbHero.landing(herolanding) }}
+	{%- endif %}
+	{%- if autorender_intro and intro %}
+		{{ bbContent.intro(
+				title=intro.title,
+				content=intro.content,
+				multibutton=intro.multibutton,
+				use_h1=(false if h1_used_in_hero else true)
+			)
+		}}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : MAIN ===============================================
+============================================================================= #}
+{#
+	This block attempts to autorender a flexiblecontent. Please note, this will
+	autorender the flexcontent at the top of the block – which comes immediately
+	after our main_prepend block. There are two considerations to keep in mind:
+	1. If you need to position the flexiblecontent elsewhere, you should set
+	   autorender_flexiblecontent=false in your subpage and then manually call
+	   the bbFlex.render() where you need it.
+	2. If content in a subpage comes after the autorendered flexiblecontent,
+	   make sure to call super() in your subpage to ensure you get everything
+	   you want.
+#}
+{% block main %}
+	{%- if autorender_flexiblecontent and flexiblecontent %}
+		{{ bbFlex.render(flexiblecontent) }}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : POPUPS =============================================
+============================================================================= #}
+{#
+	This is where any popup that should be included in the page on page load –
+	and not loaded via ajax. There are a number of different static popups to be
+	aware of...
+	1. Popup Newsletter Form (exists globally and defined in _layouts/_base.html
+	2. Popup Alert gets autorendered. (currently, only exists on Landing Pages)
+	3. Popup Forms. (added per subpage – private events, careers, etc)
+	4. Popup Galleries. (added per subpage – single gallery pages, etc)
+	...
+#}
+{% block popups %}
+	{{ super() }}
+	{#- if a popup alert exists: please note, there's no (current) reason to
+		stop this popup alert from rendering via autorender_alert #}
+	{%- if alert and alert.popup_enabled %}
+		{{ bbAlert.popup(content=alert.popup.text, imgs=alert.popup.images|list) }}
+	{%- endif %}
+{% endblock %}

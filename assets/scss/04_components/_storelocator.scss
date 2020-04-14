@@ -1,0 +1,99 @@
+#storeLocator {
+  #storeLocatorContainer {
+    #locationsContainer {
+      min-height: 75vh !important;
+    }
+
+    .locationListItemHours {
+      * {
+        padding: 0;
+        margin: 0;
+      }
+    }
+
+    .hr-store-locator {
+      background-color: $site-header-border-color;
+    }
+
+    .gm-style {
+      font: inherit !important;
+
+      .gm-style-iw-t:after {
+        background-color: $body-bg;
+      }
+
+      div:first-child {
+        div:nth-child(3) {
+          div:nth-child(1) {
+            div:nth-child(4) {
+              div:nth-child(1) {
+                div:nth-child(1) {
+                  div:nth-child(3) {
+                    div {
+                      div {
+                        background-color: $body-bg !important;
+                      }
+                    }
+                  }
+                  div:nth-child(4) {
+                    background-color: $body-bg !important;
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+
+    .gm-style-iw {
+      text-align: center !important;
+      background-color: $body-bg;
+    }
+
+    .gm-style-iw-d {
+      overflow: hidden !important;
+    }
+
+    .gm-ui-hover-effect {
+      filter: grayscale(1) brightness(0) invert(1);
+    }
+
+    .link-button {
+      margin-top: 0.5rem;
+      text-decoration: underline;
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      color: $link-color;
+    }
+
+    .link-button:hover,
+    .link-button:focus {
+      color: $link-hover-color;
+    }
+
+    .location-name {
+      margin-bottom: 0;
+      text-align: left;
+      text-transform: uppercase;
+      padding-bottom: 0.15rem;
+      font-size: 20px;
+      & > a {
+        text-decoration: none;
+        color: inherit;
+        font-size: inherit;
+
+        &:hover {
+          opacity: 70%;
+        }
+      }
+    }
+  }
+}
+
+// Prevents `.locationList` from blowing out the layout.
+// Bug found in Chrome 72.0.3626.121 and Safari 12.0.3
+.store-locator-template .site-content__main {
+  overflow-y: hidden;
+}

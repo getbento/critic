@@ -1,0 +1,68 @@
+////
+/// @group components-paginator
+/// @access public
+//// 
+
+// ============================================================================================================
+// =============== PAGINATOR : VARS ===========================================================================
+// ============================================================================================================
+/// Max-width applied to `.paginator` instances. This is only useful when a browser has JavaScript disabled 
+/// and the class `html.no-js` is present – in which case, `previous` and `next` buttons will be shown instead 
+/// of our ajax paginator. By limiting the max-width, you can pinch in the left and right buttons a little 
+/// from their extreme left and extreme right positions.
+/// @type Number
+$paginator-max-width: null !default;
+
+/// Margin-top applied to `.paginator` instances. This is useful to add a little more visual separation between 
+/// the paginator and the content listing above it.
+/// @type Number
+$paginator-margin-top: 2rem !default;
+
+// ============================================================================================================
+// =============== PAGINATOR : EXPORT =========================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-paginator() {
+
+	// block
+	.paginator {
+		@include clearfix;
+		@include bb-hmargins-auto;
+		max-width: $paginator-max-width;
+		margin-top: $paginator-margin-top;
+
+		// elements: shared
+		&__prev, &__next {
+			display: none;
+
+			// modernizr modifer: if no js, we force our standard UI
+			.no-js & {
+				display: inline-block !important;
+			}
+		}
+
+		// element: standard ui button
+		&__prev {
+			float: left;
+		}
+
+		// element: standard ui button
+		&__next {
+			float: right;
+		}
+
+		// element: ajax ui button
+		&__ajax {
+
+			// modernizr modifier: if no js, force hide this button
+			.no-js & {
+				display: none !important;
+			}	
+		}
+
+		// element
+		&-meta {
+			display: none !important;
+		}
+	}
+}

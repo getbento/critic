@@ -1,0 +1,77 @@
+////
+/// @group components-tabs
+/// @access public
+////
+
+// ============================================================================================================
+// =============== ALERT : VARS ===============================================================================
+// ============================================================================================================
+/// Margin-left and margin-right applied to `.tabs-nav` buttons.
+/// @type Number
+$tabs-nav-btn-spacer-x: 0.25rem !default;
+
+/// Margin-bottom applied to `.tabs-nav` per breakpoint. All breakpoints are optional, however, you should
+/// probably include (at a minimum) a value at the `xs` breakpoint. Please note, breakpoint keys must match a
+/// key available in `$grid-breakpoints`.
+/// @type Map
+$tabs-nav-margin-bottom: (
+	xs: 2rem
+) !default;
+
+// ============================================================================================================
+// =============== ALERT : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-tabs() {
+
+	// block
+	.tabs-nav {
+		@include list-unstyled;
+		@include make-container();
+  		@include make-container-max-widths();
+
+		// immediate child
+		& > li {
+			display: inline-block;
+		}
+
+		// child
+		& .btn {
+			margin-top: 0;
+			margin-left: $tabs-nav-btn-spacer-x;
+			margin-right: $tabs-nav-btn-spacer-x;
+		}
+
+		// adds space below the .tabs-nav based on breakpoints.
+		@each $breakpoint, $value in $tabs-nav-margin-bottom {
+			@if map-has-key($grid-breakpoints, $breakpoint) {
+				@include media-breakpoint-up($breakpoint) {
+					margin-bottom: $value;
+				}
+			}
+		}
+	}
+
+	// block
+	.tabs-panel {
+		@include bb-prefix-transition(opacity 0.3s ease-in 0.1s);
+		display: none;
+		opacity: 0;
+
+		// modifier: active state unhides the panel
+		&--active {
+			display: block;
+		}
+
+		// modifier: show state makes the panel visible
+		&--show {
+			opacity: 1;
+		}
+
+		// body modifier: if no js, force all the panels to be visible!
+		.no-js & {
+			display: block !important;
+			opacity: 1 !important;
+		}
+	}
+}

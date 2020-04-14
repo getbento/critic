@@ -1,0 +1,60 @@
+// ============================================================================================================
+// =============== PIKADAY EXPORTS ONLY =======================================================================
+// ============================================================================================================
+// BentoBox: 
+// - This file is derived from bower_components/pikaday/pikaday.scss and
+//   bower_components/pikaday-responsive/dist/pikaday-responsive.css
+// 			 
+// Intended use: 
+// - Override the default Pikaday imports and re-path to use our /assets/bower_components/ directory instead.
+// - Only @import files that export classes directly. DO NOT @import variables, function, mixins, etc.
+// 
+// Important:
+// - We also also using Pikaday-Responsive which swaps out a native datepicker on mobile devices where 
+//   Modernizr.touchevents && Modernizr.inputtypes.date criteria are met. If you need to alter anything, please
+//   review both sets of files from each package.
+
+@import "../../bower_components/pikaday/pikaday";
+@import "../../bower_components/pikaday-responsive/pikaday-responsive";
+
+// ============================================================================================================
+// Note:
+// Pikaday no longer provides any variables with its scss, so we have to override a few classes and inject 
+// some of our own custom variables that are defined in ./_pikaday.custom.variables.scss
+
+
+.pika-single {
+	font-family: inherit;
+	color: $pikaday-color;
+}
+
+.pika-label {
+	color: $pikaday-label-color;
+}
+
+.pika-button {
+
+	.is-today & {
+		color: $pikaday-today-color;
+		background-color: $pikaday-today-bg-color;
+	}
+
+	&:hover,
+	.is-today &:hover,
+	.is-selected & {
+		color: $pikaday-active-color;
+		background: $pikaday-active-bg-color;
+		box-shadow: none;
+	}
+
+	&:hover,
+	.is-startrange &,
+	.is-endrange &,
+	.is-selected & {
+		border-radius: 0;
+	}
+}
+
+.pikaday__container {
+	display: block;
+}

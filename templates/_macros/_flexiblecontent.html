@@ -1,0 +1,583 @@
+{# ============================================================================
+================== FLEXIBLE CONTENT : PUBLIC ==================================
+============================================================================= #}
+{#
+    Renders a flexible content repeater all at once by delegating each supported
+    block type to its own corresponding macros.
+
+    IMPORTANT: `two_column_featured_box` now actually allows for a variable
+    number of columns that is set via Theme Options. However, to preserve
+    backwards-compatibility – we have changed the "title" to reflect the usage,
+    but we have to leave the "slug" name as-is.
+
+    @access public
+    @param {Dict} object          	- Flexible content object obtained directly from the global context.
+    @returns {HTML}
+#}
+{% macro render(obj) %}
+	{%- if obj and obj.sections and obj.sections|length > 0 %}
+		{%- for section in obj.sections %}
+			{%- if section.content_type == "one_column_text" %}
+				{{ _one_column_text(section.one_column_text) }}
+			{%- elif section.content_type == "two_column_text" %}
+				{{ _two_column_text(section.two_column_text) }}
+			{%- elif section.content_type == "two_column_freeform_thumbnails" %}
+				{{ _two_column_freeform_thumbnails(section.two_column_freeform_thumbnails) }}
+			{%- elif section.content_type == "two_column_featured_box" %}
+				{{ _featured_box(section.two_column_featured) }}
+			{%- elif section.content_type == "alert" %}
+				{{ _alert(section.alert) }}
+			{%- elif section.content_type == "youtube_video" %}
+				{{ _youtube(section.youtube) }}
+			{%- elif section.content_type == "vimeo_video" %}
+				{{ _vimeo(section.vimeo) }}
+			{%- elif section.content_type == "instagram" %}
+				{{ bbMedia.instagram() }}
+			{%- elif section.content_type == "gallery" %}
+				{{ _gallery(section.gallery) }}
+			{%- elif section.content_type == "embed" %}
+				{{ _embed(section.embed) }}
+			{%- elif section.content_type == "full_overlay" %}
+				{{ _full_overlay(section.full_overlay) }}
+			{%- elif section.content_type == "split_overlay" %}
+				{{ _split_overlay(section.split_overlay) }}
+			{%- endif %}
+		{%- endfor %}
+	{%- endif %}
+{% endmacro %}
+
+
+{# ============================================================================
+================== PROXIES : PRIVATE ==========================================
+============================================================================= #}
+{#
+	Each one of the macros below represents a supported Flexible Content
+	Repeater block type. Each macro validates its own object parameters that
+	are required for it to render properly. Most of these macros proxy another
+	macro in another file passing in the proper parameters. It might not seem
+	like it, but this structure keeps things nice and organized.
+#}
+{#
+    Renders a one column text block. Proxies bbContent.one_column(). Please note, we are passing
+    in an additional class that explicitly marks this content as originating from the Flexible
+    Content Repeater. We are implementing this class as a modifier just in case we add additional
+    "One Column" types in the future.
+
+    @access private
+    @param {Dict} object          	- Object representing the "one_column_text" block type.
+    @returns {HTML}
+#}
+{% macro _one_column_text(obj) %}
+	{%- if obj %}
+		{{ bbContent.one_column(title=obj.title, content=obj.content, classlist="c-one-col--text") }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders an alert block type. Proxies bbAlert.simple()
+
+    @access private
+    @param {Dict} object          	- Object representing the "alert" block type.
+    @returns {HTML}
+#}
+{% macro _alert(obj) %}
+	{%- if obj and obj.text %}
+		{{ bbAlert.simple(obj.text) }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a YouTube video block type. Proxies bbMedia.youtube(). Please note, we are passing in
+    an additional class (also including the default classes) that explicitly marks this video as
+    originating from the Flexible Content Repeater as well as being specifically YouTube.
+
+    @access private
+    @param {Dict} object          	- Object representing the "youtube_video" block type.
+    @returns {HTML}
+#}
+{% macro _youtube(obj) %}
+	{%- if obj and obj.video_id %}
+		{{ bbMedia.youtube(id=obj.video_id, title=obj.video_title, classlist="c-video--youtube content container") }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a Vimeo video block type. Proxies bbMedia.vimeo(). Please note, we are passing in
+    an additional class (also including the default classes) that explicitly marks this video as
+    originating from the Flexible Content Repeater as well as being specifically Vimeo.
+
+    @access private
+    @param {Dict} object          	- Object representing the "vimeo_video" block type.
+    @returns {HTML}
+#}
+{% macro _vimeo(obj) %}
+	{%- if obj and obj.video_id %}
+		{{ bbMedia.vimeo(id=obj.video_id, title=obj.video_title, classlist="c-video--vimeo content container") }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a gallery. Proxies bbMedia.gallery(). Please note, we are passing in an additional class
+    that explicitly marks this gallery as originating from the Flexible Content Repeater.
+
+    @access private
+    @param {Dict} object          	- Object representing the "gallery" block type.
+    @returns {HTML}
+#}
+{% macro _gallery(obj) %}
+	{%- if obj and obj.images and obj.images|length > 0 %}
+		{{ bbMedia.gallery(imgs=obj.images|list, classlist="c-gallery") }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a gallery. Proxies bbContent.embed(). Please note, we are passing in an
+    additional class that explicitly marks this embed as originating from the Flexible
+    Content Repeater.
+
+    @access private
+    @param {Dict} object          	- Object representing the "embed" block type.
+    @returns {HTML}
+#}
+{% macro _embed(obj) %}
+	{%- if obj and obj.code %}
+		{{ bbContent.embed(obj.code, classlist="c-embed", revealable=true) }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a full width tout-overlay. Proxies bbContent.overlay_tout()
+
+    @access private
+    @param {Dict} object          	- Object representing the "full_overlay" block type.
+    @returns {HTML}
+#}
+{% macro _full_overlay(obj) %}
+	{%- if obj %}
+		{{ bbContent.overlay_tout(
+				title=obj.title,
+				subtitle=obj.subtitle,
+				content=obj.text,
+				image=obj.image,
+				multibutton=obj.multibutton,
+				dimmed=obj.add_overlay
+			)
+		}}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a split (50/50) tout overlay. Proxies bbContent.overlay_split()
+
+    Please note, there is currently an `obj.vertical_center_content` field commented out in
+    `config/_section.flexible_content.json` which can map to the `vcenter` parameter. Its
+    intended use is to add a vertical alignment option per instance of the split overlay. If,
+    at some point, this is re-introduced, we should update the `vcenter` attribute to make use
+    of the `|default(theme.options.misc.split_overlay_vertical_center)` filter.
+
+    @access private
+    @param {Dict} object          	- Object representing the "split_overlay" block type.
+    @returns {HTML}
+#}
+{% macro _split_overlay(obj) %}
+	{%- if obj %}
+    {% set split_overlay_vertical_center = theme.options.layout.flexible_content.split_overlay_vertical_center if theme_options.layout and theme.options.layout.flexible_content else None %}
+		{{ bbContent.overlay_split(
+				title1=obj.left_title,
+				content1=obj.left_content,
+				image1=obj.left_image,
+				multibutton1=obj.multibutton_left,
+				dimmed1=obj.left_add_overlay,
+				use_alt_colors1=obj.left_use_alt_colors,
+				title2=obj.right_title,
+				content2=obj.right_content,
+				image2=obj.right_image,
+				multibutton2=obj.multibutton_right,
+				dimmed2=obj.right_add_overlay,
+				use_alt_colors2=obj.right_use_alt_colors,
+				alternate=obj.alternate,
+				vcenter=theme.options.layout.flexible_content.split_overlay_vertical_center,
+			)
+		}}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a full two column text block. Proxies bbContent.two_columns(). Please
+    note, we are passing in an additional class that explicitly marks this content
+    as originating from the Flexible Content Repeater. We are implementing this
+    class as a modifier because both "text" and "freeform" versions exist.
+
+    @access private
+    @param {Dict} object          	- Object representing the "two_column_text" block type.
+    @returns {HTML}
+#}
+{% macro _two_column_text(obj) %}
+	{%- if obj %}
+		{{ bbContent.two_columns(
+				title1=obj.title_one,
+				column1=obj.column_one,
+				title2=obj.title_two,
+				column2=obj.column_two,
+				classlist="c-two-col--text",
+				revealable=true
+			)
+		}}
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a full two column freeform block with optional thumbnails. Proxies
+    bbContent.two_columns().  Please note, we are passing in an additional class
+    that explicitly marks this content as originating from the Flexible Content
+    Repeater. We are implementing this class as a modifier because both "text"
+    and "freeform" versions exist.
+
+    @access private
+    @param {Dict} object          	- Object representing the "two_column_freeform_thumbnails" block type.
+    @returns {HTML}
+#}
+{% macro _two_column_freeform_thumbnails(obj) %}
+	{%- if obj %}
+		{{ bbContent.two_columns(
+				title1=obj.title_one,
+				column1=obj.column_one,
+				thumbnail1=obj.image_one,
+				multibutton1=obj.multibutton_one,
+				title2=obj.title_two,
+				column2=obj.column_two,
+				thumbnail2=obj.image_two,
+				multibutton2=obj.multibutton_two,
+				classlist="c-two-col--freeform",
+				revealable=true
+			)
+		}}
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== FEATURED ===================================================
+============================================================================= #}
+{#
+	Note: This block type is very different than the other content types. This
+	macro will render "featured" items from almost every Box we have available.
+	Because of this, we have to break it up into smaller macros below that
+	utilize our bbCard set of macros – otherwise, this macro would be huge.
+
+	You may be thinking – "The _featured_*() and bbCard macros all look very
+	similar. Is this DRY?" Its important to call out that each card type has
+	very small variations that make it unique. These variations could be handled
+	in a much smarter single macro, but the tradeoff is it would be almost
+	impossible to debug or update due to its complexity. So, instead, we've
+	broken it out. If you have a problem or need to change something, you only
+	really need to address a one or two macros...max.
+
+	Currently, this macro is ONLY used in the Flexible Content Repeater, so it
+	only needs to live here. If we find these macros would be useful anywhere
+	else outside of our repeater, we will need to move everything below to its
+	own macro file and refactor as necessary.
+
+	IMPORTANT: This macro can now display at 2,3 or 4 columns per row – which
+	is settable per type via Theme Options > Grid Columns. However, to ensure
+	backwards compatibility, we have to keep the "slug" as `two_column_featured_box`.
+
+	Last, to add a new Box Type, you will need to....
+	1. 	Add it to config/_partials/_section.flexible_content.json >
+		two_column_featured > box_type.
+	2. 	Add the Box Type to the "supported_box_types" variable list below.
+	3. 	Add a condition inside this macro that calls a dedicated macro per type.
+	4. 	Create and test your dedicated Box Type macro.
+
+	To remove a supported Box Type, do the above steps in reverse – deleting
+	everything relevant to that Box Type.
+
+	@access private
+    @param {Dict} object          	- Object representing the "two_column_featured_box" block type.
+    @returns {HTML}
+#}
+{% macro _featured_box(obj) %}
+	{%- set supported_box_types = ["news", "press", "team", "galleries", "jobs", "events", "menus", "venues"] -%}
+	{%- if obj and obj.box_type and (obj.box_type in supported_box_types) %}
+		{%- set box = boxes[obj.box_type] %}
+
+        {%- set themeopts = theme.options.layout.flexible_content if theme.options.layout and theme.options.layout.flexible_content else {} %}
+		{%- set is_clickable = themeopts.featured_box_clickable %}
+		{%- set max = themeopts.featured_box_max %}
+		{%- if box.featured and (box.featured|length > 0) and max %}
+			<aside class="c-featured--{{ obj.box_type }} content container">
+				{%- if obj.title %}
+					<div class="revealable">
+						<h2 class="card-listing-heading">{{ obj.title }}</h2>
+					</div>
+				{%- endif %}
+				<ul class="card-listing row">
+					{%- if obj.box_type == "news" %}
+						{{ _featured_news(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "press" %}
+						{{ _featured_press(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "team" %}
+						{{ _featured_team(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "galleries" %}
+						{{ _featured_galleries(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "events" %}
+						{{ _featured_events(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "venues" %}
+						{{ _featured_venues(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- elif obj.box_type == "menus" %}
+						{{ _featured_menus(box.featured[0:max], is_clickable, obj.button_label, box.box_index_url) }}
+					{%- elif obj.box_type == "jobs" %}
+						{{ _featured_jobs(box.featured[0:max], is_clickable, obj.button_label) }}
+					{%- endif %}
+				</ul>
+			</aside>
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{# ================== FEATURED : NEWS ======================================= #}
+{#
+	Renders the featured news block.
+
+	@access private
+    @param {List} list          	- An array of featured news article objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_news(list, clickable, label) %}
+
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{{ bbCard.news(
+				title=item.name,
+				image=item.image,
+				content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+				url=(item.url if clickable else ""),
+				use_thumbnails=use_thumbnails,
+				tag="li",
+				htag="h3",
+				revealable=true
+			)
+		}}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : PRESS ====================================== #}
+{#
+	Renders the featured press block.
+
+	@access private
+    @param {List} list          	- An array of featured press article objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_press(list, clickable, label) %}
+	{%- set list = list|sort(attribute="date", reverse=true) %}
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{{ bbCard.press(
+		    	title=item.title,
+		    	source=item.source,
+		    	content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+		    	image=item.image,
+		    	external_url=(item.external_url if clickable else ""),
+		    	file=(item.file if clickable else ""),
+		    	use_thumbnails=use_thumbnails,
+		    	tag="li",
+		    	htag="h3",
+		    	stag="h4",
+		    	revealable=true
+	    	)
+	    }}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : TEAM ======================================= #}
+{#
+	Renders the featured team block.
+
+	@access private
+    @param {List} list          	- An array of featured team member objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_team(list, clickable, label) %}
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{{ bbCard.team(
+				name=item.name,
+				title=item.title,
+				image=item.image,
+				content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+				url=(item.url if clickable else ""),
+				use_thumbnails=use_thumbnails,
+				tag="li",
+				htag="h2",
+				stag="h4",
+				revealable=true
+			)
+		}}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : GALLERIES ================================== #}
+{#
+	Renders the featured galleries block. Please note, by default this item
+	will open a popup gallery via AJAX instead of navigating to the gallery
+	page.
+
+	@access private
+    @param {List} list          	- An array of featured gallery objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_galleries(list, clickable, label) %}
+	{%- for item in list %}
+		{{ bbCard.gallery(
+				title=item.name,
+				images=item.images,
+				content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+				url=(item.url if clickable else ""),
+				ajaxable=true,
+				tag="li",
+				htag="h3",
+				revealable=true
+			)
+		}}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : EVENTS  ==================================== #}
+{#
+	Renders the featured events block.
+
+	@access private
+    @param {List} list          	- An array of featured event objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_events(list, clickable, label) %}
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{{ bbCard.events(
+		    	title=item.name,
+		    	image=item.image,
+		    	content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+		    	url=(item.url if clickable else ""),
+		    	use_thumbnails=use_thumbnails,
+		    	tag="li",
+		    	htag="h3",
+		    	revealable=true
+	    	)
+	    }}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : VENUES  ==================================== #}
+{#
+	Renders the featured venus block.
+
+	Note: the reason we aren't including the description here is because they
+	can potentially be relatively long. Normally we might truncate the text,
+	but because the description is a WYSIWYG editor, you'll also have to
+	consider what to do if the truncate process strips some html tags. If that
+	happens, it has the potential to really make a mess of everything rendered
+	after it on the page. So, please be careful here.
+
+	@access private
+    @param {List} list          	- An array of featured venue objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_venues(list, clickable, label) %}
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{{ bbCard.venue(
+				name=item.name,
+				description="",
+				capacity="",
+				append=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+				image=item.image,
+				url=(item.url if clickable else ""),
+				use_thumbnails=use_thumbnails,
+				tag="li",
+				htag="h3",
+				revealable=true
+			)
+		}}
+	{%- endfor %}
+{% endmacro %}
+{# ================== FEATURED : MENUS  ===================================== #}
+{#
+	Renders the featured menus block.
+
+	Notes: The Menus Listing Template (and others) use the interactive tabs UI
+	to display menus. Although it is possible to include that UI here, it is
+	currently not implemented. To do so, we would need to re-work our
+	_featured_box() macro as well as this one.
+
+	@access private
+    @param {List} list          	- An array of featured menu objects.
+    @param {Boolean} clickable		- True if an item should be clickable.
+    @param {String} label 			- CTA label (ie...Learn More)
+    @param {String} box_index_url	- The url of the menu page, if it exists
+    @returns {HTML}
+#}
+{% macro _featured_menus(list, clickable, label, box_index_url) %}
+	{%- set use_thumbnails = true if (bbUtils.use_thumbnails(list) == "1") else false %}
+	{%- for item in list %}
+		{%- set url = item.url if (box_index_url == None) else "{0}#{1}".format(box_index_url, item.slug) %}
+		{{ bbCard.menu(
+		    	name=item.name,
+		    	image=item.image,
+		    	content=(("<span>" ~ label ~ "</span>") if (clickable and label) else ""),
+		    	url=(url if clickable else ""),
+		    	use_thumbnails=use_thumbnails,
+		    	tag="li",
+		    	htag="h3",
+		    	revealable=true
+	    	)
+	    }}
+	{%- endfor %}
+{% endmacro %}
+
+{# ================== FEATURED : JOBS  ====================================== #}
+{#
+	Renders the featured jobs block.
+
+	Notes: Currently, there is no URL associated with a Job Single Box as it
+	does not appear that the BentoBox platform supports custom box URLs even
+	though it does generate them. So, the "clickable" parameter will be ignored
+	because the URL that is present will no resolve and route correctly.
+
+	Also, the Jobs Listing template uses categories and the interactive tabs
+	UI to display the listing. It is possible to include that type of UI here
+	instead of our default card rendering, but it is currently not implemented.
+	To do so, we would need to re-work our _featured_box() macro as
+	well as this one.
+
+	@access private
+    @param {List} list          	- An array of featured menu objects.
+    @param {Boolean} clickable		- True if an item should be clickable. (will always be ignored!)
+    @param {String} label 			- CTA label (ie...Learn More)
+    @returns {HTML}
+#}
+{% macro _featured_jobs(list, clickable, label) %}
+	{%- for item in list %}
+		{{ bbCard.job(
+				name=item.name,
+				description=item.description,
+				tag="li",
+				htag="h3",
+				leftalign=true,
+				revealable=true
+			)
+		}}
+	{%- endfor %}
+{% endmacro %}
+

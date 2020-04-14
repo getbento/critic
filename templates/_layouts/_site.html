@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html class="no-js" lang="{{ account.language }}">
+    <head>
+      {% block head %}{% endblock %}
+      {% block head_schema %}{% endblock %}
+      {% block head_append %}{% endblock %}
+    </head>
+    <body class="{% block body_class %}{% endblock %}">
+        {% block body %}{% endblock %}
+        {% block body_append %}{% endblock %}
+    </body>
+</html>

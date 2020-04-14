@@ -1,0 +1,40 @@
+////
+/// @access public
+/// @group mixins-backgrounds
+//// 
+
+// ============================================================================================================
+// =============== MIXINS : BACKGROUNDS =======================================================================
+// ============================================================================================================
+
+/// Shortcut to add all background properties separately. Any parameters set to `null` will be ignored.
+/// @parameter {Color} $color [null] - The background color.
+/// @parameter {String} $repeat [null] - The background-repeat value. (ex: repeat-x, no-repeat, etc)
+/// @parameter {Number | String} $size [null] - The background-size value. (ex: 100% 100%, cover, etc)
+/// @parameter {Number | String} $position [null] - The background-position value. (ex: 100% 100%, top center, etc)
+/// @parameter {String} $image [null] - The image file / background-url value.
+/// @parameter {Bool} $prendPath [false] - If true, the path to the `/assets` directory will be prepended.
+@mixin bb-background($color: null, $repeat: null, $size: null, $position: null, $image: null, $prependPath: false) {
+	background-color: $color;
+	background-repeat: $repeat;
+	background-size: $size;
+	background-position: $position;
+	@if $image {
+		$image-url: if($prependPath, bb-path-images($image), $image);
+		background-image: url('#{$image-url}');
+	}
+}
+
+/// Shortcut to setup a normal `background-size: cover` but does not include the image path. This is useful when 
+/// declaring background images with inline css via an html element's `style="background-image:url(...);"` attribute.
+@mixin bb-background-cover-base() {
+	@include bb-background($repeat: no-repeat, $size: cover, $position: center center);
+}
+
+/// Shortcut to setup a normal tiled image background. Useful for textures and patterns. Any parameters set to `null` will be ignored.
+/// @parameter {Color} $color [null] - The background color. Useful when using transparent PNGs as `$image`.
+/// @parameter {String} $image [null] - The image file / background-url value.
+/// @parameter {Bool} $prendPath [false] - If true, the path to the `/assets` directory will be prepended.
+@mixin bb-background-pattern-base($color: null, $image: null, $prependPath: false){
+	@include bb-background($color: $color, $repeat: repeat, $size: null, $position: top left, $image: $image, $prependPath: $prependPath);
+}

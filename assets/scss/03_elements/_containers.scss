@@ -1,0 +1,54 @@
+////
+/// @group elements-containers
+/// @access public
+//// 
+
+// ============================================================================================================
+// =============== CONTAINERS : VARS ==========================================================================
+// ============================================================================================================
+/// Adds extra `.container-*` elements defining `max-width` per breakpoint and applying gutters by default. 
+/// The map key is the name of the container class to create (ie...`.container-xxs`), and the value is a Map 
+/// of key/value breakpoint sizes. Each container you add can support a variable number of (optional) 
+/// breakpoints which must be availabe in `$grid-breakpoints`. There are no requirements that all containers 
+/// have the same breakpoints or even that a container has any breakpoints at all. A container with no 
+/// breakpoints will automatically be the equivalent of `width: 100%;`.
+/// 
+/// ** Workaround:** Bootstrap only comes with one `.container` which means that we would have to use a lot of
+/// `.col-md-*` and `.col-md-offset-*` modifiers to create our layouts at different sizes. Instead, we are 
+/// creating a set of additional `max-width` containers (each supporting multiple breakpoints) so we can avoid
+/// the confusion of offsets.
+/// 
+/// ** Usage:** In most scenarios, the default containers are all you need and are already specified in the
+/// content-generating macros. The intended usage is simply to define the *sizing* of each pre-defined container.
+/// 
+/// @type Map
+$additional-containers: (
+	"container-xxs": (
+		xs: 500px
+	),
+	"container-xs": (
+		xs: 570px
+	),
+	"container-sm": (
+		xs: 640px
+	),
+	"container-md": (
+		xs: 790px
+	),
+) !default;
+
+// ============================================================================================================
+// =============== CONTAINERS : EXPORT ========================================================================
+// ============================================================================================================
+@mixin bb-export-classes-containers() {
+
+	// Some of the containers used are smaller than Bootstrap
+	// containers. Instead of setting row offsets, we're making
+	// new categories of container that can be used the same way.
+	@each $key, $obj in $additional-containers {
+		.#{$key} {
+			@include make-container;
+			@include make-container-max-widths($obj);
+		}
+	}
+}

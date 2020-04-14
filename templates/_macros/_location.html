@@ -1,0 +1,338 @@
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{#
+	In Jinja2, there isn't really a way to set a global-ish variable that is
+	either true or false and then update its value inside a macro using "set".
+	The workaround is – we create an array with no items and add items using
+	"append()" within a macro. For some reason this works and if at least one
+	item is present, we can consider that to be a "true" value.
+#}
+{% set _name_to_hero_is_set = [] %}
+
+{# ============================================================================
+================== GETTERS / SETTERS : PUBLIC =================================
+============================================================================= #}
+{#
+	The following macros are used directly and return Boolean values to help
+	the page template render appropriately. These macros do not render anything
+	directly and are not used by any other macros included in this file.
+
+	Please note, these macro return a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+#}
+{#
+	Get whether or not the hero should display the location name (if applicable
+	and if it exists) Not only does this return "0" or "1" to notify the parent
+	template, but IT ALSO updates the hero object directly – changing the hero
+	title's data to the name of the location. (when applicable)
+
+	@access public
+	@param {Dict} hero 				- The hero object obtained from the main context.
+	@param {String} name 			- The name of the location.
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro set_name_to_hero(hero, name) -%}
+	{%- if name -%}
+		{%- if theme.options.general.display_locname_on_locpages and (bbHero.basic_exists(hero) == "1") and not hero.title -%}
+			{%- do hero.update({ "title" : name }) -%}
+			{%- do _name_to_hero_is_set.append(1) -%}
+			{{- 1 -}}
+		{%- else -%}
+			{{- 0 -}}
+		{%- endif -%}
+	{%- else -%}
+		{{- 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Get whether or not at least one location has an associated image/thumbnail.
+
+	@access public
+	@param {List} locs 				- An array of location objects (boxes.locations.all)
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro get_uses_thumbnails(locs) -%}
+	{%- if locs and locs|length > 0 -%}
+		{% set locimgs = [] %}
+		{%- for loc in locs -%}
+			{%- if get_thumbnail(loc) -%}{%- do locimgs.append(1) -%}{%- endif -%}
+		{%- endfor -%}
+		{{- 1 if (locimgs|length != 0) else 0 -}}
+	{%- else -%}
+		{{- 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== MAIN MACROS : PUBLIC =======================================
+============================================================================= #}
+{#
+	The following macros are used by the different location templates and
+	return rendered HTML.
+#}
+{#
+	Renders a location intro block using many of the public helper location
+	macros included below as well as proxying bbContent.intro() and
+	bbContent.intro_one_column() to generate the final output.
+
+	@access public
+	@param {Dict} loc				- A location object. (boxes.locations.all.0)
+	@param {Boolean} use_h1			- True of the intro should use an <h1>. false uses <h2 class="h1">
+	@returns {HTML}
+#}
+{% macro intro(loc, use_h1=false) %}
+	{% if loc %}
+		{% set description = get_intro_description(loc.description) %}
+		{% if get_has_hourslocation(loc) == "1" %}
+			{{ bbContent.intro(
+					title=get_hourslocation_title(loc),
+					content=hourslocation_content(loc),
+					title2=(true if description else ""),
+					content2=description,
+					use_h1=use_h1,
+					tag="section",
+					revealable=true
+				)
+			}}
+		{% else %}
+			{% if description %}
+				{{ bbContent.intro_one_column(
+						content=description,
+						use_h1=use_h1,
+						tag="section",
+						revealable=true
+					)
+				}}
+			{% endif %}
+		{% endif %}
+	{% endif %}
+{% endmacro %}
+
+{#
+	Renders a location's Google Maps block using a few of the public helper
+	location macros included below as well as a few other macro libraries
+	(such as bbTrack.button_address()) to generate the final output.
+
+	@access public
+	@param {String} name					          - The name of the location.
+	@param {String} address 				        - The address of the location.
+  @param {String} lat                     - The location's Latitude
+  @param {String} lng                     - The location's Longitude
+	@param {String} google_place_id			    - Optional Google Place ID. Attempts to make results more accurate.
+	@param {Boolean} add_directions_button	- True adds a "get directions" button overlaying the map.
+	@param {String} tag             		    - The html tag to use for the container.
+	@param {String} map_tag             	  - The html tag to use Google Maps element.
+	@param {Boolean} track             		  - True to track the "get directions" button clicks.
+	@param {Boolean} revealable 			      - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro gmap(name, address, lat, lng, gmaps_static_urls='', google_place_id=false, google_place_url=false, add_directions_button=true, tag="section", map_tag="div", track=false, revealable=true) %}
+	{%- if name and address %}
+	{%- set gmap_href = get_gmaps_href(name=name, address=address, google_place_url=google_place_url) %}
+		<{{ tag }} class="gmaps__container{% if revealable %} revealable{% endif %}">
+			{%- if add_directions_button %}
+				<a href="{{ gmap_href }}" class="btn btn-brand gmaps__directions-btn" target="_blank" rel="noopener"{% if track %} {{ bbTrack.button_address(placement="Map") }}{% endif %}>Get Directions</a>
+			{%- endif %}
+			<{{ map_tag }} class="gmaps" data-gmaps-static-url-mobile="{{ gmaps_static_urls.mobile }}" data-gmaps-address="{{ address }}" data-gmaps-href="{{ gmap_href }}"{% if google_place_id %}data-gmaps-place-id="{{ google_place_id }}"{% endif %} data-gmaps-lat="{{ lat }}" data-gmaps-lng="{{ lng }}" role="region" aria-label="Google Map"></{{ map_tag }}>
+		</{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== INTERNAL HELPERS : PUBLIC ==================================
+============================================================================= #}
+{#
+	The following macros are intended to be helpers to simplify other macros
+	and encapsulate specific tasks. These macros can be used publicly, but are
+	mainly intended to help other main macros in this file...or even help each
+	other.
+
+	Please note, these macro return a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+#}
+{#
+	Gets whether or not the location name has been added to the hero by
+	checking the private _name_to_hero_is_set array variable.
+
+	@access public
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro get_added_name_to_hero() -%}
+	{{- 0 if (_name_to_hero_is_set|length == 0) else 1 -}}
+{%- endmacro %}
+
+{#
+	Gets whether or not the location has a renderable hours and location
+	column...
+	- If it has any of the elements to render (address, phone number, or
+	  hours)
+	- Else, if we should be displaying the location name, but it hasn't been
+	  added to the hero.
+
+	@access public
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro get_has_hourslocation(loc) -%}
+	{%- if (loc.address or loc.phone_number or loc.hours) -%}{{- 1 -}}
+	{%- else -%}{{- 1 if (theme.options.general.display_locname_on_locpages and (get_added_name_to_hero() == "0")) else 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Gets the title to add to the hours and location column...
+	- Use the location name if we should be displaying the location name, but
+	  it hasn't been added to the hero, but only if its defined. Otherwise, we
+	  should use the default label.
+
+	@access public
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro get_hourslocation_title(loc) -%}
+	{{- loc.name|default("Hours & Location") if (theme.options.general.display_locname_on_locpages and (get_added_name_to_hero() == "0")) else "Hours & Location" -}}
+{%- endmacro %}
+
+{#
+	Gets a location's thumbnail image (if applicable). First, it attempts to see
+	if there is an image associated directly on the location. If not, it then
+	looks to see if the location has a hero gallery – where it can grab the first
+	image. Finally, if no images are found, it will return "".
+
+	Please note, this macro is also used by the location listing template.
+
+	@access public
+	@param {Dict} loc				- A location object. (boxes.locations.all.0)
+	@returns {String} - The image file path if found, and "" if not.
+#}
+{% macro get_thumbnail(loc) -%}
+	{%- if loc -%}
+		{%- if loc.image -%}
+			{{- loc.image -}}
+		{%- else -%}
+			{%- set lochero = loc.fields.herobasic -%}
+			{{- lochero.images.0.image_path if (lochero and (lochero.background_type == "images") and (lochero.images|length > 0)) else "" -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro -%}
+
+{#
+	Replaces any <h1> tags added by the intro description WYSIWYG editor with
+	an <h2 class="h1"> which is intended to be placed in the second column of
+	the intro next to the Hours and Location column.
+
+	@access public
+	@param {String} description		- The locaitons intro description.
+	@param {String|HTML}
+#}
+{% macro get_intro_description(description) -%}
+	{{ description|replace("<h1>", "<h2 class=\"h1\">")|replace("</h1>", "</h2>") if description else "" }}
+{%- endmacro %}
+
+{#
+	A standard Hours and Locations column's content generally includes the
+	location's address, phone number, and hours. However, the address is entered
+	by an admin in individual columns – so there is no guarentee that all the
+	address parts/components exist...and therefore might not be formatted
+	property. This macros figures out which parts and pieces exist and attempts
+	to pieces together the column content with the nicest formatting possible
+	given the available components.
+
+	@access public
+	@param {Dict} loc				- A location object. (boxes.locations.all.0)
+	@param {HTML}
+#}
+{% macro hourslocation_content(loc) -%}
+	{%- if loc %}
+		{%- if loc.address or loc.phone_number %}
+			{% set br = joiner("<br>") %}
+			<p>
+				{% if loc.address %}
+					{{ br() }}
+					{%- set gmaps_href = get_gmaps_href(
+							name=loc.name,
+							address=loc.address,
+							google_place_url=(loc.google_place_url if loc.use_gmaps_advanced else false)
+						)
+					%}
+					<a href="{{ gmaps_href }}" target="_blank" rel="noopener"{{ bbTrack.button_address(placement="Location") }}>
+						{{ get_pretty_address(loc) }}
+					</a>
+				{% endif %}
+				{% if loc.phone_number %}
+					{{ br() }}
+					<a href="tel:{{ loc.phone_number }}"{{ bbTrack.button_phone(placement="Location") }}>{{ loc.phone_number }}</a>
+				{% endif %}
+				{% if loc.email_address %}
+					{{ br() }}
+					<a href="mailto:{{ loc.email_address }}">{{ loc.email_address }}</a>
+				{% endif %}
+			</p>
+		{%- endif %}
+		{{- loc.hours -}}
+	{%- endif %}
+{%- endmacro %}
+
+{#
+	A standard location address should be formatted as...
+		Street,
+		City, State Zipcode
+
+	However, because those components are entered by an admin individually, there is
+	no guarentee all the components exist – and therefore might not format properly.
+	The simplest way to ensure proper formatting is to...
+	- If the loc.address has a (loc.street ~ ","), then replace that with
+	  (loc.street ~ ",<br>"). If there is no "," in the street, we can assume at a
+	  minimum that city and/or state is missing.
+
+	@access public
+	@param {Dict} loc				- A location object. (boxes.locations.all.0)
+	@param {HTML}
+#}
+{% macro get_pretty_address(loc) -%}
+	{%- if loc and loc.address -%}
+		{{- loc.address|replace((loc.street ~ ","), (loc.street ~ ",<br>")) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Generates the Google Maps url href based on the name and location, and if
+	a `place_id` is provided, includes a `data-gmaps-btn-place-id=""` attribute.
+
+	If a `place_id` is provided, JavaScript will make a request to Google to get
+	the actual Google Place URL, and if it finds one it will replace the `href`
+	generated by only the address. The intention is, using `place_id` should result
+	in a more accurate result than the address alone.
+
+	By providing this functionality in a single macro to handle this task, we can
+	ensure that all Google Maps links throughout the theme will used exactly the
+	same link...which is much easier to maintain.
+
+	Places method: Currently, places search is not reliably finding the appropriate
+	result location...if any. So, instead, we are using the "search" method to
+	generate the address url.
+	{{- ("https://www.google.com/maps/place/" ~ name ~ "/" ~ address)|replace(" ", "+") -}}
+
+	@access public
+	@param {String} name			- The location's name (not required with "search" method.
+	@param {String} address 		- The location's address.
+	@param {String} google_place_id - Optional Google Place ID. Attempts to make results more accurate.
+	@param {HTML}
+#}
+{% macro get_gmaps_href(name, address, google_place_url) -%}
+	{%- if address or google_place_url -%}
+		{% if google_place_url %}
+			{{- google_place_url -}}
+		{% else %}
+			{{- (("http://www.google.com/maps/search/" ~ address|urlencode) if address else "") -}}
+		{% endif %}
+	{%- endif -%}
+{%- endmacro %}
+
+
+
+
+
+

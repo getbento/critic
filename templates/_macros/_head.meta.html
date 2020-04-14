@@ -1,0 +1,427 @@
+{# ============================================================================
+================== RENDER =====================================================
+============================================================================= #}
+{#
+	Renders our general and social meta tags inside the `<head>` on a per-page
+	basis. You can think of this process as a cascade – where less specific
+	values will be overriden when more specific values are found. Currently,
+	all values are optional. The cascade sets values in the following order...
+
+	- Site-level variables are found and set (generally found in `account`).
+	- Per-page settings are set. (keywords, description, image) If any per-page
+	  value is undefined, the site-level variables will be used instead.
+	- Facebook per-page settings are found and set. If any value is undefined,
+	  the per-page settings variables will be used instead.
+	- Twitter per-page settings are found and set. If any value is undefined,
+	  the Facebook per-page settings will be used instead.
+
+	This ensures that most of these tags will get a value assigned even if their
+	specific setting is left undefined. This allows us to fill in as much as
+	little backend details as we want, but still get a relatively complete output.
+
+	TODO: Once the Per-Page Attributes feature is fully implemented on the
+	backend, we'll have to double back and hook this up for real. For now,
+	everything will work automatically – you just won't be able to "set" any of
+	these via the Admin Area.
+
+	@access public
+	@returns {HTML}
+#}
+
+{% macro render() -%}
+	{#- DEV: Do we want to render our social tags? -#}
+	{%- set social_output_enabled = true -%}
+
+	{#- DEV: Fake per-page attributes.
+		Until this feature is fully implemented on the backend, we are using this
+		Dict as a mock context variable. Filling in any of these values will mimic
+		what we expect to be set on the backend later. Once this feature is fully
+		implemented on the backend, we will have to remove this variable and remap
+		all of our `_get_var()` calls below.
+	-#}
+	{%- set opts = {
+			"meta": {
+				"title": current.meta_title,
+				"description" : current.meta_description,
+				"keywords": "",
+				"url": "",
+				"image_src": "",
+				"image_fill_color": theme.options.navigation.logo.image_fill_color
+			},
+			"social": {
+				"fb": {
+					"title": "",
+					"type": "",
+					"url": "",
+					"description": "",
+					"site_name": "",
+					"admins": "",
+					"image_src": "",
+					"image_fill_color": ""
+				},
+				"twitter": {
+					"title": "",
+					"description": "",
+					"card_type": "",
+					"site_handle": "",
+					"author_handle": "",
+					"image_src": "",
+					"image_fill_color": ""
+				}
+			}
+		}
+	-%}
+	{#- =========== SITE-LEVEL VARIABLES ==================================== -#}
+	{#-
+		The following variables are intended to represent site-level settings
+		and what we would be displaying if we didn't have (or didn't support)
+		per-page settings.
+	-#}
+	{%- set fallback_page_title = account.site.title if (current.homepage or not page_title) else (page_title ~ " | " ~ account.site.title) -%}
+	{%- set fallback_page_url = current.request.absolute_url if (current.request and current.request.absolute_url) else account.site.url -%}
+	{#- Special Case: By creating a image "placeholder" Dict variable, we can
+		use a macro to update it via its reference. After this macro runs, our
+		`fallback_page_image` variable will be updated with the appropriate
+		per-page image values.
+	-#}
+	{%- set fallback_page_image = { "src" : "", "is_logo": false } -%}
+	{%- do _find_fallback_image(fallback_page_image, force_homepage_logo=true) -%}
+
+	{#- =========== PAGE-LEVEL VARIABLES ==================================== -#}
+	{#- Looks for the general per-page settings. If any are not found, where
+		applicable, the fallback variables (above) will be used instead. In
+		some scenarios (keywords, etc) we can just access the context variables
+		directly because we know they always exist.
+	-#}
+	{%- set meta = {
+			"title":			_get_var(scope=opts, path="meta.title", default=fallback_page_title),
+			"description":		_get_var(scope=opts, path="meta.description", default=account.site.meta_description),
+			"keywords":			_get_var(scope=opts, path="meta.keywords", default=account.site.meta_keywords),
+			"url": 				_get_var(scope=opts, path="meta.url", default=fallback_page_url),
+			"image_src": 		_get_var(scope=opts, path="meta.image_src", default=fallback_page_image.src),
+			"image_fill_color": _get_var(scope=opts, path="meta.image_fill_color", default="#EDEDF1")
+		}
+	-%}
+
+	{#- only run social logic if its enabled -#}
+	{%- if social_output_enabled -%}
+
+		{#- ======= FACEBOOK VARIABLES ====================================== -#}
+		{#- Looks for Facebook-specific page settings. If any are not found,
+			the per-page meta settings (above) are used instead.
+		-#}
+		{%- set fb = {
+				"title":			_get_var(scope=opts, path="social.fb.title", default=meta.title),
+				"type": 			_get_var(scope=opts, path="social.fb.type", default=("website" if current.homepage else "article")),
+				"url":				_get_var(scope=opts, path="social.fb.url", default=meta.url),
+				"description":		_get_var(scope=opts, path="social.fb.description", default=meta.description),
+				"admins":			_get_var(scope=opts, path="social.fb.admins"),
+				"image_src":		_get_var(scope=opts, path="social.fb.image_src", default=meta.image_src),
+				"image_fill_color": _get_var(scope=opts, path="social.fb.image_fill_color", default=meta.image_fill_color),
+				"image_resized":	""
+			}
+		-%}
+		{#- Once all of the `fb` variables are set, we have to resize the image
+			appropriately using those `fb` variables (if applicable) and update
+			the `fb` variable to reflect the changes...if any.
+		-#}
+		{%- do fb.update({
+				"image_resized": _transform_image(
+						src=fb.image_src,
+						is_logo=(true if (fb.image_src == account.logo) else false),
+						fill_color=fb.image_fill_color,
+						pad=100
+					)
+				}
+			)
+		-%}
+
+		{#- ======= TWITTER VARIABLES ======================================= -#}
+		{#- Special Case: The site-level Twitter handle can be obtained from
+			a few different places, so we need to check each to find the right
+			value to use. The process is...
+
+			- If the "CONNECT TO TWITTER" feature is being used, the service
+			  name should be set to the associated/authenticated handle. This
+			  is the most-valid priority to use.
+			- If that service is not being used, we can then check to see if
+			  a url has been set to inform the social icons. Please note,
+			  because its possible to add tracking urls to a twitter url, we
+			  need to do a little extra processing.
+		-#}
+		{%- set fallback_twitter = { "handle" : "" } -%}
+		{%- with -%}
+			{#- if "CONNECT TO TWITTER" service is being used, use the `name`. -#}
+			{%- set service_handle = _get_var(scope=account, path="services.twitter.name") -%}
+			{%- if service_handle -%}
+				{%- do fallback_twitter.update({ "handle": service_handle }) -%}
+			{#- if not using the service, check the twitter social icons url -#}
+			{%- else -%}
+				{%- set url = _get_var(scope=account, path="services.twitter.url") -%}
+				{#- if `twitter.com` is in the url, we can assume that a handle
+					is also in the url after the first `/`.
+				-#}
+				{%- if url and ("twitter.com/" in url) -%}
+					{%- set segments = url.split("twitter.com/") -%}
+					{%- if segments|length > 1 -%}
+						{#- before we add the handle, we need to strip out any
+							potential tracking tags – which would be present as
+							a query string. (after the first `?`)
+						-#}
+						{%- do fallback_twitter.update({ "handle": segments.1.split("?").0 }) -%}
+					{%- endif -%}
+				{%- endif -%}
+			{%- endif -%}
+		{%- endwith -%}
+		{#- Looks for Twitter-specific page settings. If any are not found,
+			the Facebook-specific page settings (above) are used instead.
+		-#}
+		{%- set tw = {
+				"card_type":		_get_var(scope=opts, path="social.twitter.card_type", default="summary_large_image"),
+				"title":			_get_var(scope=opts, path="social.twitter.title", default=fb.title),
+				"description":		_get_var(scope=opts, path="social.twitter.description", default=fb.description),
+				"site_handle":		_get_var(scope=opts, path="social.twitter.site_handle", default=fallback_twitter.handle),
+				"author_handle":	_get_var(scope=opts, path="social.twitter.author_handle", default=_get_var(scope=opts, path="social.twitter.site_handle", default=fallback_twitter.handle)),
+				"image_src": 		_get_var(scope=opts, path="social.twitter.image_src", default=fb.image_src),
+				"image_fill_color": _get_var(scope=opts, path="social.twitter.image_fill_color", default=fb.image_fill_color),
+				"image_resized": 	""
+			}
+		-%}
+		{#- Once all of the `tw` variables are set, we have to resize the image
+			appropriately using those `tw` variables (if applicable) and update
+			the `tw` variable to reflect the changes...if any. Please note, we
+			also have to update the `card_type` in a very specific set of
+			scenarios. If the `card_type` is set to `summary_large_image` and
+			the image either isn't set or its set to the logo – we DO NOT want
+			to use the `summary_large_card` type. Instead, we will force it back
+			to using the normal `summary` type.
+		-#}
+		{%- do tw.update({
+				"card_type": ("summary" if ((tw.card_type == "summary_large_image") and (not tw.image_src or (tw.image_src == account.logo))) else tw.card_type),
+				"image_resized": _transform_image(
+						src=tw.image_src,
+						is_logo=(true if (fb.image_src == account.logo) else false),
+						fill_color=tw.image_fill_color,
+						pad=100
+					)
+				}
+			)
+		-%}
+	{%- endif -%}
+
+	{#- =========== BEGIN OUTPUT ============================================ -#}
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<meta http-equiv="x-ua-compatible" content="ie=edge">
+	<title>{{ meta.title }}</title>
+	<!-- Powered by BentoBox http://getbento.com -->
+	<!--
+	___ ___ _  _ _____ ___  ___  _____  __
+	| _ ) __| \| |_   _/ _ \| _ )/ _ \ \/ /
+	| _ \ _|| .` | | || (_) | _ \ (_) >  <
+	|___/___|_|\_| |_| \___/|___/\___/_/\_\
+
+	-->
+	{#- standard meta tags #}
+	{%- if meta.keywords %}
+		<meta name="keywords" content="{{ meta.keywords }}">
+	{%- endif %}
+	{%- if meta.description %}
+		<meta name="description" content="{{ meta.description }}">
+	{%- endif %}
+	{%- if account.site.favicon %}
+		<link rel="icon" href="{{ account.site.favicon }}">
+	{%- endif %}
+
+	{#- canonical tag #}
+	<link rel="canonical" href="{{ account.site.url ~ current.url }}">
+
+	{#- older standard tags from other themes: I don't know if they are necessary. #}
+	<meta name="Revisit-After" content="5 Days">
+	<meta name="Distribution" content="Global">
+	<meta name="Rating" content="General">
+
+	{%- if social_output_enabled %}
+		{#- Open Graph: Facebook #}
+		<meta property="og:site_name" content="{{ account.site.title }}">
+		<meta property="og:title" content="{{ fb.title }}">
+		<meta property="og:type" content="{{ fb.type }}">
+		<meta property="og:url" content="{{ fb.url }}">
+		{%- if fb.description %}
+			<meta property="og:description" content="{{ fb.description }}">
+		{%- endif %}
+		{%- if fb.image_resized %}
+			<meta property="og:image" content="{{ fb.image_resized }}">
+		{%- endif %}
+		{%- if fb.admins %}
+			<meta property="fb:admins" content="{{ fb.admins }}">
+		{%- endif %}
+
+		{#- Twitter Cards #}
+		<meta name="twitter:card" content="{{ tw.card_type }}">
+		<meta name="twitter:title" content="{{ tw.title }}">
+		{%- if tw.description %}
+			<meta name="twitter:description" content="{{ tw.description }}">
+		{%- endif %}
+		{%- if tw.site_handle %}
+			<meta name="twitter:site" content="{{ ('@' ~ tw.site_handle)|replace('@@', '@') }}">
+		{%- endif %}
+		{%- if tw.author_handle %}
+			<meta name="twitter:creator" content="{{ ('@' ~ tw.author_handle)|replace('@@', '@') }}">
+		{%- endif %}
+		{%- if tw.image_resized %}
+			<meta name="twitter:image" content="{{ tw.image_resized }}">
+		{%- endif -%}
+		{#- Note: Schema.org markup for Google+ shouldn't be necessary because we are also including
+			fully-rendered json-ld script tags in the head.
+		#}
+	{%- endif %}
+{%- endmacro %}
+
+{# ============================================================================
+================== PRIVATE HELPERS ============================================
+============================================================================= #}
+{#
+	Traverses a scoped variable path and returns the variable if a valid value
+	is found. The intention is – we may have some very long variable paths nested
+	dicts that have nested dicts, and we have to check every step of the way to
+	make sure ever variable level exists before attempting to use the variable...
+	which can get very verbose and ugly. Instead, we can use this macro to
+	simplify and beautify the process.
+
+	Please note, macros can only return simple data types (Number, String, etc).
+	For this reason, if you try to access complex types (Dict, Array, etc), this
+	macro will fail and always return the default provided.
+
+	Example:
+		{{ _get_var(scope=account, path="services.twitter.name", default="@me") }}
+
+	@access private
+	@param {Dict} scope 			- An initial entry object for the path. (scope=current | scope=account)
+	@param {String} path 			- A dot-notation path to a child property relative to the scope ("request.base_url")
+	@param {String|Number} default  - A default value if our process fails to find a valid value.
+	@returns {String|Number}
+#}
+{% macro _get_var(scope, path, default="") -%}
+	{%- if scope and path -%}
+		{%- set segments = path.split(".") -%}
+		{#- lookup dict provides a persistent place we can "update" and keep track of values. -#}
+		{%- set lookup = {
+				"obj": scope,
+				"valid": true
+			}
+		-%}
+		{#- loop through each segment in the path as long as our process is still valid -#}
+		{%- for seg in segments if lookup.valid -%}
+			{#- if the current segment can be resolved, update the lookup -#}
+			{%- if lookup.obj[seg] is defined -%}
+				{%- do lookup.update({ "obj" : lookup.obj[seg] })-%}
+			{#- if the current segment can't be resolved, invalidate the process -#}
+			{%- else -%}
+				{%- do lookup.update({ "valid" : false })-%}
+			{%- endif -%}
+		{%- endfor -%}
+
+		{#- if we have a valid process and the final value is a number|string, output it! -#}
+		{%- if lookup.obj and lookup.valid and ((lookup.obj is number) or (lookup.obj is string)) -%}
+			{{- lookup.obj -}}
+		{#- if our process failed, or the value is a complex data type, return the default! -#}
+		{%- else -%}
+			{{- default if default else "" -}}
+		{%- endif -%}
+	{#- if we didn't have enough information to do any processing, just return the default -#}
+	{%- else -%}
+		{{- default if default else "" -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	This macro attempts to find a usable "image" by checking for increasingly specific
+	image files. Please note, we also have the ability to force the use of the logo on
+	the homepage if necessary.
+
+	The order (and priority) we look for to set an image is...
+		- Does a logo exist?
+		- If `current.image` exists, override the logo. (this happens in boxes)
+		- If there is any hero that has images, override `current.image`.
+
+	@access private
+	@param {Dict} obj 	 					- An reference to a persistent Dict/Object, so we can update it.
+		@param {String} src 					- A url path to an image file.
+		@param {Boolean} is_logo 				- True if the `src` represents a logo file. False if not.
+	@param {Boolean} force_homepage_logo 	- True if we want to always use the logo on the homepage. False if not.
+	@returns {String} 						- A url path to an image file (if found).
+#}
+{% macro _find_fallback_image(obj, force_homepage_logo=false) -%}
+	{%- if obj -%}
+		{# logo #}
+		{%- if account.logo -%}{%- do obj.update({ "src": account.logo, "is_logo": true }) -%}{%- endif -%}
+
+		{#- if this is the homepage and we are forcing the logo, then we shouldn't go any farther. -#}
+		{%- if not current.homepage or not force_homepage_logo -%}
+
+			{# if a box with current.image #}
+			{%- if current.image -%}{%- do obj.update({ "src": current.image|image_url, "is_logo": false }) -%}{%- endif -%}
+
+			{#- check if herolanding or hero basic is defined -#}
+			{%- if current.fields and (current.fields.herobasic or current.fields.herolanding) -%}
+				{#- which type of hero is it? -#}
+				{%- set hero = current.fields.herobasic if current.fields.herobasic else current.fields.herolanding -%}
+				{#- if this is an "images" hero, and we have a valid image to use, update it! -#}
+				{%- if ((hero.background_type == "images") and hero.images and (hero.images|length > 0)) -%}
+					{%- do obj.update({ "src" : hero.images.0.image_path, "is_logo": false }) -%}
+				{#- if this is an "images_multitext" hero, and we have a valid image to use, update it! -#}
+				{%- elif ((hero.background_type == "images_multitext") and hero.images_multi_slides and (hero.images_multi_slides|length > 0) and hero.images_multi_slides.0.image1) -%}
+					{%- do obj.update({ "src" : hero.images_multi_slides.0.image1, "is_logo": false }) -%}
+				{%- endif -%}
+			{%- endif -%}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Resizes an image, adds an appropriate protocol to ensure its a valid url, and
+	conditionally adds additional query string parameters. Please note, if this is
+	a logo, we are using a different `fit` type that allows us to provide a bg color.
+
+	Please note, the ideal Facebook size is `1200x600` and Twitter is `2:1`. So, for
+	now, we are using the came configuration for the resize.
+
+	@access private
+	@param {String} src 	 				- A url path to an image file.
+	@param {Boolean} is_logo 				- True if `src` represents a logo file. False if not.
+	@param {String} fill_color 				- A hex color that will be applied to logo backgrounds.
+	@returns {String} 						- A fully valid path to an image file.
+#}
+{% macro _transform_image(src, is_logo=false, fill_color="#FFFFFF", pad=100) -%}
+	{%- if src -%}
+		{%- set config = {
+				"width": 1200,
+				"height": 600,
+				"fit": ("fill" if is_logo else "crop"),
+				"query": (("&bg=" ~ fill_color|replace("#", "") ~ "&pad=" ~ pad) if is_logo else "")
+			}
+		-%}
+		{{- _protocol_relative_to_absolute(src|resize(width=config.width, height=config.height, fit=config.fit) ~ config.query, protocol="https") -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Adds a protocol (http|https) to a url/image path if one is not already applied to
+	the url. This is necessary because most of our image files are formatted as
+	`protocol-relative` (ie...start with `//`) and Facebook and Twitter require a fully
+	qualified image path to resolve properly. This macro simply slaps on the protocol of
+	our choosing. Because `imgix` supports `https`, we are just going to use that as our
+	default because most sites/search engines like that better.
+
+	@access private
+	@param {String} url 	 				- A url path to an image file. (can actually be any url, not just images)
+	@param {String} protocol 				- A protocol to add if one isn't found on the `url`.
+	@returns {String} 						- A fully valid url with a protocol assigned.
+#}
+{%- macro _protocol_relative_to_absolute(url, protocol="https") -%}
+	{%- if url -%}
+		{{- (protocol ~ ":" ~ url) if (url.startswith("//")) else url -}}
+	{%- endif -%}
+{%- endmacro -%}
+

@@ -1,0 +1,270 @@
+////
+/// @group components-hero
+/// @access public
+////
+
+// ============================================================================================================
+// =============== HERO : VARS ================================================================================
+// ============================================================================================================
+/// Text color to apply to `.hero` instances.
+/// @type Color
+$hero-color: $overlay-text-color !default;
+
+/// Heading color to apply to `.hero` instances.
+/// @type Color
+$hero-heading-color: $overlay-h1-color !default;
+
+/// Text alignment to apply to `.hero` instances. (ex: left, right, center)
+/// @type String
+$hero-text-align: center !default;
+
+/// Min-height to apply to `.hero` instances. This value is enforced if the aspect ratio causes the height to
+/// drop below this value and the content still fits comfortably without any overflow. However, it is only
+/// enforced if there is text content. If only an image is provided, the aspect ratio is maintained.
+/// @type Number
+$hero-min-height: 20rem !default;
+
+/// Hero aspect ratio to attempt to maintain as long as the content has enough vertical space to fit without
+/// overflowing the container. If only an image is provided, the aspect ratio is always maintained. The ratio
+/// is the height relative to the width. By default, this value will result in a **16:9** aspect ratio.
+/// (1000px wide X 56.25% = 562.25px high)
+/// @type Number
+$hero-aspect-ratio: 56.25% !default; // 16:9
+
+/// Background color to apply to `.hero` instances. This is useful to provide the user with some spatial
+/// feedback by showing a *placeholder* that is visible until the hero media (image, video, etc) has loaded.
+/// @type Color
+$hero-bg-color: $hidden-bg-color !default;
+
+/// Horizontal padding to apply to the `.hero`.
+/// @type Number
+$hero-hpadding: 4rem !default;
+
+/// Vertical padding to apply to the `.hero` content. Please note, this value is also taken into consideration
+/// when calculating if the content height fits inside the hero.
+/// @type Number
+$hero-content-vpadding: 4rem !default;
+
+$hero-buttons-vpadding: 13rem !default;
+
+/// Margin-top to apply to `.btn` instances inside `.hero__content`. This allows for some extra vertical
+/// separation between the button and content.
+/// @type Number
+$hero-content-btn-spacing-y: $btn-spacer-y !default;
+
+/// Bottom position of the `.hero__scroll-btn`. This is applied via `position: absolute; bottom: ...`.
+/// @type Number
+$hero-scrollbtn-bottom: 2rem !default;
+
+/// Provide an alternate text link color for `.hero` instances. Please note, this value is ignored if
+/// the `$hero-color` matches the `$body-color` – in which case we should be using the standard link color
+/// styles anyways.
+/// @type Color
+$hero-link-color: $link-alt-color !default;
+
+/// Provide an alternate text link `:hover` color for `.hero` instances. Please note, this value is ignored if
+/// the `$hero-color` matches the `$body-color` – in which case we should be using the standard link color
+/// styles anyways.
+/// @type Color
+$hero-link-active-color: $link-alt-active-color !default;
+
+/// Background color when a `.hero` instance has *no media* assigned. In these scenarios, a `.hero` instance
+/// is intended to appear the same as a `.c-intro` instance – in which case they can be used interchangeably.
+/// @type Color
+$hero-no-media-bg-color: transparent !default;
+
+/// Padding bottom to apply to `.hero` content when set to include the scroll button arrow. This allows you to
+/// adjust and include a little extra spacing and make room for the arrow button.
+/// @type Number
+$hero-scrollable-content-padding-bottom: 6rem !default;
+
+/// Horizontal padding to apply to `.hero` content when the hero is a gallery with multiple images. This is
+/// intended to adding some extra separation and keep the content away the left and right arrows buttons.
+/// @type Number
+$hero-gallery-content-hpadding: 3rem !default;
+
+$hero-motion-element-control-section-breakpoint-1: 1050px;
+$hero-motion-element-control-section-breakpoint-2: 810px;
+
+// ============================================================================================================
+// =============== HERO : EXPORT ==============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-hero() {
+	// block
+	.hero {
+		@include bb-position($position: relative, $z-index: 0);
+		@include bb-size($min-height: $hero-min-height);
+		text-align: $hero-text-align;
+		color: $hero-color;
+		background-color: $hero-bg-color;
+		padding: $hero-aspect-ratio $hero-hpadding 0;
+		overflow: hidden;
+
+		// element: .hero__content
+		// child: .hero .gallery__content
+		&__content,
+		& .gallery__content {
+			@include bb-position($position: absolute, $top: 50%, $left: 0, $right: 0, $z-index: 1);
+			@include bb-size($width: 100%);
+			@include bb-prefix-transform(translateY(-50%));
+			padding-top: $hero-content-vpadding;
+			padding-bottom: $hero-content-vpadding;
+
+			// immediate child
+			& > .btn {
+				margin-top: $hero-content-btn-spacing-y;
+			}
+		}
+
+		&__buttons {
+			@include bb-position($position: absolute, $top: 90%, $left: 0, $right: 0, $z-index: 1);
+			@include bb-prefix-transform(translateY(-50%));
+			padding-bottom: $hero-buttons-vpadding;
+		}
+
+		& .gallery__content {
+			@include bb-position($z-index: 11);
+		}
+
+		// element: .hero__video
+		&__video {
+			@include bb-position($position: absolute, $top: 0, $right: 0, $bottom: 0, $left: 0, $z-index: 0);
+			overflow: hidden;
+			pointer-events: none;
+
+			// sub element
+			&-inner {
+				@include bb-position($position: absolute, $top: 0, $right: 0, $z-index: 0);
+				@include bb-size($width: 100%, $height: 100%);
+				overflow: hidden;
+			}
+
+			// modifier: .hero__video--dimmed:before
+			&--dimmed:before {
+				@include bb-position($position: absolute, $top: 0, $left: 0, $z-index: 10);
+				@include bb-size($width: 100%, $height: 100%);
+				content: '';
+				display: block;
+				background-color: $overlay-darken-color;
+			}
+		}
+
+		// child
+		& h1,
+		& .h1 {
+			color: $hero-heading-color;
+		}
+
+		// modifier: only change the color of the anchors if its not no-media.
+		&:not(&--no-media) {
+			// child: anchors
+			@if $hero-color != $body-color {
+				@include bb-anchor-variant(
+					$color: $hero-link-color,
+					$active-color: $hero-link-active-color
+				);
+			}
+		}
+
+		// child
+		& .gallery {
+			@include bb-position($position: absolute, $top: 0, $left: 0, $z-index: 0);
+			@include bb-size($width: 100%, $height: 100%);
+		}
+
+		// element: .hero__scroll-btn
+		&__scroll-btn {
+			@include bb-position($position: absolute, $left: 50%, $bottom: $hero-scrollbtn-bottom, $z-index: 20);
+			@include bb-prefix-transform(translateX(-50%));
+
+			// html modifier: no reason to show it if it wont work.
+			.no-js & {
+				display: none;
+			}
+		}
+
+		// modifier: .hero--no-content
+		// note: when there is no content, we need to keep the aspect ratio.
+		&--no-content {
+			@include bb-size($min-height: 0);
+		}
+
+		// modifier: .hero--no-media
+		&--no-media {
+			@include bb-size($min-height: 0);
+			color: $body-color;
+			padding: 0;
+			background-color: $hero-no-media-bg-color;
+
+			& h1,
+			& .h1 {
+				color: if($headings-h1-color, $headings-h1-color, inherit);
+			}
+
+			// child: reset to static block
+			& .hero__content {
+				@include bb-position($position: static);
+				@include bb-prefix-transform(none);
+			}
+
+			// child: bc there's no set size, content can be real short. And, a button is
+			// proboably more distracting than helpful in this scenario.
+			& .hero__scroll-btn {
+				display: none;
+			}
+		}
+
+		&--fullheight {
+			@include bb-size($height: 100vh);
+		}
+
+		// modifier: special case – if we have a full height hero with content, we don't want
+		// to try to maintain an aspect ratio. However, if there is no content, we do want to
+		// maintain aspect ratio (as a min-height) because otherwise there would be nothing to
+		// limit how small our hero can get!
+		&--fullheight:not(&--no-content) {
+			padding-top: 0;
+		}
+
+		// modifier: .hero--scrollable .hero__content, .hero--scrollable .gallery__content
+		&--scrollable &__content,
+		&--scrollable .gallery__content {
+			padding-bottom: $hero-scrollable-content-padding-bottom;
+		}
+
+		// modifier: .hero--gallery .hero__content, .hero--gallery .gallery__content
+		// Note: .hero__content blocks swipe gestures, so we have to turn off the pointer events.
+		&--gallery &__content,
+		&--gallery .gallery__content {
+			@include bb-position($right: $hero-gallery-content-hpadding, $left: $hero-gallery-content-hpadding);
+			@include bb-size($width: calc(100% - #{$hero-gallery-content-hpadding * 2})); // ie11 bugfix: requires with to center properly!
+			pointer-events: none; // turn off pointer events so swipe/drag is easier.
+
+			// child
+			& a {
+				// IE/Edge Bug Fix: pointer-events aren't recognized on display: inline elements!
+				display: inline-block;
+			}
+
+			// children
+			& * {
+				pointer-events: auto; // override the parent setting for descendants.
+			}
+		}
+		#motion-elements-control-section {
+			position: absolute;
+			top: 80%;
+			left: 0%;
+			z-index: 1000;
+			width: 100%;
+			@media screen and(max-width: $hero-motion-element-control-section-breakpoint-1) {
+				top: 75%;
+			}
+
+			@media screen and(max-width: $hero-motion-element-control-section-breakpoint-2) {
+				top: 72%;
+			}
+		}
+	}
+}

@@ -1,0 +1,37 @@
+{# ============================================================================
+================== IMPORT MACROS ==============================================
+============================================================================= #}
+{#
+	Note, these imports are exactly the same in _layouts/_base.html. If you add
+	any, make sure to copy them there, too! In theory, we can probably remove
+	some of these like header and footer, but better to be consistent instead
+	of having to explain or understand the discrepencies.
+#}
+{% import "_macros/_forms.platform.html" as bentoForms with context %}
+{% import "_macros/_tracking.html" as bbTrack with context %}
+{% import "_macros/_utils.html" as bbUtils with context %}
+{% import "_macros/_images.html" as bbImage with context %}
+{% import "_macros/_store.html" as bbStore with context %}
+{% import "_macros/_breadcrumb.html" as bbBreadcrumb with context %}
+{% import "_macros/_reservations.html" as bbReservations with context %}
+{% import "_macros/_paginator.html" as bbPaginator with context %}
+{% import "_macros/_forms.html" as bbForms with context %}
+{% import "_macros/_button.html" as bbButton with context %}
+{% import "_macros/_card.html" as bbCard with context %}
+{% import "_macros/_social.html" as bbSocial with context %}
+{% import "_macros/_media.html" as bbMedia with context %}
+{% import "_macros/_hero.html" as bbHero with context %}
+{% import "_macros/_alert.html" as bbAlert with context %}
+{% import "_macros/_content.html" as bbContent with context %}
+{% import "_macros/_menu.html" as bbMenu with context %}
+{% import "_macros/_flexiblecontent.html" as bbFlex with context %}
+{% import "_macros/_location.html" as bbLocation with context %}
+{% import "_macros/_header.html" as bbHeader with context %}
+{% import "_macros/_footer.html" as bbFooter with context %}
+{% import "_macros/_head.meta.html" as bbHeadMeta with context %}
+{% import "_macros/_schema.jsonld.html" as bbSchemaJson with context %}
+
+{# ============================================================================
+================== BLOCK : MAIN ===============================================
+============================================================================= #}
+{% block main %}{% endblock %}

@@ -1,0 +1,332 @@
+{# ============================================================================
+================== GALLERY ====================================================
+============================================================================= #}
+{#
+    Renders a swipeable gallery. There are 5 types of galleries:
+    	1. std - A standard 16:9 swipeable gallery.
+    	2. full - A full browser height swipeable gallery.
+    	3. fit - Swipeable gallery that expands to fill/match its parent container's height.
+    	4. popup - A popup swipeable gallery showing the images as large as possible.
+      5. catering_store - A swipeable gallery for images in catering store forms.
+
+    @access public
+	@param {List} imgs            	- Array of image file paths.
+	@param {String} type			- Type of gallery to render. (see types above)
+	@param {String} classlist		- Additional classes (space separated) to add to the gallery.
+	@param {Boolean} dimmed			- Whether to add a dimmer on top of the images. (for visual text separation)
+	@param {String} tag             - The html tag to use for the gallery.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro gallery(imgs=[], type="std", classlist="", dimmed=false, tag="section", revealable=true) %}
+	{%- if imgs|length > 0 %}
+		{%- set classes = ["gallery", ("gallery--" ~ type)] %}
+		{%- if dimmed %}{% do classes.append("gallery--dimmed") %}{% endif %}
+		{%- if revealable %}{% do classes.append("revealable") %}{% endif %}
+		{%- if classlist %}{% set classes = [classlist] + classes %}{% endif %}
+    {%- set total_images = imgs|length %}
+    {%- if total_images > 1 %}{% set wrapper_tag="li" %}{% else %}{% set wrapper_tag="div" %}{% endif %}
+		{#- render it! #}
+		<{{ tag }} class="{{ classes|join(" ") }}">
+			{% for item in imgs %}
+        {%- if imgs|length > 1 %}
+          {% set fallback = "Gallery Slide " + loop.index|string %}
+        {%- else %}
+          {% set fallback = "" %}
+        {%- endif %}
+				<{{ wrapper_tag }}>
+					{%- if theme.options.general.srcset_enabled %}
+						{# Most of our images are served by imgix but in the scenario where they aren't 
+						we should explicitly check for known occurrences before we try to render an optimized image. #}
+
+						{# Default to true #}
+						{% set render_optimized_image = True %}
+
+						{# Check for youtube thumbnail #}
+						{% if (item|image_url).startswith('https://img.youtube.com/vi/') %}
+							{% set render_optimized_image = False %}
+							{% set alt_text = 'Youtube thumbnail' %}
+						{% endif %}
+
+						<div class="gallery__item gallery__item-enhancement">
+							{% if render_optimized_image %}
+								{# Utilizes `<source>` with different image sizes so the browser
+							 		can optimally fetch the best image according to the screen size. #}
+								{{ _responsive_image(item, fallback) }}
+							{% else %}
+								<img src="{{ item|image_url }}" alt="{{ alt_text }}">
+							{% endif %}
+						</div>
+						{# 
+							We store the image on a data attribute to prevent the browser 
+							from downloading it unless it absolutely needs too. Before galleries 
+							are initialized we check to see if srcset_enabled is false and inline 
+							the image source on the gallery__item.
+						#}
+						<div class="gallery__item gallery__item-fallback" data-src="{{ item|image_url }}">
+							{% if item %}
+								<img class="sr-only" {{ bbImage.alt_text(item, fallback, True) }}>
+							{% endif %}
+						</div>
+					{%- else %}
+						{# Fallback for browsers that do not support `object-fit` on `<img>` tags #}					
+						<div class="gallery__item gallery__item-fallback" style="background-image: url('{{ item|image_url }}');">
+							{% if item %}
+								<img class="sr-only" {{ bbImage.alt_text(item, fallback, True) }}>
+							{% endif %}
+						</div>
+					{%- endif %}					
+          {%- if total_images > 1 %}
+              <span class="sr-only">Slide {{ loop.index }} of {{ total_images }}</span>
+          {%- endif %}
+        </{{ wrapper_tag }}>
+			{% endfor %}
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+  Renders a picture element with multiple source images.
+
+  @access private
+	@param {item} image                   - An image object.
+	@param {fallback_alt_text} string			- Text to be used as fallback alt_text
+	@returns {HTML}
+#}
+{% macro _responsive_image(item, fallback_alt_text) %}
+	{% set alt_text = fallback_alt_text %}
+	{% if item.alt_text %}
+    {% set alt_text = item.alt_text %}
+  {% endif %}
+	{# 
+		Sizes targets:
+		max-width: 559px // screens not wider than 559px
+		(min-width: 560px) and (max-width: 767px) // screens wider than 560px but not wider than 767px
+		(min-width: 767px) and (max-width: 1024px) // screens wider than 767px but not wider than 1024px
+		min-width: 1024px // screens wider than 1024px 
+	#}
+  <picture>
+		<source 
+			media="(max-width: 559px)" 
+			sizes="100vw"
+			srcset="{{ item|resize(1000)|replace(' ', '%20') }} 1000w"
+		>
+		<source 
+			media="(min-width: 560px) and (max-width: 767px)"
+			sizes="100vw"
+			srcset="{{ item|resize(1200)|replace(' ', '%20') }} 1200w"
+		>
+		<source 
+			media="(min-width: 767px) and (max-width: 1024px)"
+			sizes="100vw"
+			srcset="{{ item|resize(1400)|replace(' ', '%20') }} 1400w"
+		>
+		<source 
+			media="(min-width: 1024px)"
+			sizes="100vw"
+			srcset="{{ item|resize(1800)|replace(' ', '%20') }} 1800w"
+		>
+		<img src="{{ item|image_url }}" alt="{{ alt_text }}">
+	</picture>
+{% endmacro %}
+
+{#
+    Renders exactly the same thing as the `gallery()` macro, except that is macro is just
+    a wrap and requires you to pass in the slides as fully rendered html – which can be
+    generated via the `gallery_item()` macro.
+
+    TODO: We can potentially refactor the `gallery()` macro to utilize this macro instead.
+    This way we can limit duplicate code.
+
+    @access public
+	@param {HTML} slides            - Fully rendered slides via `gallery_item()` macro.
+	@param {String} type			- Type of gallery to render. (see types above)
+	@param {String} classlist		- Additional classes (space separated) to add to the gallery.
+	@param {Boolean} dimmed			- Whether to add a dimmer on top of all images. (for visual text separation)
+	@param {String} tag             - The html tag to use for the gallery.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro gallery_wrap(slides, type="std", classlist="", dimmed=false, tag="section", revealable=true) %}
+	{%- if slides and slides|trim|length %}
+		{%- set classes = ["gallery", ("gallery--" ~ type)] %}
+		{%- if dimmed %}{% do classes.append("gallery--dimmed") %}{% endif %}
+		{%- if revealable %}{% do classes.append("revealable") %}{% endif %}
+		{%- if classlist %}{% set classes = [classlist] + classes %}{% endif %}
+		{#- render it! #}
+		<{{ tag }} class="{{ classes|join(" ") }}">
+			{{ slides }}
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders individual gallery slides/items. This is intended to be used in conjunction
+    with the `gallery_wrap()` macro.
+
+    TODO: We can potentially refactor the `gallery()` macro to utilize this macro instead.
+    This way we can limit duplicate code.
+
+    @access public
+	@param {String} image           - Image file path.
+	@param {String} title			- Title to apply to this slide only.
+	@param {String} content			- Content to apply to this slide only.
+	@param {Dict} multibutton		- Multibutton opts. (See bbButton._multi() for parameters)
+	@param {Boolean} dimmed			- Whether to add a dimmer on top of this slide's image. (for visual text separation)
+	@param {String} htag			- HTML tag to apply to the title.
+	@returns {HTML}
+#}
+{% macro gallery_item(image, title, content, multibutton, current_slide, total_slides, dimmed=false, htag="h2") %}
+  {%- if total_slides > 1 %}{% set wrapper_tag="li" %}{% else %}{% set wrapper_tag="div" %}{% endif %}
+	{%- if image %}
+		<{{ wrapper_tag }} class="gallery__item{% if dimmed %} gallery__item--dimmed{% endif %}" style="background-image: url('{{ image|image_url }}');">
+			{%- if title or content %}
+				<div class="gallery__content container">
+					{% if title %}<{{ htag }} class="h1">{{ title }}</{{ htag }}>{% endif %}
+          <img class="sr-only" {{ bbImage.alt_text(image=image, img=True) }}>
+					{% if content %}{{ content }}{% endif %}
+					{% if multibutton %}{{ bbButton.multi(multibutton) }}{% endif %}
+				</div>
+			{%- endif %}
+      {%- if total_slides > 1 %}
+        <span class="sr-only">Slide {{ current_slide }} of {{ total_slides }}</span>
+      {%- endif %}
+		</{{ wrapper_tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== GALLERY GRID ===============================================
+============================================================================= #}
+{#
+    Renders a 2-column (side-by-side) gallery – intended for use on landing
+    pages. Please note, there is an optional "url", which if provided, will turn
+    the entire grid into one large clickable button. Just to clarify, "one
+    large button" and not "individual buttons for each image.".
+
+    @access public
+	@param {List} leftimgs          - Array of image file paths to place in the left column.
+	@param {List} rightimgs         - Array of image file paths to place in the left column.
+	@param {String} url             - Optional clickthrough url.
+	@param {String} url_taget       - How should the url open? (_blank, _self, etc if applicable)
+	@param {Boolean} clip         	- True clips the tallest column to match the shortest column.
+	@param {String} tag             - The html tag to use for the gallery grid.
+	@param {String} classlist		- Additional classes (space separated) to add to the gallery grid.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro grid(leftimgs=[], rightimgs=[], url="", url_target=false, clip=true, tag="section", classlist="", revealable=true) %}
+	{% set total = (leftimgs|length + rightimgs|length) %}
+	{%- if total > 0 %}
+		{%- set classes = [classlist] %}
+		{%- if revealable %}{% do classes.append("revealable") %}{% endif %}
+		<{{ tag }} class="gallery-grid{% if classes|length > 0 %}{{ classes|join(" ") }}{% endif %}" {% if clip and total > 1 %}data-gallery-grid-clip{% endif %}>
+			{%- if url %}<a class="gallery-grid__btn" href="{{ url }}" target="{{ "_blank" if url_target else "_self" }}">{% endif %}
+			{%- for column in [leftimgs, rightimgs] %}
+				<div class="gallery-grid__col">
+					{%- for item in column %}
+						<img {{ bbImage.alt_text(image, None, True) }} src="{{ item|image_url }}" />
+					{%- endfor %}
+				</div>
+			{% endfor %}
+			{%- if url %}</a>{% endif %}
+	    </{{ tag }}>
+    {%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== INSTAGRAM ==================================================
+============================================================================= #}
+{#
+    Renders an instagram gallery. Each image item clicks through to the
+    corresponding instagram url.
+
+    @access public
+	@param {String} tag             - The html tag to use for the instagram gallery.
+	@param {Int} max             	- Maximum number of items to render to the gallery.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro instagram(tag="aside", max=10, revealable=true) %}
+	{%- if account.services.instagram and account.services.instagram.media and account.services.instagram.media|length > 0 %}
+		<{{ tag }} class="instagram-grid{% if revealable %} revealable{% endif %}">
+			{%- for item in account.services.instagram.media[0:max] %}
+	      <div class="instagram-grid__item">
+	        <a href="{{ item.link }}" style="background-image:url('{{ item.images.standard_resolution.url|image_url }}');" target="_blank" rel="noopener">
+            <img class="sr-only" alt="view {{ account.name }} on instagram">
+          </a>
+	      </div>
+	    {%- endfor %}
+	  </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== YOUTUBE VIDEO ==============================================
+============================================================================= #}
+{#
+    Renders an embeddable responsive YouTube video iframe using the abstract
+    video() macro.
+
+    @access public
+	@param {String} id              - The YouTube video id.
+	@param {String} title           - The title for the iframe.
+	@param {String} tag             - The html tag to wrap the embedded video.
+	@param {String} classlist		- Additional classes (space separated) to add container.
+	@param {String} aspectratio		- "16by9" or "4by3"
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro youtube(id, title, tag="section", classlist="content container", aspectratio="16by9", revealable=true) %}
+	{%- if id %}
+		{{ video("//www.youtube.com/embed/" ~ id, title=title, tag=tag, classlist=classlist, aspectratio=aspectratio, revealable=revealable) }}
+    {%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== VIMEO VIDEO ================================================
+============================================================================= #}
+{#
+    Renders an embeddable responsive Vimeo video iframe using the abstract
+    video() macro.
+
+    @access public
+	@param {String} id              - The Vimeo video id.
+	@param {String} title           - The title for the iframe.
+	@param {String} tag             - The html tag to wrap the embedded video.
+	@param {String} classlist		- Additional classes (space separated) to add container.
+	@param {String} aspectratio		- "16by9" or "4by3"
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro vimeo(id, title, tag="section", classlist="content container", aspectratio="16by9", revealable=true) %}
+	{%- if id %}
+		{{ video("//player.vimeo.com/video/" ~ id, title=title, tag=tag, classlist=classlist, aspectratio=aspectratio, revealable=revealable) }}
+    {%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== VIDEO : ABSTRACT ===========================================
+============================================================================= #}
+{#
+    Abstract macro used to render YouTube and Vimeo videos, or really any video
+    that should be loaded via iframe.
+
+    @access public
+	@param {String} src             - The url to apply to the iframe.src
+	@param {String} title           - The title for the iframe.title
+	@param {String} tag             - The html tag to wrap the embedded video.
+	@param {String} classlist		- Additional classes (space separated) to add container.
+	@param {String} aspectratio		- "16by9" or "4by3"
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro video(src, title, tag="section", classlist="content container", aspectratio="16by9", revealable=true) %}
+	{%- if src %}
+		<{{ tag }} class="{{ classlist }}{% if revealable %} revealable{% endif %}">
+	        <div class="embed-responsive embed-responsive-{{ aspectratio }}">
+	            <iframe class="embed-responsive-item" src="{{ src|image_url }}" title="{{ title }}" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe>
+	        </div>
+	    </{{ tag }}>
+    {%- endif %}
+{% endmacro %}

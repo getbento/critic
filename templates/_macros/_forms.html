@@ -1,0 +1,1143 @@
+{% macro render_fields(fields, defaults) %}
+    {% set row_namespace = namespace(close_on_index=None, row_open=False) %}
+    {% for field in fields %}
+        {% if fields[loop.index0].option == 'half-width' and fields[loop.index0 + 1].option == 'half-width' and row_namespace.close_on_index != loop.index0 %}
+            {% set row_namespace.close_on_index = loop.index0 + 1 %}
+            {% set row_namespace.row_open = True %}
+            <div class="form-row">
+        {% endif %}
+
+        {% if field.type in ['text', 'name', 'first_name', 'last_name'] %}
+            {{ text_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'phone' %}
+            {{ phone_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'email' %}
+            {{ email_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'dropdown' %}
+            {{ dropdown_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'locations' %}
+            {{ location_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'jobs' %}
+            {{ job_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'textarea' %}
+            {{ textarea_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'file' %}
+            {{ file_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'event_type' %}
+            {{ dropdown_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'date' %}
+            {{ date_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'time' %}
+            {{ time_field(field, row_namespace.row_open) }}
+        {% elif field.type == 'venues' %}
+            {{ venue_field(field, defaults.get('venue'), row_namespace.row_open) }}
+        {% elif field.type == 'number' %}
+            {{ number_field(field, row_namespace.row_open) }}
+        {% endif %}
+        {% if row_namespace.close_on_index == loop.index0 %}
+            {% set row_namespace.row_open = False %}
+            </div>
+        {% endif %}
+    {% endfor %}
+{% endmacro %}
+
+{% macro render_icon(type, position='left') %}
+    <span class="form-control-group--icon is-positioned-{% if position == 'left' %}left{% elif position == 'right' %}right{% endif %}" aria-hidden="true">
+        {% if type == 'time' %}
+        <i class="fa fa-clock-o"></i>
+        {% elif type == 'dropdown' %}
+        <i class="fa fa-chevron-down"></i>
+        {% endif %}
+    </span>
+{% endmacro %}
+
+{% macro field_input_label(id, label, required, option, row_open=False) %}
+<label for="{{ id }}" {% if option == 'half-width' and row_open %}class="form-col-md-6"{% endif %}>
+    {% if required %}<i class="error-label"></i>{% endif %}
+    <span class="input-label">{{ label }}{% if not required %} <span class="input-label-optional">- Optional</span>{% endif %}</span>
+    {{ caller() }}
+</label>
+{% endmacro %}
+
+{% macro date_field(field, row_open) %}
+  {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+    {%- set component_props = {
+      'id': field.id|string,
+      'placeholder': field.placeholder if field.placeholder else field.name,
+      'required': field.required
+    } %}
+    <div data-react-component="accessible-date-picker" data-component-props='{{ component_props|tojson }}'></div>
+  {% endcall %}
+{% endmacro %}
+
+{% macro time_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <div class="form-control-group has-icon-left has-icon-right">
+            {{ render_icon(type='time', position='left') }}
+            <select id="{{ field.id }}" class="form-control unselected" name="{{ field.id }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+                <option value="" selected disabled>{{ field.name }}</option>
+                <option value="11:00 PM">11:00 PM</option>
+                <option value="10:30 PM">10:30 PM</option>
+                <option value="10:00 PM">10:00 PM</option>
+                <option value="9:30 PM">9:30 PM</option>
+                <option value="9:00 PM">9:00 PM</option>
+                <option value="8:30 PM">8:30 PM</option>
+                <option value="8:00 PM">8:00 PM</option>
+                <option value="7:30 PM">7:30 PM</option>
+                <option value="7:00 PM">7:00 PM</option>
+                <option value="6:30 PM">6:30 PM</option>
+                <option value="6:00 PM">6:00 PM</option>
+                <option value="5:30 PM">5:30 PM</option>
+                <option value="5:00 PM">5:00 PM</option>
+                <option value="4:30 PM">4:30 PM</option>
+                <option value="4:00 PM">4:00 PM</option>
+                <option value="3:30 PM">3:30 PM</option>
+                <option value="3:00 PM">3:00 PM</option>
+                <option value="2:30 PM">2:30 PM</option>
+                <option value="2:00 PM">2:00 PM</option>
+                <option value="1:30 PM">1:30 PM</option>
+                <option value="1:00 PM">1:00 PM</option>
+                <option value="12:30 PM">12:30 PM</option>
+                <option value="12:00 PM">12:00 PM</option>
+                <option value="11:30 AM">11:30 AM</option>
+                <option value="11:00 AM">11:00 AM</option>
+                <option value="10:30 AM">10:30 AM</option>
+                <option value="10:00 AM">10:00 AM</option>
+                <option value="9:30 AM">9:30 AM</option>
+                <option value="9:00 AM">9:00 AM</option>
+                <option value="8:30 AM">8:30 AM</option>
+                <option value="8:00 AM">8:00 AM</option>
+                <option value="7:30 AM">7:30 AM</option>
+                <option value="7:00 AM">7:00 AM</option>
+            </select>
+            {{ render_icon(type='dropdown', position='right') }}
+        </div>
+    {% endcall %}
+{% endmacro %}
+
+{% macro text_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <input id="{{ field.id }}" class="form-control" type="text" name="{{ field.id }}" placeholder="{{ field.name }}" {% if field.required %}required{% endif %}
+        {% if field.type == 'phone' %}data-input-validator="phone"{% endif %} {{ autocomplete_helper(field) }} aria-describedby="{{ field.id }}-error">
+    {% endcall %}
+{% endmacro %}
+
+{% macro email_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <input id="{{ field.id }}" class="form-control" type="email" name="{{ field.id }}" placeholder="{{ field.name }}" {% if field.required %}required{% endif %} {{ autocomplete_helper(field) }} aria-describedby="{{ field.id }}-error">
+    {% endcall %}
+{% endmacro %}
+
+{% macro phone_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <input id="{{ field.id }}" class="form-control" type="text" name="{{ field.id }}" placeholder="{{ field.name }}" {% if field.required %}required{% endif %} data-input-validator="phone" {{ autocomplete_helper(field) }} aria-describedby="{{ field.id }}-error">
+    {% endcall %}
+{% endmacro %}
+
+{% macro number_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <input id="{{ field.id }}" class="form-control" type="number" name="{{ field.id }}" placeholder="{{ field.name }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+    {% endcall %}
+{% endmacro %}
+
+{% macro file_field(field, row_open) %}
+    <label class="input-file" for="{{ field.id }}">
+        <span>{{ field.name }}{% if not field.required %} <span class="input-label-optional">- Optional</span>{% endif %}</span>
+        <input id="{{ field.id }}" {% if field.required %}required{% endif %} type="file" name="{{ field.id }}">
+        <input type="hidden" {% if field.required %}required{% endif %} name="MAX_FILE_SIZE" value="10000000">
+    </label>
+{% endmacro %}
+
+{% macro location_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <div class="form-control-group has-icon-right">
+            <select id="{{ field.id }}" class="form-control unselected" name="{{ field.id }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+                <option value="" selected disabled>{{ field.name }}</option>
+                {%- for location in boxes.location.all if boxes.location %}
+                    <option value="{{ location.slug }}">{{ location.name }}</option>
+                {%- endfor %}
+            </select>
+            {{ render_icon(type='dropdown', position='right') }}
+        </div>
+    {% endcall %}
+{% endmacro %}
+
+{% macro venue_field(field, default, row_open) %}
+    {% set venues = boxes.venues.all %}
+
+    {% if venues|length == 1 or default %}
+    <input type="hidden" name="{{ field.id }}" value="{% if default %}{{ default }}{% else %}{{ venues[0].slug }}{% endif %}" />
+    {% elif venues|length > 0 %}
+        {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+            <div class="form-control-group has-icon-right">
+                <select id="{{ field.id }}" class="form-control unselected" name="{{ field.id }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+                    <option value="" selected disabled>{{ field.name }}</option>
+                    {% for opt in venues %}
+                        {% set name = opt.name if opt.name and opt.name|length > 0 else 'Default Venue' %}
+                        <option value="{{ opt.slug }}">{{ name }}</option>
+                    {% endfor %}
+                </select>
+                {{ render_icon(type='dropdown', position='right') }}
+            </div>
+        {% endcall %}
+    {% endif %}
+{% endmacro %}
+
+{% macro job_field(field, row_open) %}
+    {% if boxes.jobs.all|length > 0 %}
+        {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+            <div class="form-control-group has-icon-right">
+                <select id="{{ field.id }}" class="form-control unselected" name="{{ field.id }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+                    <option value="" selected disabled>{{ field.name }}</option>
+                    {%- for job in boxes.jobs.all if boxes.jobs %}
+                        <option value="{{ job.slug }}">{{ job.name }}</option>
+                    {%- endfor %}
+                </select>
+                {{ render_icon(type='dropdown', position='right') }}
+            </div>
+        {% endcall %}
+    {% endif %}
+{% endmacro %}
+
+
+{% macro dropdown_field(field, row_open) %}
+    {% if field.choices|length > 0 %}
+        {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+            <div class="form-control-group has-icon-right">
+                <select id="{{ field.id }}" class="form-control unselected" name="{{ field.id }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error">
+                    <option value="" selected disabled>{{ field.name }}</option>
+                    {%- for choice in field.choices if field.choices %}
+                        <option value="{{ choice }}">{{ choice }}</option>
+                    {%- endfor %}
+                </select>
+                {{ render_icon(type='dropdown', position='right') }}
+            </div>
+        {% endcall %}
+    {% endif %}
+{% endmacro %}
+
+{% macro textarea_field(field, row_open) %}
+    {% call field_input_label(field.id, field.name, field.required, field.option, row_open) %}
+        <textarea id="{{ field.id }}" class="form-control" name="{{ field.id }}" placeholder="{{ field.name }}" {% if field.required %}required{% endif %} aria-describedby="{{ field.id }}-error"></textarea>
+    {% endcall %}
+{% endmacro %}
+
+{% macro autocomplete_helper(field) %}
+  {% set type = '' %}
+  {% if field.type == 'first_name' %}
+    {% set type = 'given-name' %}
+  {% endif %}
+  {% if field.type == 'last_name' %}
+    {% set type = 'family-name' %}
+  {% endif %}
+  {% if field.type == 'email' %}
+    {% set type = field.type %}
+  {% endif %}
+  {% if field.type == 'name' %}
+    {% set type = 'name' %}
+  {% endif %}
+  {% if field.type == 'phone' %}
+    {% set type = 'tel' %}
+  {% endif %}
+  {% if field.name == 'Company' %}
+    {% set type = 'organization' %}
+  {% endif %}
+    {% if type %}
+    autocomplete="{{ type }}"
+  {% endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== PRODUCT FORM ===============================================
+============================================================================= #}
+{#
+    Note: This exists directly in the store/product.html template file.
+    Including it in that file (instead of this file) provides a little more
+    context and helps make it easier to understand what's going on. It is only
+    used in that template, as it makes up the bulk of the template. If, we find
+    a need to add it to another template, we will then considering creating a
+    macro and adding it here.
+#}
+{# ============================================================================
+================== TICKET FORM ================================================
+============================================================================= #}
+{#
+    Note: This exists directly in the store/event.html template file.
+    Including it in that file (instead of this file) provides a little more
+    context and helps make it easier to understand what's going on. It is only
+    used in that template, as it makes up the bulk of the template. If, we find
+    a need to add it to another template, we will then considering creating a
+    macro and adding it here.
+#}
+{# ============================================================================
+================== RESERVATIONS FORM ==========================================
+============================================================================= #}
+{#
+    Note: This macro exists in _macros/_reservations.html because it references
+    variables defined and populated in that same file. Including the macro in
+    that file (instead of this file) provides a little more context and helps
+    make it easier to understand what's going on and why.
+#}
+{# ============================================================================
+================== PRIVACY POLICY FOOTER ======================================
+============================================================================= #}
+{#
+    Renders the privacy policy footer based on the privacy setting on the account.
+
+    @param {String} type           - The form's "type".
+    @returns {HTML}
+#}
+{% macro privacy_footer(type) %}
+
+  {% set forms_for_privacy_footer = ['contact', 'catering', 'private-events', 'careers'] %}
+
+  {%- if type == 'newsletter' %}
+
+    {% set show_help_text = account.privacy.show_privacy_text_email_form %}
+    {% set show_url = account.privacy.show_privacy_url_email_form %}
+
+  {%- elif type in forms_for_privacy_footer %}
+
+    {% set show_help_text = account.privacy.show_privacy_text_all_forms %}
+    {% set show_url = account.privacy.show_privacy_url_all_forms %}
+
+  {%- endif %}
+
+  {% set privacy_text %}
+    <span>{{ account.privacy.privacy_text }} {{' '}} </span>
+  {% endset %}
+
+  {% set privacy_url %}
+    <a href="{{account.privacy.privacy_url}}" target="_blank" rel="noopener">
+      Privacy Policy
+    </a>
+  {% endset %}
+
+  {% set privacy_footer %}
+    <div class="form-footer">
+      {%- if show_help_text %}
+        {{ privacy_text }}
+      {%- endif %}
+
+      {%- if show_url %}
+        {{ privacy_url }}
+      {%- endif %}
+    </div>
+  {% endset %}
+
+  {%- if show_url or show_help_text  %}
+      {{ privacy_footer }}
+  {%- endif %}
+{%- endmacro %}
+{# ============================================================================
+================== NEWSLETTER FORM ============================================
+============================================================================= #}
+{#
+    Renders the newsletter popup form.
+
+    @access public
+    @param {String} id              - unique id so buttons can trigger this popup.
+    @param {String} title           - Form heading.
+    @param {String} content         - Content/Description displayed below the heading.
+    @param {String} button_label    - Label applied to the Form Submit button.
+    @param {String} success_message - Message to display when the form submission is successful.
+    @param {Boolean} use_alt_colors - True if the form should use the alternate color scheme (including the submit button)
+    @returns {HTML}
+#}
+
+{% macro newsletter(
+            id="popup-newsletter-form",
+            title="Email Signup",
+            content="",
+            button_label="Submit",
+            success_message="Thank you for signing up for email updates!",
+            use_alt_colors=true
+        )
+    %}
+    {%- if account.newsletter %}
+        {% set classes = ["js-form-ajax", ("form-alt" if use_alt_colors else ""), "container-sm"] %}
+        {% set slug = 'newsletter' %}
+        {% set fields = forms[slug].form_fields %}
+        <div id="{{ id }}" class="popup popup--form mfp-hide">
+            {% call bentoForms.email_form(action=forms[slug].endpoint, class=classes|join(" ")) %}
+                <input type="hidden" name="form" value="newsletter">
+                {{ bbTrack.form(label="Email Sign Up") }}
+
+                {#- form header #}
+                <div class="form-header">
+                    {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+                    {% if content %}{{ content }}{% endif %}
+                  </div>
+                {#- form ui #}
+                <div class="form-ui">
+                    {{ render_fields(fields, defaults) }}
+                </div>
+                {#- form actions #}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %}">{{ button_label }}</button>
+                    <span class="form-error-msg">Please check errors in the form above</span>
+                </div>
+                {#- form success msg #}
+                <div class="form-success-msg">
+                    <span>{{ success_message }}</span>
+                    <button type="button" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %} js-popup-closebtn">Close</button>
+                </div>
+                {{ privacy_footer('newsletter')}}
+            {% endcall %}
+        </div>
+    {%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== CONTACT FORM ===============================================
+============================================================================= #}
+{#
+    Renders the contact form.
+
+    @access public
+    @param {String} title           - Form heading.
+    @param {String} content         - Content/Description displayed below the heading.
+    @param {List} reasons           - A list of strings applied to a dropdown select.
+    @param {String} button_label    - Label applied to the Form Submit button.
+    @param {String} reasons_label   - Label applied to the Reasons dropdown select.
+    @param {String} success_message - Message to display when the form submission is successful.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro contact(
+            slug,
+			title,
+            fields,
+			content,
+			reasons,
+			button_label="Send",
+			success_message="Thank you for your inquiry. We’ll be in touch shortly.",
+			revealable=true,
+            defaults={}
+		)
+	%}
+	{% set classes = "js-form-ajax" ~ (" revealable" if revealable else "") %}
+	{% call bentoForms.email_form(action=forms[slug].endpoint, class=classes) %}
+        {{ bbTrack.form(label="Contact") }}
+
+		{#- form header #}
+      <div class="form-header">
+        {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+        {% if content %}{{ content }}{% endif %}
+      </div>
+    	{#- form ui #}
+        <div class="form-ui">
+            {{ render_fields(fields, defaults) }}
+        </div>
+        {#- form actions #}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-brand">{{ button_label }}</button>
+            <span class="form-error-msg">Please check errors in the form above</span>
+        </div>
+        {#- form success msg #}
+        <div class="form-success-msg">
+            <span>{{ success_message }}</span>
+        </div>
+        {{ privacy_footer('contact')}}
+	{% endcall %}
+{% endmacro %}
+
+{# ============================================================================
+================== PRIVATE EVENTS FORM ========================================
+============================================================================= #}
+{#
+    Renders the private event popup form. Please note, if a single-venue site,
+    then you don't need to pass in a list of venues – resulting in the Venues
+    dropdown being omitted from the form.
+
+    @access public
+    @param {String} id              - unique id so buttons can trigger this popup.
+    @param {String} slug            - the slug of the form getting rendered
+    @param {String} title           - Form heading.
+    @param {String} content         - Content/Description displayed below the heading.
+    @param {List} venues            - A list of venue titles applied to a dropdown select.
+    @param {List} event_types       - A list of strings applied to a dropdown select.
+    @param {String} button_label    - Label applied to the Form Submit button.
+    @param {String} success_message - Message to display when the form submission is successful.
+    @param {Boolean} use_alt_colors - True if the form should use the alternate color scheme (including the submit button)
+    @param {String} preselected_venue - Preselect this venue in the dropdown
+    @returns {HTML}
+#}
+{% macro private_events(
+            slug="private-dining-inquiry",
+            id="popup-private-events-form",
+            title="",
+            content="",
+            button_label="Submit",
+            success_message="Thank you for your inquiry. We’ll be in touch shortly.",
+            use_alt_colors=true,
+            defaults={}
+        )
+    %}
+    {% set classes = ["js-form-ajax", ("form-alt" if use_alt_colors else ""), "container-sm"] %}
+    {% set fields = forms[slug].form_fields %}
+
+    <div id="{{ id }}" class="popup popup--form mfp-hide">
+        {% call bentoForms.email_form(action=forms[slug].endpoint, class=classes|join(" ")) %}
+            <input type="hidden" name="form" value="private-dining-inquiry">
+            {% set value = defaults.venue if defaults.venue else '' %}
+            {{ bbTrack.form(label="Private Events", value=value) }}
+
+            {#- form header #}
+            <div class="form-header">
+                {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+                {% if content %}{{ content }}{% endif %}
+            </div>
+            {#- form ui #}
+            <div class="form-ui">
+                {{ render_fields(fields, defaults) }}
+            </div>
+            {#- form actions #}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %}">{{ button_label }}</button>
+                <span class="form-error-msg">Please check errors in the form above</span>
+            </div>
+            {#- form success msg #}
+            <div class="form-success-msg">
+                <span>{{ success_message }}</span>
+                <button type="button" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %} js-popup-closebtn">Close</button>
+            </div>
+            {{ privacy_footer('private-events')}}
+        {% endcall %}
+    </div>
+{% endmacro %}
+
+{# ============================================================================
+================== CATERING FORM ==============================================
+============================================================================= #}
+{#
+    Renders the catering popup form.
+
+    @access public
+    @param {String} id              - unique id so buttons can trigger this popup.
+    @param {String} title           - Form heading.
+    @param {String} content         - Content/Description displayed below the heading.
+    @param {List} event_types       - A list of strings applied to a dropdown select.
+    @param {String} button_label    - Label applied to the Form Submit button.
+    @param {String} success_message - Message to display when the form submission is successful.
+    @param {Boolean} use_alt_colors - True if the form should use the alternate color scheme (including the submit button)
+    @returns {HTML}
+#}
+{% macro catering(
+            slug="catering-inquiry",
+            id="popup-catering-form",
+            title="",
+            content="",
+            button_label="Submit",
+            success_message="Thank you for your inquiry. We’ll be in touch shortly.",
+            use_alt_colors=true
+        )
+    %}
+    {% set classes = ["js-form-ajax", ("form-alt" if use_alt_colors else ""), "container-sm"] %}
+    {% set fields = forms[slug].form_fields %}
+
+    <div id="{{ id }}" class="popup popup--form mfp-hide">
+        {% call bentoForms.email_form(action=forms[slug].endpoint, class=classes|join(" ")) %}
+            <div class="form-meta" aria-hidden="true">
+                {{ bbTrack.form(label="Catering") }}
+            </div>
+
+            {#- form header #}
+          <div class="form-header">
+              {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+              {% if content %}{{ content }}{% endif %}
+          </div>
+            {#- form ui #}
+            <div class="form-ui">
+                {{ render_fields(fields) }}
+            </div>
+            {#- form actions #}
+            <div class="form-actions">
+                <button type="submit" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %}">{{ button_label }}</button>
+                <span class="form-error-msg">Please check errors in the form above</span>
+            </div>
+            {#- form success msg #}
+            <div class="form-success-msg">
+                <span>{{ success_message }}</span>
+                <button type="button" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %} js-popup-closebtn">Close</button>
+            </div>
+            {{ privacy_footer('catering')}}
+        {% endcall %}
+    </div>
+{% endmacro %}
+
+
+{# ============================================================================
+================== JOBS FORM ==================================================
+============================================================================= #}
+{#
+    Renders the jobs form.
+
+    @access public
+    @param {String} title           - Form heading.
+    @param {String} content         - Content/Description displayed below the heading.
+    @param {List} positions         - A list of job titles applied to a dropdown select.
+    @param {String} button_label    - Label applied to the Form Submit button.
+    @param {String} success_message - Message to display when the form submission is successful.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro jobs(
+            fields,
+            title,
+            content,
+            positions,
+            button_label="Apply",
+            success_message="Thank you for your inquiry. We’ll be in touch shortly.",
+            revealable=true
+        )
+    %}
+    {% set classes = "js-form-ajax" ~ (" revealable" if revealable else "") %}
+    {% call bentoForms.email_form(action=forms.careers.endpoint, class=classes) %}
+        <input type="hidden" name="form" value="careers">
+        {{ bbTrack.form(label="Jobs") }}
+
+        {#- form header #}
+        <div class="form-header">
+            {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+            {% if content %}{{ content }}{% endif %}
+        </div>
+        {#- form ui #}
+        <div class="form-ui">
+            {{ render_fields(fields) }}
+        </div>
+        {#- form actions #}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-brand">{{ button_label }}</button>
+            <span class="form-error-msg">Please check errors in the form above</span>
+        </div>
+        {#- form success msg #}
+        <div class="form-success-msg">
+            <span>{{ success_message }}</span>
+        </div>
+        {{ privacy_footer('careers')}}
+    {% endcall %}
+{% endmacro %}
+
+{# ============================================================================
+================== PHYSICAL GIFT CARDS FORM ===================================
+============================================================================= #}
+{#
+    Renders the physical gift cards form.
+
+    @access public
+    @param {String} title           - Heading/Title displayed above the form.
+    @param {String} description     - Content/Description displayed above the form.
+    @param {List} amounts           - A list of currency amounts available.
+    @param {String} image           - Optional. The image associated with the gift card type.
+    @returns {HTML}
+#}
+{% macro physical_gift_cards(title, description, amounts, image) %}
+
+
+
+  {#
+    Note: We set these variables in order to control the placeholders/labels for the
+    State/Provicne and Postal Code/Zip Code fields depending on which countries
+    the account will ship to.  We also populate the State/Province dropdow based on this same logic.
+  #}
+
+    {% if store.settings.available_shipping_countries|length > 1 %}
+        {% set state_label = 'State/Province' %}
+        {% set zip_label = 'Zip/Postal Code' %}
+        {% set include_states = True %}
+        {% set include_provinces = True %}
+    {% else %}
+        {% if store.settings.available_shipping_countries and store.settings.available_shipping_countries[0].iso_code == 'CA' %}
+            {% set state_label = 'Province' %}
+            {% set zip_label = 'Postal Code' %}
+            {% set include_states = False %}
+            {% set include_provinces = True %}
+        {% else %}
+            {% set state_label = 'State' %}</span>
+            {% set zip_label = 'Zip Code' %}
+            {% set include_states = True %}
+            {% set include_provinces = False %}
+        {% endif %}
+    {% endif %}
+
+    <form class="physical-giftcards-form js-form-ajax container-sm" method="post" data-form-endpoint="/store/gift-cards/">
+        {% csrf_token %}
+        <input type="hidden" name="gift_card_type" value="physical">
+        <input type="hidden" name="gift_card_image" value="{{ image if image else '' }}">
+        {{ bbTrack.form(category="Add To Cart", action="Click", label="Gift Cards") }}
+
+        {#- form header #}
+        <div class="form-header">
+            {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+            {% if description %}{{ description }}{% endif %}
+        </div>
+        {#- form ui #}
+        <div class="form-ui">
+            {#- form ui group #}
+            <div class="form-ui__group">
+                {% if store.settings.available_shipping_countries|length > 1 %}
+                    {% call field_input_label("recipient-country", "Country", True) %}
+                        <div class="form-control-group has-icon-right">
+                            <select id="recipient-country" class="form-control unselected" name="recipient_country" required aria-describedby="recipient-country-error">
+                                <option value="" disabled>Country</option>
+                                {%- for country in store.settings.available_shipping_countries %}
+                                    <option {% if country.iso_code == store.settings.country %} selected {% endif %} value="{{ country.iso_code }}">{%- if country.iso_code == 'CA' %}Canada{%- elif country.iso_code == 'US' %}United States{%- endif %}</option>
+                                {%- endfor %}
+                            </select>
+                            {{ render_icon(type='dropdown', position='right') }}
+                        </div>
+                    {% endcall %}
+                {% endif %}
+
+                {% call field_input_label("physical-amount", "Select Amount", True) %}
+                    <div class="form-control-group has-icon-right">
+                        <select id="physical-amount" class="form-control unselected" name="amount" required aria-describedby="physical-amount-error">
+                            <option value="" selected disabled>Select Amount</option>
+                            {%- for amount in amounts %}
+                                <option value="{{ amount }}">${{ amount }}</option>
+                            {%- endfor %}
+                        </select>
+                        {{ render_icon(type='dropdown', position='right') }}
+                    </div>
+                {% endcall %}
+                {% call field_input_label("physical-recipient-name", "Recipient’s Name", True) %}
+                    <input id="physical-recipient-name" class="form-control" type="text" name="recipient_name" placeholder="Recipient’s Name" required aria-describedby="physical-recipient-name-error">
+                {% endcall %}
+                {% call field_input_label("physical-recipient-email", "Recipient’s Email", True) %}
+                    <input id="physical-recipient-email" class="form-control" type="email" name="recipient_email" placeholder="Recipient’s Email" required aria-describedby="physical-recipient-email-error">
+                {% endcall %}
+                {% call field_input_label("physical-recipient-street-address-1", "Recipient’s Street Address 1", True) %}
+                    <input id="physical-recipient-street-address-1" class="form-control" type="text" name="recipient_street_address_1" placeholder="Recipient’s Street Address 1" required aria-describedby="physical-recipient-street-address-1-error">
+                {% endcall %}
+                <label for="physical-recipient-street-address-2">
+                    <span class="input-label">Recipient’s Street Address 2</span>
+                    <input id="physical-recipient-street-address-2" class="form-control" type="text" name="recipient_street_address_2" placeholder="Recipient’s Street Address 2" aria-describedby="physical-recipient-street-address-2-error">
+                </label>
+                {% call field_input_label("physical-recipient-city", "City", True) %}
+                    <input id="physical-recipient-city" class="form-control" type="text" name="recipient_city" placeholder="City" required aria-describedby="physical-recipient-city-error">
+                {% endcall %}
+                {% call field_input_label("physical-recipient-state", state_label, True) %}
+                    <div class="form-control-group has-icon-right">
+                        <select id="physical-recipient-state" class="form-control unselected" name="recipient_state" required aria-describedby="physical-recipient-state-error">
+                            <option value="" selected disabled>{{ state_label }}</option>
+
+                            {% if include_states and include_provinces %}
+                            <option disabled></option>
+                            <option disabled>United States</option>
+                            {% endif %}
+
+                            {% if include_states %}
+                            <option value="AL">Alabama</option>
+                            <option value="AK">Alaska</option>
+                            <option value="AZ">Arizona</option>
+                            <option value="AR">Arkansas</option>
+                            <option value="CA">California</option>
+                            <option value="CO">Colorado</option>
+                            <option value="CT">Connecticut</option>
+                            <option value="DE">Delaware</option>
+                            <option value="DC">District Of Columbia</option>
+                            <option value="FL">Florida</option>
+                            <option value="GA">Georgia</option>
+                            <option value="HI">Hawaii</option>
+                            <option value="ID">Idaho</option>
+                            <option value="IL">Illinois</option>
+                            <option value="IN">Indiana</option>
+                            <option value="IA">Iowa</option>
+                            <option value="KS">Kansas</option>
+                            <option value="KY">Kentucky</option>
+                            <option value="LA">Louisiana</option>
+                            <option value="ME">Maine</option>
+                            <option value="MD">Maryland</option>
+                            <option value="MA">Massachusetts</option>
+                            <option value="MI">Michigan</option>
+                            <option value="MN">Minnesota</option>
+                            <option value="MS">Mississippi</option>
+                            <option value="MO">Missouri</option>
+                            <option value="MT">Montana</option>
+                            <option value="NE">Nebraska</option>
+                            <option value="NV">Nevada</option>
+                            <option value="NH">New Hampshire</option>
+                            <option value="NJ">New Jersey</option>
+                            <option value="NM">New Mexico</option>
+                            <option value="NY">New York</option>
+                            <option value="NC">North Carolina</option>
+                            <option value="ND">North Dakota</option>
+                            <option value="OH">Ohio</option>
+                            <option value="OK">Oklahoma</option>
+                            <option value="OR">Oregon</option>
+                            <option value="PA">Pennsylvania</option>
+                            <option value="RI">Rhode Island</option>
+                            <option value="SC">South Carolina</option>
+                            <option value="SD">South Dakota</option>
+                            <option value="TN">Tennessee</option>
+                            <option value="TX">Texas</option>
+                            <option value="UT">Utah</option>
+                            <option value="VT">Vermont</option>
+                            <option value="VA">Virginia</option>
+                            <option value="WA">Washington</option>
+                            <option value="WV">West Virginia</option>
+                            <option value="WI">Wisconsin</option>
+                            <option value="WY">Wyoming</option>
+                            {% endif %}
+
+                            {% if include_states and include_provinces %}
+                            <option disabled></option>
+                            <option disabled>Canada</option>
+                            {% endif %}
+
+                            {% if include_provinces %}
+                            <option value="ON">Ontario</option>
+                            <option value="AB">Alberta</option>
+                            <option value="NL">Newfoundland and Labrador</option>
+                            <option value="BC">British Columbia</option>
+                            <option value="NB">New Brunswick</option>
+                            <option value="MB">Manitoba</option>
+                            <option value="YT">Yukon</option>
+                            <option value="SK">Saskatchewan</option>
+                            <option value="QC">Quebec</option>,
+                            <option value="PE">Prince Edward Island</option>
+                            <option value="NS">Nova Scotia</option>
+                            <option value="NT">Northwest Territories</option>
+                            <option value="NU">Nunavut</option>
+                            {% endif %}
+
+                        </select>
+                        {{ render_icon(type='dropdown', position='right') }}
+                    </div>
+                {% endcall %}
+                {% call field_input_label("physical-recipient-postal-code", zip_label, True) %}
+                    <input id="physical-recipient-postal-code" class="form-control" type="text" name="recipient_postal_code" placeholder="{{ zip_label }}" required aria-describedby="physical-recipient-postal-code-error">
+                {% endcall %}
+            </div>
+            {#- form ui group #}
+            <div class="form-ui__group">
+                {% call field_input_label("physical-gifter", "Your Name", True) %}
+                    <input id="physical-gifter" class="form-control" type="text" name="gifter_name" placeholder="Your Name" required autocomplete="name" aria-describedby="physical-gifter-error">
+                {% endcall %}
+                {% call field_input_label("physical-your-message", "Your Message", False) %}
+                    <textarea id="physical-your-message" class="form-control" name="message" placeholder="Your Message"></textarea>
+                {% endcall %}
+            </div>
+        </div>
+        {#- form actions #}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-brand">Add to Cart</button>
+            <span class="form-error-msg">Oops. Looks like there was an error adding to your cart. Please check the form and try again.</span>
+        </div>
+    </form>
+{% endmacro %}
+
+{# ============================================================================
+================== DIGITAL GIFT CARDS FORM ====================================
+============================================================================= #}
+{#
+    Renders the digital gift cards form.
+
+    @access public
+    @param {String} title           - Heading/Title displayed above the form.
+    @param {String} description     - Content/Description displayed above the form.
+    @param {List} amounts           - A list of currency amounts available.
+    @param {String} image           - Optional. The image associated with the gift card type.
+    @returns {HTML}
+#}
+{% macro digital_gift_cards(title, description, amounts, image) %}
+    <form class="digital-giftcards-form js-form-ajax container-sm" method="post" data-form-endpoint="/store/gift-cards/">
+        {% csrf_token %}
+        <input type="hidden" name="gift_card_type" value="electronic">
+        <input type="hidden" name="gift_card_image" value="{{ image if image else '' }}">
+        {{ bbTrack.form(category="Add To Cart", action="Click", label="Gift Cards") }}
+
+        {#- form header #}
+        <div class="form-header">
+            {% if title %}<h2 class="h1 form-heading">{{ title }}</h2>{% endif %}
+            {% if description %}{{ description }}{% endif %}
+        </div>
+        {#- form ui #}
+        <div class="form-ui">
+            {#- form ui group #}
+            <div class="form-ui__group">
+                {% call field_input_label("digital-amount", "Select Amount", True) %}
+                    <div class="form-control-group has-icon-right">
+                        <select id="digital-amount" class="form-control unselected" name="amount" required aria-describedby="digital-amount-error">
+                            <option value="" selected disabled>Select Amount</option>
+                            {%- for amount in amounts %}
+                                <option value="{{ amount }}">${{ amount }}</option>
+                            {%- endfor %}
+                        </select>
+                        {{ render_icon(type='dropdown', position='right') }}
+                    </div>
+                {% endcall %}
+                {% call field_input_label("digital-recipient-name", "Recipient’s Name", True) %}
+                    <input id="digital-recipient-name" class="form-control" type="text" name="recipient_name" placeholder="Recipient’s Name" required aria-describedby="digital-recipient-name-error">
+                {% endcall %}
+                {# Dont use the macro here because we need to render this label with a few classes #}
+                <label for="digital-recipient-email" class="input--disabled input--hidden">
+                    <i class="error-label"></i>
+                    <span class="input-label">Recipient’s Email</span>
+                    <input id="digital-recipient-email" class="form-control" type="email" name="recipient_email" placeholder="Recipient’s Email" disabled required aria-describedby="digital-recipient-email-error">
+                </label>
+                {%- set date_field_options = {
+                    "id" : "send_after",
+                    "name": "Date of Delivery",
+                    "placeholder": "Send Immediately",
+                    "required": false
+                    }
+                -%}
+                {{ date_field(date_field_options) }}
+                {# Dont use the macro here because this is a one off input that we don't know how to handle #}
+                <label for="email-gifter-checkbox">
+                    <span class="sr-only">Unchecking this checkbox will add a required "Recipient's Email" input field above.</span>
+                    <input id="email-gifter-checkbox" type="checkbox" name="email_gifter" checked>
+                    <span>Email the gift to me so I can print it and give it in-person.</span>
+                </label>
+            </div>
+            {#- form ui group #}
+            <div class="form-ui__group">
+                {% call field_input_label("digital-gifter-name", "Your Name", True) %}
+                    <input id="digital-gifter-name" class="form-control" type="text" name="gifter_name" placeholder="Your Name" required autocomplete="name" aria-describedby="digital-gifter-name-error">
+                {% endcall %}
+                {% call field_input_label("digital-gifter-email", "Your Email", True) %}
+                    <input id="digital-gifter-email" class="form-control" type="email" name="gifter_email" placeholder="Your Email" required autocomplete="email" aria-describedby="digital-gifter-email-error">
+                {% endcall %}
+                {% call field_input_label("digital-your-message", "Your Message", False) %}
+                    <textarea id="digital-your-message" class="form-control" name="message" placeholder="Your Message"></textarea>
+                {% endcall %}
+            </div>
+        </div>
+        {#- form actions #}
+        <div class="form-actions">
+            <button type="submit" class="btn btn-brand">Add to Cart</button>
+            <span class="form-error-msg">Oops. Looks like there was an error adding to your cart. Please check the form and try again.</span>
+        </div>
+    </form>
+{% endmacro %}
+
+{# ============================================================================
+================== CATERING PRODUCT FORM ======================================
+============================================================================= #}
+{#
+    Renders the catering product form inside a popup modal. Please note, this
+    macro utilizes the `product_configurable()` macro in this file to render
+    the inner Catering Products form because it renders and functions exactly
+    the same as a Configurable Product Form. This is because, in regards to the
+    JavaScript components, a Catering Product IS a Configurable Product.
+
+    IMPORTANT: For the inner form to be found and work properly, we have to
+    include the `data-product-id="[PRODUCT_ID]"` attribute and value on the
+    wrapping modal element. For more information, please read the
+    `product_configurable()` macro's documentation (below) carefully.
+
+    @access public
+    @param {Dict} product                   - A single product dict/object directly from `store.catering_products`
+    @returns {HTML}
+#}
+{% macro product_catering(product) %}
+  {%- if product %}
+    <div id="{{ bbStore.get_product_popup_uid(product.id) }}" class="popup popup--product-config mfp-hide" {{ bbStore.get_product_wrap_identifier(product.id) }}>
+      <div class="popup__content">
+        <h1 class="h2 popup__heading">{{ product.name }}</h1>
+        <p class="popup__price product-price"> {{ product.price }}</p>
+          {%- if product.images|length > 1 %}
+            {{ bbMedia.gallery(imgs=product.images, type="catering_store", classlist="swipeable-image-thumbnail", dimmed=false, tag="div", revealable=false )}}
+          {%- elif product.image %}
+            <div class="image-thumbnail" style="background-image: url('{{ product.image|image_url|resize(768) }}');">
+              <img class="sr-only" {{ bbImage.alt_text(product.image, img=True) }}>
+            </div>
+          {%- endif %}
+        {{ product.description }}
+
+        {#- internal form macro #}
+        {{ product_configurable(product=product, add_quantity_at_top=true, resettable=true) }}
+      </div>
+    </div>
+  {%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== CONFIGURABLE PRODUCT FORM ==================================
+============================================================================= #}
+{#
+    Renders the configurable product form. Please note, this is used for both
+    Configurable Products and Catering Products (in a modal) – and there are a
+    few output variations based on type.
+
+    IMPORTANT: Every Basic Product and Configurable Product (including Catering)
+    requires an element that wraps the form to include a specific data-attribute.
+    This data attribute is required for the JavaScript components to properly find
+    and initialize all the product's related elements – imgbrowser, form, modal,
+    etc. The intention of this macro is to make that requirement obvious, and
+    provide a consistent way of creating that element.
+
+    When this form is on a standalone product page, the data-attribute is placed
+    on the parent `<article>` tag. When this form is in a modal, the data-attribute
+    is placed on the parent modal's `<div>` tag.
+
+    @access public
+    @param {Dict} product                   - A single product dict/object directly from `store.catering_products`
+    @param {Boolean} add_quantity_to_top    - True if the quantity field should be rendered before "required_fields". False renders after.
+    @param {Boolean} resettable             - `true` to reset the form after successful submission. `false` to leave it as-is.
+    @returns {HTML}
+#}
+{% macro product_configurable(product, add_quantity_at_top=true, resettable=false) %}
+    {%- if product %}
+        {#-
+            Note: configurable products don't currently have variants, but our data is in the product.variant.0 slot. So,
+            its ok to assume its populated.
+        #}
+        {% set variant = product.variants.0 %}
+        {% set variant_has_inventory = true if (variant.inventory and (variant.inventory > 0)) else false %}
+        {#-
+            If we have at least one, go ahead and show the form.
+        #}
+        {%- if variant_has_inventory %}
+            <form class="product-config-form" method="post" data-form-endpoint="{{ product.add_to_cart_url }}"  data-product-config-preview-action="{{ product.price_preview_url }}"{% if resettable %} data-form-resettable{% endif %}>
+                {% csrf_token %}
+                <input type="hidden" name="product_id" value="{{ product.id }}">
+                <input type="hidden" name="variant_id" value="{{ variant.id }}">
+                {#- these variants help configure the javascript component #}
+                <input type="hidden" name="product_quantity_handling_method" value="{{ product.quantity_handling_method }}">
+                <input type="hidden" name="product_price_unit_label" value="{{ product.price_unit_label }}">
+                <input type="hidden" name="variant_base_price" value="{{ variant.price }}">
+                <input type="hidden" name="inventory" value="{{ variant.inventory if variant.inventory else 0 }}">
+                <input type="hidden" name="product_name" value="{{ product.name }}">
+                <input type="hidden" name="product_image" value="{{ product.image|image_url if product.image|image_url else '' }}">
+                {{ bbTrack.form(category="Add To Cart", action="Click", label="eCom") }}
+
+                {#- form ui #}
+                <div class="form-ui">
+
+                    {#- if quantity field should be rendered at the top (ie...standalone, not in a modal) #}
+                    {%- if add_quantity_at_top %}
+                        {{ _product_configurable_quantity_field(
+                                product=product,
+                                variant=variant
+                            )
+                        }}
+                    {%- endif %}
+
+                    {#- Required fields #}
+                    {%- for field in variant.required_fields %}
+                        {# Note: Dropdown, checkbox, and quantity all require at least one option for the input to be rendered. #}
+                        {%- set is_multioption = true if (field.field_type in ["dropdown", "checkbox", "quantity"]) else false %}
+                        {%- set is_renderable = true if (not is_multioption or (field.options|length > 0)) else false %}
+                        {%- if is_renderable %}
+                            <hr>
+                            <fieldset class="product-config-field form-group" data-product-config-field="{{ field.field_type }}"{% if field.min_quantity %} data-product-config-field-min="{{ field.min_quantity }}"{% endif %}{% if field.max_quantity %} data-product-config-field-max="{{ field.max_quantity }}"{% endif %}>
+                                <legend class="label product-config-field__title">{{ field.name }}</legend>
+                                {% if field.show_help_text %}<p class="product-config-field__helper">{{ field.help_text }}</p>{% endif %}
+
+                                {#- field type: freeform #}
+                                {%- if field.field_type == "free_form" %}
+                                    <label for="required_fields[{{ field.slug }}]">
+                                        <span class="product-input-label">{{ field.name }}</span>
+                                        <textarea id="required_fields[{{ field.slug }}]" class="form-control" name="required_fields[{{ field.slug }}]" data-product-config-field-slug="{{ field.slug }}"></textarea>
+                                    </label>
+
+                                {#- field type: dropdown #}
+                                {%- elif field.field_type == "dropdown" %}
+                                    <label for="required_fields[{{ field.slug }}]" class="input--populated">
+                                        <i class="error-label"></i>
+                                        <span class="product-input-label input-label">{{ field.name }}</span>
+                                        <div class="form-control-group has-icon-right">
+                                            <select id="required_fields[{{ field.slug }}]" class="form-control unselected" name="required_fields[{{ field.slug }}]" required aria-describedby="required_fields[{{ field.slug }}]" data-product-config-field-slug="{{ field.slug }}">
+                                                <option disabled selected class="disabled__choose-one">Choose One</option>
+                                                {%- for option in field.options %}
+                                                    <option value="{{ option.slug }}"
+                                                        {% if option.price_variance and (option.price_variance != "0.00") %}
+                                                            data-product-config-field-price-variant="{{ option.price_variance }}"
+                                                        {% endif %}
+                                                    >
+                                                        {{ option.name ~ " " ~ bbUtils.format_price_variance(option.price_variance, allow_zero=false) }}
+                                                    </option>
+                                                {%- endfor %}
+                                            </select>
+                                            {{ render_icon(type='dropdown', position='right') }}
+                                        </div>
+                                    </label>
+
+                                {#- field type: checkbox #}
+                                {%- elif field.field_type == "checkbox" %}
+                                    {%- for option in field.options %}
+                                        <label class="input-checkbox">
+                                            <input class="sr-only" type="checkbox"  name="required_fields[{{ field.slug }}][]" value="{{ option.slug }}" data-product-config-field-slug="{{ field.slug }}"{% if option.price_variance and (option.price_variance != "0.00") %} data-product-config-field-price-variant="{{ option.price_variance }}"{% endif %}>
+                                            <span>{{ option.name ~ " " ~ bbUtils.format_price_variance(option.price_variance, allow_zero=false) }}</span>
+                                        </label>
+                                    {%- endfor %}
+
+                                {#- field type: quantity #}
+                                {%- elif field.field_type == "quantity" %}
+                                    {% for option in field.options %}
+                                        <div class="label product-options">
+                                            <span>
+                                                <div>{{ option.name }}</div>
+                                                <div>{{ bbUtils.format_price_variance(option.price_variance, allow_zero=false) }}</div>
+                                            </span>
+                                            <div>
+                                                <input class="form-control numeric-stepper__input"
+                                                    name="required_fields[{{ field.slug }}][{{ option.slug }}]"
+                                                    type="text" min="0" max="{{ field.max_quantity if field.max_quantity else 99999 }}" step="1" value="0" pattern="[0-9]*" inputmode="numeric" x-inputmode="numeric"
+                                                    data-product-config-field-slug="{{ field.slug }}"
+                                                    data-product-config-option-slug="{{ option.slug }}"
+                                                    {% if option.price_variance and (option.price_variance != "0.00") %}data-product-config-field-price-variant="{{ option.price_variance }}"{% endif %}>
+                                            </div>
+                                        </div>
+                                    {%- endfor %}
+                                {%- endif %}
+                                <span class="product-field-message"></span>
+                            </fieldset>
+                        {%- endif %}
+                    {%- endfor %}
+
+                    {# if quantity field should be rendered at the bottom (ie...in a modal) #}
+                    {%- if not add_quantity_at_top %}
+                        {#- Only add an <hr> if the quantity field is visible #}
+                        {%- if product.show_quantity_field %}
+                            <hr>
+                        {%- endif %}
+
+                        {#- product quantity field #}
+                        {{ _product_configurable_quantity_field(
+                                product=product,
+                                variant=variant
+                            )
+                        }}
+                    {%- endif %}
+                </div>
+               {#- form actions #}
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-brand btn-block">Add To Cart</button>
+                    <span class="form-error-msg">Please check errors in the form above</span>
+                </div>
+            </form>
+        {#- if there isn't at least one in stock, there's no way to buy the product. #}
+        {%- else %}
+            <p><strong>Sorry. This product is currently unavailable.</strong></p>
+        {%- endif %}
+    {%- endif %}
+{% endmacro %}
+
+{#
+    Renders the primary Configurable Product `quantity` field. This is separated
+    out into its own private macro because, depending on the form configuration,
+    this field can render in different positions (ie...top/bottom) and we don't
+    want to duplicate this code unnecessarily.
+
+    @access private
+    @param {Dict} product                   - A single product dict/object directly from `store.catering_products`
+    @param {Dict} variant                   - A single product variant. Currently, Configurable Products don't have variants,
+                                              but our data is in the `product.variant.0` slot, so its ok to assume its populated.
+    @returns {HTML}
+#}
+{% macro _product_configurable_quantity_field(product, variant) %}
+    {% set quantity_label = product.quantity_label if product.quantity_label else "Quantity" %}
+    {% set min_quantity = product.minimum_quantity if product.minimum_quantity and product.quantity_handling_method else "1" %}
+    {%- if product and variant %}
+        <div class="label product-options input--populated{% if not product.show_quantity_field %} input--hidden{% endif %}">
+             <span>{{ quantity_label }}</span>
+            <div>
+                <input class="form-control numeric-stepper__input"  name="quantity" type="text" min="{{ min_quantity }}" max="{{ variant.inventory if variant.inventory else 0 }}" step="1" value="{{ min_quantity }}" pattern="[0-9]*" inputmode="numeric" x-inputmode="numeric" aria-label="Quantity">
+            </div>
+        </div>
+    {%- endif %}
+{% endmacro %}

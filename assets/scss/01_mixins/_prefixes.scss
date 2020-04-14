@@ -1,0 +1,210 @@
+////
+/// @access public
+/// @group mixins-prefixes
+//// 
+
+// ============================================================================================================
+// =============== IMPORTANT NOTES ============================================================================
+// ============================================================================================================
+
+// Setup Usage:
+// 1. Copy the recommended Bootstrap 4 browsers list below.
+// 2. https://erykpiast.github.io/online-css-autoprefixer/
+// 3. Add browser list to "Autoprefix config" field.
+// 4. Add any rules you think may need prefixing.
+// 5. Create prefixed mixins as necessary. Please only include a single property. (ie...box-shadow)
+// 
+// Recommended Bootstrap 4 Browser List:
+// (See /bower_components/bootstrap/Gruntfile.js for more info)
+// Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+// 
+// Notes: These are intended to be simple mixins. They do not include support for both shorthand and
+// per-property values in each mixin. If you need that level of support, you can (1) add another mixin,
+// or (2) expand on the current mixins. If you choose the expand on the current mixins to make them 
+// more robust, please be aware of backwards-compatibility as to not break previous uses of the mixin.
+
+// ============================================================================================================
+// =============== MIXINS : PREFIXES ==========================================================================
+// ============================================================================================================
+
+/// Creates vendor prefixes for `box-shadow` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `box-shadow`.
+@mixin bb-prefix-box-shadow($shorthand...){
+	-webkit-box-shadow: $shorthand;
+	   -moz-box-shadow: $shorthand;
+			box-shadow: $shorthand;
+}
+
+/// Creates vendor prefixes for `transition` according to Bootstrap 4 compatibility list.
+/// 
+/// **Important:** Only `transition` will be prefixed. Inner properties (that should be prefixed) like `tranform` 
+/// will be prefixed. Just a heads up!
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `transition`.
+@mixin bb-prefix-transition($shorthand...){
+	-webkit-transition: $shorthand;
+    		transition: $shorthand;
+}
+
+/// Creates vendor prefixes for `transform` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `transform`.
+@mixin bb-prefix-transform($shorthand...){
+	-webkit-transform: $shorthand;
+    	-ms-transform: $shorthand;
+        	transform: $shorthand;
+}
+
+/// Creates vendor prefixes for `transform-origin` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `transform-origin`.
+@mixin bb-prefix-transform-origin($shorthand...){
+	-webkit-transform-origin: $shorthand;
+    	-ms-transform-origin: $shorthand;
+        	transform-origin: $shorthand;
+}
+
+/// Creates vendor prefixes for `user-select` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `user-select`.
+@mixin bb-prefix-user-select($value){
+	-webkit-user-select: $value;
+       -moz-user-select: $value;
+     	-ms-user-select: $value;
+         	user-select: $value;
+}
+
+/// Creates vendor prefixes for `border-radius` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `border-radius`.
+@mixin bb-prefix-border-radius($shorthand...){
+	border-radius: $shorthand;
+}
+
+/// Creates vendor prefixes for `drop-shadow` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Muliple} $shorthand... - Shorthand definition of `drop-shadow`.
+@mixin bb-prefix-filter-drop-shadow($shorthand...){
+	// doesn't work in IE. Maybe need a IE specific filter?
+	-webkit-filter: drop-shadow($shorthand); 
+  	filter: drop-shadow($shorthand);
+}
+
+/// Creates vendor prefixes for `::placeholder` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ Online Autoprefixer Generator
+/// @parameter {Color} $color [$inut-color-placeholder] - Color to apply to `::placeholder`.
+@mixin bb-prefix-placeholder-color($color: $input-color-placeholder){
+	&::-webkit-input-placeholder { color: $color; }
+	&::-moz-placeholder { color: $color; }
+	&:-ms-input-placeholder { color: $color; }
+	&::placeholder { color: $color; }
+}
+
+/// Creates vendor prefixes for `appearance` according to Bootstrap 4 compatibility list.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+/// @parameter {String} $appearance - Value to apply to `appearance`. (none, etc)
+@mixin bb-prefix-appearance($appearance) {
+	-webkit-appearance: $appearance;
+	   -moz-appearance: $appearance;
+	   		appearance: $appearance;
+}
+
+/// Creates vendor prefixes for `display: flex` according to Bootstrap 4 compatibility list. Please note, due to 
+/// the abormal prefixed structure of the values themselves, this mixin is considered "static" and doesn't not 
+/// support passing in any parameters. Output will always be a representation of the `display: flex` state.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+@mixin bb-prefix-display-flex(){
+	display: -webkit-box;
+    display: -webkit-flex;
+    display: -ms-flexbox;
+    display: flex;
+}
+
+/// Creates vendor prefixes for `flex-wrap: wrap` according to Bootstrap 4 compatibility list. Please note, this 
+/// mixin has been created and currently only tested using the `wrap` value. If any other value is required, 
+/// you should ensure that that value does not require individual prefixes itself, otherwise, you should create a 
+/// completely separate mixin.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+/// @parameter {String} $value - Value to apply to `flex-wrap`. (currently, only `wrap` is supported)
+@mixin bb-prefix-flex-wrap($value) {
+	-webkit-flex-wrap: $value;
+        -ms-flex-wrap: $value;
+            flex-wrap: $value;
+}
+
+/// Creates vendor prefixes for `align-items: center` according to Bootstrap 4 compatibility list. 
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+/// @parameter {String} $value - Value to apply to `align-items`. (flex-start, flex-end, center, stretch, baseline)
+@mixin bb-prefix-flex-align-items($value){
+	  -webkit-box-align: $value;
+	-webkit-align-items: $value;
+    	 -ms-flex-align: $value;
+        	align-items: $value;
+}
+
+/// Creates vendor prefixes for `flex: 1` shorthand according to Bootstrap 4 compatibility list. Please note, this 
+/// mixin is intended to be used with flex child items for the purposes of setting their relative size. It has not 
+/// been tested thoroughly with all the possible shorthand value varations. For that reason, you should only use 
+/// this mixin to set the value to `1` or `2`. If you require supporting other values, please test thoroughly to 
+/// ensure the widest browser support and compatibility.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+/// @parameter {String} $value - Value to apply to `flex`. (currently, only `1` or '2' have been tested)
+@mixin bb-prefix-flex-shorthand($value) {
+	-webkit-box-flex: $value;
+        -webkit-flex: $value;
+            -ms-flex: $value;
+                flex: $value;
+}
+
+/// Creates vendor prefixes for a simple vertical (top-to-bottom) 2-color linear gradient.
+/// 
+/// **Compatibility:** Chrome >= 35, Firefox >= 31, Edge >= 12, Explorer >= 9, iOS >= 8, Safari >= 8, Android 2.3, Android >= 4, Opera >= 12
+/// 
+/// @link https://erykpiast.github.io/online-css-autoprefixer/ - Online Autoprefixer Generator
+/// @parameter {Color} $start-color - Color that starts at the top of gradient.
+/// @parameter {Color} $end-color - Color that ends at the bottom of the gradient.
+@mixin bb-prefix-linear-gradient-vertical($start-color, $end-color){
+	background-image: -webkit-linear-gradient(top, $start-color, $end-color);
+	background-image: linear-gradient(to bottom, $start-color, $end-color);
+}
+

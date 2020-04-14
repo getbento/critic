@@ -1,0 +1,344 @@
+////
+/// @group components-footer-desktop
+/// @access public
+////
+
+// ============================================================================================================
+// =============== DESKTOP FOOTER : VARS ======================================================================
+// ============================================================================================================
+/// At what breakpoint should the desktop footer switch from the stacked version to the side-by-side version?
+/// By default, this just uses `$mobi-expand-breakpoint`, but this value allows you to override this for the
+/// footer switching only. For added flexibility, this value can be an available key in `$grid-breakpoints`, or
+/// it can be an arbitrary number.
+/// @type {String | Number}
+$site-footer-desktop-expand-breakpoint: $mobi-expand-breakpoint !default;
+
+/// Background color applied to `.site-footer-desktop-primary`.
+///
+/// **Theme Option:** Footer > Background Color
+///
+/// @type Color
+$site-footer-desktop-primary-bg-color: $site-header-bg-color !default;
+
+/// Background image applied to `.site-footer-desktop-primary`.
+///
+/// **Theme Option:** Footer > Background Image
+///
+/// @type String
+$site-footer-desktop-primary-bg-image: null !default;
+
+/// Font family stack applied to top-level site footer navigation and any child elements set to `inherit`.
+/// @type String
+$site-footer-desktop-nav-font-family: $site-nav-font-family !default;
+
+/// Font size applied to top-level site footer navigation on desktop, and any child elements set to `inherit`.
+///
+/// **Theme Option:** Footer > Footer Navigation > Size
+///
+/// @type Number
+$site-footer-desktop-nav-font-size: $site-nav-desktop-font-size !default;
+
+/// Font weight applied to top-level site footer navigation and any child elements set to `inherit`. (ex: bold)
+///
+/// **Theme Option:** Footer > Footer Navigation > Weight
+///
+/// @type String
+$site-footer-desktop-nav-font-weight: $site-nav-font-weight !default;
+
+/// Text-transform applied to top-level site footer navigation and any child elements set to `inherit`.
+///
+/// **Theme Option:** Footer > Footer Navigation > Uppercase
+///
+/// @type Number
+$site-footer-desktop-nav-text-transform: $site-nav-text-transform !default;
+
+/// Letter-spacing applied to top-level site footer navigation and any child elements set to `inherit`.
+///
+/// **Theme Option:** Footer > Footer Navigation > Letter Spacing
+///
+/// @type Number
+$site-footer-desktop-nav-letter-spacing: $site-nav-letter-spacing !default;
+
+/// Text color applied to footer top-level and child `.site-nav` button instances.
+///
+/// **Theme Option:** Footer > Footer Navigation > Color
+///
+/// @type Color
+$site-footer-desktop-nav-btn-color: $site-nav-btn-color !default;
+
+/// Text color applied to footer top-level and child `.site-nav` button instances' `:hover` state.
+///
+/// **Theme Option:** Footer > Footer Navigation > Hover Color
+///
+/// @type Color
+$site-footer-desktop-nav-btn-hover-color: $site-nav-btn-hover-color !default;
+
+/// Text color applied to footer top-level and child `.site-nav` button instances' `:active, .is-active` state.
+///
+/// **Theme Option:** Footer > Footer Navigation > Color
+///
+/// @type Color
+$site-footer-desktop-nav-btn-active-color: $site-nav-btn-active-color !default;
+
+/// Text color applied to footer top-level and child `.site-nav` button instances' `:hover` state when the item
+/// is also `:active, .is-active`.
+/// @type Color
+$site-footer-desktop-nav-btn-active-hover-color: $site-nav-btn-active-hover-color
+	!default;
+
+/// Text color applied to footer location. Please note, by default, this is intended to inherit/use the footer
+/// navigation styles.
+/// @type Color
+$site-footer-desktop-primary-location-color: $site-footer-desktop-nav-btn-color
+	!default;
+
+/// Text color applied to footer location's `:hover` states. Please note, by default, this is intended to
+/// inherit/use the footer navigation styles.
+/// @type Color
+$site-footer-desktop-primary-location-hover-color: $site-footer-desktop-nav-btn-hover-color
+	!default;
+
+/// Vertical padding applied to `.site-footer-desktop-primary`.
+/// @type Number
+$site-footer-desktop-primary-vpadding: 1em !default;
+
+/// Vertical margins applied to the social icons' `<li>` inside the `.site-footer-desktop-primary`.
+/// @type Number
+$site-footer-desktop-primary-social-item-vmargin: 0.25em !default;
+
+/// The z-index to apply to the `.site-footer-desktop`, and its various elements when they are set to be
+/// stickable/fixed. You should not ever have to edit this value.
+/// @access private
+/// @type Number
+$site-footer-desktop-z-index: 30 !default;
+
+// ============================================================================================================
+// =============== DESKTOP FOOTER : EXPORT ====================================================================
+// ============================================================================================================
+@mixin bb-export-classes-desktop-footer() {
+	// block
+	.site-footer-desktop {
+		@include bb-size($width: 100%);
+		display: none;
+
+		// special element: use for vertical positioning, spacing, offsets, etc.
+		&-spacer {
+			display: none;
+		}
+
+		// block: .site-footer-desktop-primary
+		&-primary {
+			@include bb-size($width: 100%);
+			background-color: $site-footer-desktop-primary-bg-color;
+			@if ($site-footer-desktop-primary-bg-image) {
+				@include bb-background-pattern-base($image: $site-footer-desktop-primary-bg-image);
+			}
+
+			// element: .site-footer-desktop-primary__container
+			&__container {
+				text-align: justify;
+				line-height: 0; // note: important for justification hack!
+				padding-top: $site-footer-desktop-primary-vpadding;
+				padding-bottom: $site-footer-desktop-primary-vpadding;
+
+				&:after {
+					@include bb-position($position: relative, $z-index: -1);
+					@include bb-size($width: 100%, $height: 0);
+					content: '';
+					display: inline-block;
+					font-size: 0;
+					line-height: 0;
+					vertical-align: middle;
+				}
+			}
+
+			// children: shared
+			& .social-accounts,
+			& .site-location,
+			& .site-nav {
+				// Note: make sure justification hack (:after) doesn't block clicks!
+				@include bb-position($position: relative, $z-index: 0);
+			}
+
+			// child modifier
+			& .social-accounts {
+				// note: uses same styles as footer nav settings. background settings are inherited
+				// from $site-nav-btn-color settings.
+				@include bb-social-accounts-color-variant(
+					$color:  $social-accounts-footer-desktop-color,
+					$bg-color: $social-accounts-footer-desktop-bg-color,
+					$active-color: $social-accounts-footer-desktop-active-color,
+					$active-bg-color: $social-accounts-footer-desktop-active-bg-color,
+					$is-circle-icon: $social-accounts-footer-desktop-circle-icon
+				);
+				display: block;
+				margin-bottom: 1rem;
+
+				// immediate child
+				& > li {
+					margin-top: $site-footer-desktop-primary-social-item-vmargin;
+					margin-bottom: $site-footer-desktop-primary-social-item-vmargin;
+				}
+			}
+
+			// child modifier
+			& .site-location {
+				font-size: $site-header-desktop-location-font-size;
+				line-height: $line-height;
+				margin-top: 0;
+				margin-bottom: 1rem;
+
+				// children
+				& .site-location__address,
+				& .site-location__tel {
+					color: $site-footer-desktop-primary-location-color;
+
+					@include hover-focus-active() {
+						color: $site-footer-desktop-primary-location-hover-color;
+					}
+				}
+
+				// child: make sure that the line breaks only happen where we want them to.
+				& span {
+					white-space: nowrap;
+				}
+
+				// modifier: if only child, we don't need any extra spacing in the collapsed state.
+				&:only-child {
+					margin-bottom: 0;
+				}
+			}
+
+			// child modifier
+			& .site-nav {
+				display: block;
+				font-family: $site-footer-desktop-nav-font-family;
+				font-weight: $site-footer-desktop-nav-font-weight;
+				font-size: $site-footer-desktop-nav-font-size;
+				text-transform: $site-footer-desktop-nav-text-transform;
+				letter-spacing: $site-footer-desktop-nav-letter-spacing;
+				line-height: $line-height; // important: this ensure everything lines up correctly.
+
+				// child
+				& li {
+					display: inline-block;
+				}
+
+				// all buttons
+				&-menu a:not(.btn),
+				&-menu button:not(.btn),
+				&-submenu > span,
+				&-submenu > a {
+					color: $site-footer-desktop-nav-btn-color;
+
+					&:hover {
+						color: $site-footer-desktop-nav-btn-hover-color;
+					}
+				}
+
+				// <li> modifiers: active
+				& .is-active > a,
+				& .is-active > button,
+				& .is-active > span {
+					color: $site-footer-desktop-nav-btn-active-color;
+
+					&:hover {
+						color: $site-footer-desktop-nav-btn-active-hover-color;
+					}
+				}
+			}
+
+			// breakpoint: expand primary element only! Unaffected by mobi breakpoint.
+			@include bb-breakpoint-up($site-footer-desktop-expand-breakpoint) {
+				// children: shared, side-by-side
+				& .site-nav,
+				& .social-accounts,
+				& .site-location {
+					display: inline-block;
+
+					// modifier: if only child, take up the full width and center
+					&:only-child {
+						@include bb-size($width: 100%);
+					}
+				}
+
+				// child
+				& .social-accounts {
+					margin-bottom: 0;
+				}
+
+				// child
+				& .site-location {
+					margin-bottom: 0;
+
+					// child elements: .site-location__tel, .site-location__address
+					&__tel,
+					&__address {
+						display: inline-block;
+					}
+
+					// child element: .site-location__address
+					&__address {
+						margin-right: $site-header-desktop-secondary-location-exanded-margin-right;
+					}
+				}
+			}
+		}
+
+		// block: .site-footer-desktop-secondary
+		&-secondary {
+			@include bb-size($width: 100%);
+
+			// child
+			& .site-powered-by {
+				@include bb-gutters;
+			}
+		}
+
+		// blocks: shared - fixed/sticky position
+		&,
+		&-primary,
+		&-secondary {
+			&[data-footer-sticky] {
+				@include bb-position(
+					$position: fixed,
+					$bottom: 0,
+					$left: if($site-is-boxed, null, 0),
+					$right: if($site-is-boxed, null, 0),
+					$z-index: $site-footer-desktop-z-index
+				);
+				@include bb-site-boxed-widths();
+
+				// modernizr modifier: if no-js, we want the footer to just be static because javascript
+				// won't be able to help with vertical positioning, heights and offsets.
+				.no-js & {
+					@include bb-position($position: static !important);
+				}
+			}
+		}
+
+		// modifier: if we have js, transitions, and transforms – only then its ok to animate it in on
+		// page load. This serves an important purpose – we need to hide the footer long enough that
+		// the desktop header has a chance to fully load, initialize, and collapse (if applicable) so
+		// that we don't see the footer jumping around when it responds to "scroll" and "resize" events
+		// triggered by the different desktop header scenarios.
+		.js.csstransforms.csstransitions & {
+			@include bb-prefix-transition(opacity 0.5s linear 0s);
+			opacity: 0;
+
+			// modifier: .site-footer-desktop--show
+			&--show {
+				opacity: 1;
+			}
+		}
+
+		// breakpoint: mobi expand
+		@include bb-mobi-breakpoint-up() {
+			// show footer elements
+			&,
+			&-spacer {
+				display: block;
+			}
+		}
+	}
+}

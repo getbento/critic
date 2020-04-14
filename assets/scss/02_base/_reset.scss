@@ -1,0 +1,114 @@
+////
+/// @group base-reset
+/// @access public
+//// 
+
+// ============================================================================================================
+// =============== RESET : VARS ===============================================================================
+// ============================================================================================================
+
+/// A image file to add as the `<body>` background image. The image will be tiled by default.
+/// 
+/// **Theme Option:** General Style Settings > Main Content Background Image
+/// 
+/// @type String
+$body-bg-image: null !default;
+
+/// The default `font-weight` to assign to all non-heading elements.
+/// 
+/// **Theme Option:** Type Styles > Body & General Text Styles > Weight
+/// 
+/// @type String bold, normal, 600, etc.
+$body-font-weight: 300 !default;
+
+/// The default `letter-spacing` to assign to all elements.
+/// 
+/// **Theme Option:** Type Styles > Body & General Text Styles > Letter Spacing
+/// 
+/// @type Number
+$body-letter-spacing: null !default;
+
+/// This is used under elements such as heros, maps, galleries, image thumbnails, content overlays, and 
+/// instagram grids – either as a placeholder until the element has loaded, or to fill in the remainder if the
+/// element(s) don't entirely cover the background. For example, an `.instagram-grid` that only has 9 items
+/// instead of 10.
+/// @type Color
+$hidden-bg-color: $body-color !default;
+
+// This is defined in 00_modules/_variables, so we aren't going to SassDoc it again. The reason why this is
+// duplicated is, we need this earlier so other variables can use it, but we also need it later so it can use
+// Bootstraps functions. We probably can delete this, but its not hurting anyone to keep it...just in case.
+$brand-accent: darken($brand-primary, 10%) !default;
+
+// ============================================================================================================
+// =============== RESET : EXPORT =============================================================================
+// ============================================================================================================
+@mixin bb-export-classes-reset() {
+
+	html,
+	body {
+		@include bb-size($width: 100%, $height: 100%);
+	}
+
+	body {
+		font-weight: $body-font-weight;
+		letter-spacing: $body-letter-spacing;
+
+		@if $body-bg-image {
+			@include bb-background-pattern-base($image: $body-bg-image);
+		}
+
+		// modifier: main content is not full width
+		&.is-boxed {
+			background-color: $site-boxed-bg-color;
+
+			@if $site-boxed-bg-image {
+				@include bb-background-pattern-base($image: $site-boxed-bg-image);
+				background-attachment: fixed;
+			}
+		}
+	}
+
+	main {
+		@include bb-position($position: relative, $z-index: 0);
+	}
+
+	hr {
+		@include bb-size($width: 60%);
+	}
+
+	// OVERRIDES
+	// Origin: /bower_components/bootstrap/_type.scss
+	// Reason: The original class makes use of $grid-gutter-width directly, but we have now edited that variable's
+	// 		   use so it can either be a number or a list.
+	.dl-horizontal {
+		// margin-right: -$grid-gutter-width;
+		// margin-left: -$grid-gutter-width;
+		@include bb-gutters-negate($gutter: $grid-gutter-width, $divisor: 1);
+		@include clearfix;
+	}
+
+	button.close {
+		@include bb-prefix-transition(all $btn-transition-duration $btn-transition-ease 0s);
+		opacity: 1;
+
+		// modifier: hover state
+		&:hover {
+			color: $brand-accent;
+			opacity: 1;
+		}
+	}
+
+	// Intended to target WYSIWYG editor only!
+	// Note: This will be overriden properly if you manually resize inside the WYSIWYG editor.
+	p img {
+		@include bb-size($max-width: 100%, $height: auto);
+	}
+
+	// DO NOT put anything displayable inside of this node! We are intentionally hiding it and setting aria-hidden=true.
+	// Other data-bb-track="*" types are applied directly to buttons, etc – so we ONLY want to hide "form".
+	[data-bb-track="form"] {
+		display: none !important;
+	}
+
+}

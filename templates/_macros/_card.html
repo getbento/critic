@@ -1,0 +1,653 @@
+{# ============================================================================
+================== NOTES ======================================================
+============================================================================= #}
+{#
+    Cards are generally used for listing pages, active items, or some type of
+    "featured" callout block. The generally contain a thumbnail, a heading,
+    optional subheadings and content. These cards can also act as a button by
+    providing the url parameter to any macro.
+
+    Many of the `card types` used throughout this theme are very similar, but
+    some with very minor differences – possibly the parameters available or the
+    order in which heading elements should render. Instead of creating one
+    massive macro that figures out what to do for each `card type`, we have
+    decided its easier to maintain and provides more flexibility if we provide
+    a macro for each individual `card type`.
+
+    Please note, cards can have a variable-per-column count that is assigned by
+    "type" via Theme Options. For example, every "Press" card that gets rendered
+    throughout the theme will get the same column count – which can be different
+    than "News", etc.
+#}
+
+{# ============================================================================
+================== PRIVATE: HELPER MACROS =====================================
+============================================================================= #}
+{#
+    Returns the relevant "columns per row" classes based on the value assigned
+    (per type) in Theme Options > Grid Columns. For backwards-compatibility,
+    any "type" that does not have a value assigned will automatically get the
+    original "2 Column" layout.
+
+    Please note, we are currently only supporting 2, 3, and 4 column layouts –
+    and all variants are "2 Column" at the medium breakpoint. The variants are
+    only assigned above the large breakpoint.
+
+    @access private
+    @param {String} type            - A dropdown value directly assigned assigned via the
+                                      Theme Options > Grid Columns > [Column Selector Dropdown] (ie..."products")
+    @returns {String}
+#}
+{% macro _get_column_classes_by_type(type) -%}
+    {%- set default_key = "two" %}
+    {%- set classes = {
+            "two": "col-md-6 card--cols-two",
+            "three": "col-md-6 col-lg-4 card--cols-three",
+            "four": "col-md-6 col-lg-3 card--cols-four"
+        }
+    -%}
+    {#- if the type is defined and exists in theme options... -#}
+    {%- if type and (theme.options.layout.grids and theme.options.layout.grids[type]) -%}
+        {%- set key = theme.options.layout.grids[type] -%}
+        {#- if the theme options value matches a key in the classes dictionary, render it. If not, use the default. -#}
+        {{- classes[key] if classes[key] else classes[default_key] -}}
+    {#- if the type is invalid or missing, just use the default. -#}
+    {%- else -%}
+        {{- classes[default_key] -}}
+    {%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== PRODUCT CARD ===============================================
+============================================================================= #}
+{#
+    Renders an ecommerce product card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} name            - Name of the product.
+    @param {String} price           - Price of the product.
+    @param {String} description     - Description of the product.
+    @param {String} image           - A file path to a product image.
+    @param {String} url             - A url to the product entry page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the product card.
+    @param {String} htag            - The html tag to use for the card's heading tag.
+    @param {String} stag            - The html tag to use for the card's subheading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro product(name, price, description, image, url, use_thumbnails=true, tag="div", htag="h2", stag="p", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("products") %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" href="{{ url }}">{% endif %}
+            {%- if use_thumbnails %}
+            {#
+              Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+              recommended by NCAM's audit to avoid confusion for users who use screen readers.
+            #}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>                        
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <h3 class="{{ htag }} card__heading">{{ name }}</h3>
+            {% if price %}<{{ stag }} class="card__subheading">{{ price }}</{{ stag }}>{% endif %}
+            {{ description }}
+        {% if url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== CATERING CARD ==============================================
+============================================================================= #}
+{#
+    Renders a catering product card. Please note, at a minimum this card
+    requires a uid (ie..."popup-product-992". This is because this card is
+    intended to open a modal containing a Configurable Product Form. Withough a
+    `uid`, there is no way for the modal to open and no way to purchase the
+    product. So, instead, we're just not going to render it.
+
+    @access public
+    @param {String} uid             - UID of the catering product to be used in `data-popup-src`.
+    @param {String} name            - Name of the catering product.
+    @param {String} price           - Price of the catering product.
+    @param {String} description     - Description of the catering product.
+    @param {String} image           - A file path to a catering product image.
+    @param {String} url             - A url to the single catering product page.
+    @param {String} tag             - The html tag to use for the catering product card.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+
+{% macro catering(uid, name, price, description, image, url, tag="div", revealable=true) %}
+  {%- if uid %}
+    {%- set image_fallback = static("images/catering-item-placeholder-704x520.png") %}
+    {%- set has_image = true if (image or theme.options.menu_catering_settings.use_placeholder_image) else false %}
+    {%- set col_classes = _get_column_classes_by_type("catering") %}
+
+    <{{ tag }} class="card card--catering card--left {{ col_classes }} card--condensed{% if revealable %} revealable{% endif %}">
+      <a class="card__btn{% if not has_image %} card__btn--no-media{% endif %}" href="{{ url }}" data-popup="modal" data-popup-src="#{{ uid }}">
+        {%- if has_image %}
+          <div class="card__media">
+            {%- set fallback_alt_text = "" if image|image_url else "Catering image placeholder" -%}            
+            <div class="card__image">
+              <img src="{{ image|image_url|resize(768) if image else image_fallback }}" loading="lazy" {{ bbImage.alt_text(image, fallback_alt_text, True) }}>
+            </div>
+          </div>
+        {%- endif %}
+        <div class="card-content{% if not theme.options.menu_catering_settings.disable_content_margin %} card-content--boxed{% endif %}">
+          <div class="card-content__details">
+            <p class="card-content__title">{{ name }}</p>
+              {%- if description and not theme.options.menu_catering_settings.hide_description %}
+                {{ description|truncatechars_html(130)|replace(" ...", "...") }}
+              {%- endif %}
+          </div>
+          <div class="card-content__price">
+            {% if price != '0.00' and price != '0' %}
+              <span>{{ price }}</span>
+            {% endif %}
+          </div>
+        </div>
+      </a>
+    </{{ tag }}>
+  {%- endif %}
+{% endmacro %}
+
+{#
+    Renders a section specifically structured to hold a list of `card--catering` elements.
+    This section differs from other sections because it utilizes css flexbox, a condensed grid,
+    and left-aligned. Instead of copying and pasting this "wrapper" everywhere, this macro allows
+    us to render identical sections from anywhere.
+
+    IMPORTANT: Please note, this macro is intended to be used by `call catering_listing_wrap()`
+    where the `caller()` is rendered using the `catering()` macro.
+
+    Example:
+        {% call bbCard.catering_listing_wrap(category_name="My Category") %}
+            {% for card in cards %}
+                {{ bbCard.catering(...) }}
+            {% endblock %}
+        {% endcall %}
+
+    @access public
+    @param {String} category_name   - Name/Title of the category. If none is provided, no header will render.
+    @param {String} tag             - The html tag to use for the wrap element.
+    @param {String} htag            - The html tag to use for the listing's heading tag.
+    @returns {HTML}
+#}
+{% macro catering_listing_wrap(category_name, tag="section", htag="h2") %}
+    <{{ tag }}{% if category_name %} id="{{ category_name|slugify }}"{% endif %} class="content container">
+        {%- if category_name %}
+            <div class="revealable">
+                <{{ htag }} class="card-listing-heading card-listing-heading--left">{{ category_name }}</{{ htag }}>
+            </div>
+        {%- endif %}
+        <div class="card-listing--flex card-listing--condensed row">
+            {#- caller should be a list of rendered `.card--catering` elements.  #}
+            {{ caller() }}
+        </div>
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== JOBS CARD ==================================================
+============================================================================= #}
+{#
+    Renders a jobs entry card. Please note, individual jobs box entries does not
+    have a url, so these cards are never (for now) clickable.
+
+    @access public
+    @param {String} name            - Name/Title of the job opening.
+    @param {String} description     - Description of the job opening.
+    @param {String} image           - A file path to a product image.
+    @param {String} tag             - The html tag to use for the job card.
+    @param {String} htag            - The html tag to use for the job card's heading tag.
+    @param {Boolean} leftalign      - True to left align text. false will center text.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro job(name, description, tag="div", htag="h2", leftalign=true, revealable=false) %}
+    {%- set col_classes = _get_column_classes_by_type("jobs") %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+    <{{ tag }} class="card {% if leftalign %}card--left {% endif %}{{ col_classes }}{% if revealable %} revealable{% endif %}">
+        <{{ htag }} class="{{ htag_class }}card__heading">{{ name }}</{{ htag }}>
+        {{ description }}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== MENU CARD ==================================================
+============================================================================= #}
+{#
+    Renders a single menu card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} name            - Name/Title of the menu.
+    @param {String} image           - A file path to a menu image.
+    @param {String} content         - The menu description/content.
+    @param {String} url             - A url to the single menu entry page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the menu card.
+    @param {String} htag            - The html tag to use for the menu card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro menu(name, image, content, url, use_thumbnails=true, tag="div", htag="h2", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("menus") %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" href="{{ url }}">{% endif %}
+            {%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail" {% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <{{ htag }} class="{{ htag_class }}card__heading">{{ name }}</{{ htag }}>
+            {{ content }}
+        {% if url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== VENUE CARD =================================================
+============================================================================= #}
+{#
+    Renders a single venue card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button. Also, this
+    card can be configured to use the url parameter to navigate to the
+    specified url, or open a popup gallery of images that exists at the
+    specified url.
+
+    Please note, there is a slight difference between how the venue card
+    renders on the Private Events template and inside a Two Column Featured Box.
+    - If it is on the Private Events template, we don't want the content to be
+      included in the hyperlinked text, just in case additional hyperlinks (<a>)
+      are included in the content itself.
+    - If it is in the Two Column Featured Box, we want the content to be included
+      in the hyperlink/button.
+
+    @access public
+    @param {String} name            - Name/Title of the venue.
+    @param {String} description     - Description of the venue.
+    @param {String} capacity        - Capacity of the venue.
+    @param {String} append          - Additional content to include after the capacity.
+    @param {String} image           - A file path to a venue image.
+    @param {String} url             - A url to the single venue page.
+    @param {Boolean} is_gallery     - False will navigate to the url. True uses the url to open a popup gallery.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the venue card.
+    @param {String} htag            - The html tag to use for the venue card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro venue(name, description, capacity, append, image, url, is_gallery=false, use_thumbnails=true, tag="div", htag="h2", revealable=true) %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+    {# -
+        Cache the content because it may be included inside or outside the <a> depending on
+        if is_gallery is true or false. (See description above for more information)
+    #}
+    {%- set inner_content %}
+        <{{ htag }} class="{{ htag_class }}card__heading">{{ name }}</{{ htag }}>
+        {{ description }}
+        {% if capacity %}<p><strong>Capacity:</strong> {{ capacity }}</p>{% endif %}
+        {{ append }}
+    {%- endset %}
+
+    {%- set col_classes = _get_column_classes_by_type("venues") %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" aria-label="{{ name }} {% if is_gallery %}Image Gallery{% endif %}" href="{{ url }}"{% if is_gallery %} data-popup="gallery"{% endif %}>{% endif %}
+            {%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+             {%- if not is_gallery %}{{ inner_content }}{% endif %}
+        {% if url %}</a>{% endif %}
+        {%- if is_gallery %}{{ inner_content }}{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== LOCATION CARD ==============================================
+============================================================================= #}
+{#
+    Renders a single location card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} name            - Name/Title of the location.
+    @param {String} image           - A file path to a location image.
+    @param {String} url             - A url to the single location page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the location card.
+    @param {String} htag            - The html tag to use for the location card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro location(name, image, url, use_thumbnails=true, tag="div", htag="h2", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("locations") %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        <a class="card__btn" href="{{ url }}">
+            {%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail" {% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <h3 class="{{ htag }} card__heading">{{ name }}</h3>
+        </a>
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== TEAM CARD ==================================================
+============================================================================= #}
+{#
+    Renders a single team member card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} name            - Name of the team member.
+    @param {String} title           - Title/Position of the team member.
+    @param {String} image           - A file path to the team member image.
+    @param {String} content         - Content/Description of the team member.
+    @param {String} url             - A url to the single team member page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the team member card.
+    @param {String} htag            - The html tag to use for the team member card's heading tag.
+    @param {String} stag            - The html tag to use for the team member card's subheading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro team(name, title, image, content, url, use_thumbnails=true, tag="div", htag="h2", stag="h4", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("team") %}
+    {# {%- set htag_class = "h2 " %} #}
+	<{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" data-popup="team" href="{{ url }}">{% endif %}
+            {%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>                        
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <h3 class="{{ htag }} card__heading">{{ name }}</h3>
+            {% if title %}<div class="{{ stag }} card__subheading">{{ title }}</div>{% endif %}
+            {{ content }}
+        {% if url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== NEWS CARD ==================================================
+============================================================================= #}
+{#
+    Renders a single news article card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} title           - Title of the news article.
+    @param {String} image           - A file path to the news article image.
+    @param {String} content         - Content/Description of the news article.
+    @param {String} url             - A url to the news article page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the news article card.
+    @param {String} htag            - The html tag to use for the news article card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro news(title, image, content, url, use_thumbnails=true, tag="div", htag="h2", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("news") %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+	<{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" href="{{ url }}">{% endif %}
+        	{%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <{{ htag }} class="{{ htag_class }}card__heading">{{ title }}</{{ htag }}>
+            {{ content }}
+        {% if url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== EVENTS CARD ================================================
+============================================================================= #}
+{#
+    Renders a single event card. Please note, if you do not provide a url,
+    the card will not be rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} title           - Title of the event.
+    @param {String} image           - A file path to the event image.
+    @param {String} content         - Content/Description of the event.
+    @param {String} url             - A url to the event page.
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the event card.
+    @param {String} htag            - The html tag to use for the event card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro events(title, image, content, url, use_thumbnails=true, tag="div", htag="h2", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("events") %}
+    {%- set htag_class = "" if (htag == "h2") else "h2 " %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url %}<a class="card__btn" href="{{ url }}">{% endif %}
+            {%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <{{ htag }} class="{{ htag_class }}card__heading">{{ title }}</{{ htag }}>
+            {{ content }}
+        {% if url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== PRESS CARD =================================================
+============================================================================= #}
+{#
+    Renders a press article card. Please note, if you do not provide a url, the
+    card will not be rendered as a hoverable/clickable button. Also note, press
+    articles can be an article on a third-party website or a PDF file. There are
+    (currently) no internal urls to press article pages.
+
+    IMPORTANT: Please note that the "source" is rendered using the subheading
+    tag but uses the .card__heading class, and the "title" is rendered using
+    the heading tab but the .card__subheading class. This swap is done on
+    purpose. (08.15.16)
+
+    @access public
+    @param {String} title           - Title of the press article.
+    @param {String} source          - Source/Publication of the press article.
+    @param {String} content         - Content/Description of the press article.
+    @param {String} image           - A file path to the press article image.
+    @param {String} external_url    - URL to the external article on a third-party site.
+    @param {String} file            - A file path to a PDF of the press article (takes precedence over external_url).
+    @param {Boolean} use_thumbnails - Include the thumbnail area regardless of whether an image is provided.
+    @param {String} tag             - The html tag to use for the press article card.
+    @param {String} htag            - The html tag to use for the press article card's heading tag.
+    @param {String} stag            - The html tag to use for the press article card's subheading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+{% macro press(title, source, content, image, external_url, file, use_thumbnails=true, tag="div", htag="h2", stag="h3", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("press") %}
+    {%- set stag_class = "" if (stag_class == "h2") else "h2 " %}
+	<{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if file or external_url %}<a class="card__btn" href="{{ file if file else external_url }}" target="_blank" rel="noopener">{% endif %}
+        	{%- if use_thumbnails %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            {% if source %}<{{ stag }} class="{{ stag_class }}card__heading">{{ source }}</{{ stag }}>{% endif %}
+            <{{ htag }} class="card__subheading">{{ title }}</{{ htag }}>
+            {{ content }}
+        {% if file or external_url %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ======================================================================================
+================== TICKETED EVENTS CARD =================================================
+======================================================================================= #}
+{#
+    Removed role='image'/aria-label={alt_text} aka (bbImage.alt_text) because it is strictly decorative,
+    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+#}
+
+{% macro ticketed_event(title, date, start_time, categories, summary, image, url, tag="div", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("ticketed_events") %}
+    {%- set categories = categories|map(attribute='name')|join(', ') %}
+    <{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        {% if url%}<a class="card__btn" href="{{ url }}">{% endif %}
+            {%- if image and image|length %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail" {% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                        {% if image %}
+                            <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+            {%- endif %}
+            <h3 class="card__heading">{{ title }}</h3>
+            <h2 class="card__subheading">{{ date }} {{ start_time }}</h2>
+            <h2 class="card__subheading">{{ categories }}</h2>
+            <p>{{ summary }}</p>
+        {% if url  %}</a>{% endif %}
+    </{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== GALLERY CARD ===============================================
+============================================================================= #}
+{#
+    Renders a single gallery card. Gallery cards can be configured to click
+    through to the corresponding gallery page, or to open a popup gallery in
+    place. Please note, if you do not provide a url, the card will not be
+    rendered as a hoverable/clickable button.
+
+    @access public
+    @param {String} title           - Title of the gallery.
+    @param {List} images            - Array of image file paths.
+    @param {String} content         - Content/Description of the gallery.
+    @param {String} url             - A url to the gallery page.
+    @param {Boolean} ajaxable       - True opens a popup gallery. false navigates to the gallery page.
+    @param {String} tag             - The html tag to use for the gallery card.
+    @param {String} htag            - The html tag to use for the gallery card's heading tag.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro gallery(title, images, content, url, ajaxable=true, tag="div", htag="h2", revealable=true) %}
+	{%- if images and images|length > 0 %}
+        {%- set col_classes = _get_column_classes_by_type("galleries") %}
+        {%- set htag_class = "" if (htag_class == "h2") else "h2 " %}
+		<{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+	        {% if url %}<a class="card__btn" aria-label='Open {{ title }} Gallery' href="{{ url }}"{% if ajaxable %} data-popup="gallery-ajax"{% endif %}>{% endif %}
+                <div class="card__media">
+                    <div class="card__image image-thumbnail" style="background-image: url('{{ images.0|image_url }}');">
+                        {% if images.0 %}
+                            <img class="sr-only" {{ bbImage.alt_text(images.0, img=True) }}>
+                        {% endif %}
+                    </div>
+                </div>
+	            <{{ htag }} class="{{ htag_class }}card__heading">{{ title }}</{{ htag }}>
+                {{ content }}
+	       {% if url %}</a>{% endif %}
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+    Renders a gallery image card – representing a single image in a gallery.
+    A gallery image card will open a popup gallery and automatically scroll the
+    gallery to show this image's index.
+
+    @access public
+    @param {String} image           - A file path to this gallery image card's image.
+    @param {Int} index              - What index/position is this image in the gallery? (0-based)
+    @param {String} slug            - A slug/id representing the gallery this image belongs to.
+    @param {String} tag             - The html tag to use for the gallery image card.
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro gallery_item(image, index, slug, tag="div", revealable=true) %}
+    {%- set col_classes = _get_column_classes_by_type("galleries") %}
+	<{{ tag }} class="card {{ col_classes }}{% if revealable %} revealable{% endif %}">
+        <a class="card__btn" aria-label='Open {{ slug }}' href="{{ image|image_url }}" data-popup="gallery"{% if index is defined %}data-popup-gallery-index="{{ index }}"{% endif %}{% if slug %} data-popup-src="#{{ slug }}"{% endif %}>
+            <div class="card__media">
+                <div class="card__image image-thumbnail" {% if image %} style="background-image: url('{{ image|image_url }}');"{% endif %}>
+                    {% if image %}
+                        <img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+                    {% endif %}
+                </div>
+            </div>
+        </a>
+    </{{ tag }}>
+{% endmacro %}

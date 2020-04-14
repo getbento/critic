@@ -1,0 +1,377 @@
+{# ============================================================================
+================== PRIVATE UTILITIES ==========================================
+============================================================================= #}
+{#
+	This macro formats a single price by following these procedures...
+		- Add the currency symbol in a `<span>` (hidden via css)
+		- Wrap if a `<strong>` tag if desired
+		- Uses the expanded (1.00) or simplified (1) money format based on
+		  Theme Options > Menus > Show Prices Exactly as Entered
+		- `money` and `round_money` return inconsistent results regarding
+		  whether to include the `$` or not...so, we're stripping it out
+		  ourselves to ensure the value is normalized.
+
+	ex: <strong><span class="menu-item__currency">$</span>12</strong>
+
+    all_rounding  -> hide all zeros after decimal point, round to tenth
+    some_rounding -> hide zeros after decimal point only for whole numbers
+    no_rounding   -> show two decimal places
+
+    "1.00"|all_rounding    -> "1"
+       "1"|all_rounding    -> "1"
+    "1.50"|all_rounding    -> "1.5"
+    "1.55"|all_rounding    -> "1.6"
+
+    "1.00"|some_rounding   -> "1"
+       "1"|some_rounding   -> "1"
+    "1.50"|some_rounding   -> "1.50"
+
+    "1.00"|no_rounding     -> "1.00"
+       "1"|no_rounding     -> "1.00"
+    "1.50"|no_rounding     -> "1.50"
+
+	@access private
+	@param {String} value 			- The currency value. (12.50)
+	@param {String} currency 		- What is the currency label? ($)
+	@param {Boolean} strong 		- Should be bold the output?
+	@returns {HTML}
+#}
+{% macro _format_currency(value="", currency="$", strong=false) -%}
+  {%- set rounding = theme.options.menu_catering_settings.price_rounding %}
+	{%- if strong -%}<strong>{%- endif -%}
+		{%- if currency and value -%}<span class="menu-item__currency">{{ currency }}</span>{%- endif -%}
+
+    {%- if rounding == 'no_rounding' and value -%}
+      {{- (value|money|replace("$", ""))  -}}
+
+    {%- elif rounding == 'some_rounding' and value -%}
+      {{- (value|round_money|replace("$", ""))  -}}
+
+    {%- elif rounding == 'all_rounding' and value -%}
+      {{- (value|partial_round_money|replace("$", ""))  -}}
+
+    {%-else -%}
+      {{-  "" -}}
+    {%- endif -%}
+
+	{%- if strong -%}</strong>{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== MENU TABS ==================================================
+============================================================================= #}
+{#
+	This macro renders a list of menus contained in an interactive "tabs"
+	container – allowing only one active menu to be shown at a time. This component
+	is also connected to the browser's url/address bar and will update on hash
+	changes that are specifically relevant to this component.
+
+	Note: Tab buttons have an id of "#tab-[slug]", href="#[slug]", and
+	aria-controls="[slug]". Tab Panel have an id="[slug]" and
+	aria-labelledby="tab-[slug]". The most important thing is that the tab
+	button's href is pointing to the tab panel's id, but it is also important
+	to understand what values are being used to connect the various aria-*
+	attributes.
+
+	@access public
+	@param {List} menus 			- A list of menu objects. (boxes.menus.all)
+	@returns {HTML}
+#}
+{% macro tabs(menus) %}
+	{%- if menus and menus|length > 0 %}
+		<section id="menus" class="content revealable">
+			<div class="tabs">
+				{# tab nav/buttons #}
+				<ul class="tabs-nav" role="tablist">
+					{% for menu in menus %}
+						<li role="presentation">
+							<a id="tab-{{ menu.slug }}"
+								class="btn btn-tabs{% if loop.first %} active{% endif %}"
+								href="#{{ menu.slug }}"
+								role="tab"
+								aria-controls="{{ menu.slug }}"
+								aria-selected="{{ 'true' if loop.first else 'false' }}"
+								data-order="{{ loop.index }}"
+								tabindex="{{ '0' if loop.first else '-1' }}">{{ menu.name }}</a>
+						</li>
+					{% endfor %}
+				</ul>
+				{# tab panels #}
+				<div class="tabs-content">
+					{% for menu in menus %}
+						<section id="{{ menu.slug }}"
+								class="tabs-panel{% if loop.first %} tabs-panel--active tabs-panel--show{% endif %}"
+								role="tabpanel"
+								aria-labelledby="tab-{{ menu.slug }}"
+								aria-selected="{{ 'true' if loop.first else 'false' }}">
+							{{ menu_single(menu) }}
+						</section>
+					{% endfor %}
+				</div>
+			</div>
+		</section>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MENU SINGLE ================================================
+============================================================================= #}
+{#
+	This is our outer-most menu object to render a single menu. This macro renders...
+	- the menu's description and/or file button (if applicable)
+	- the different menu layouts
+	- and the menu's gallery (if applicable)
+
+	Note: Each menu piece/fragment is delegated to different macros for individual
+	rendering. If we tried to do it in a single macro, it would be huge and very
+	difficult to maintain or update.
+
+	Note: We are only really using this macro page pages that contain multiple
+	menus. On a Single Box page, we are probably going to be constructing our
+	structure using a real hero/intro or gallery elements is a slightly different
+	order....hence, the reason for encapsulating many of the macros below.
+
+	@access public
+	@param {Dict} menu 			- A single menu object. (boxes.menus.all.0)
+	@returns {HTML}
+#}
+{% macro menu_single(menu) %}
+	{%- if menu %}
+		{{ description(content=menu.description, file=menu.file) }}
+		{{ layouts(menu) }}
+		{{ gallery(imgs=menu.images) }}
+	{%- endif %}
+{% endmacro %}
+
+
+{# ============================================================================
+================== MENU LAYOUTS ===============================================
+============================================================================= #}
+{#
+	This macro decides how to render each section (based on layout slug) and
+	the data source of each section, and then delegates the rendering of the
+	action sections to the sections() macro.
+
+	@access public
+	@param {Dict} menu 			- A single menu object. (boxes.menus.all.0)
+	@returns {HTML}
+#}
+{% macro layouts(menu) %}
+	{%- if menu %}
+		{%- if menu.layout.slug == "basic" %}
+			{%- if menu.sections and menu.sections|length > 0 %}
+				<div class="container-sm">
+					{{ sections(menu.sections) }}
+				</div>
+			{%- endif %}
+		{%- elif menu.layout.slug == "two_columns" %}
+			<div class="container">
+				<div class="row">
+					<div class="col-md-6">
+						{{ sections(menu.layout.blocks.column_one.sections) }}
+					</div>
+					<div class="col-md-6">
+						{{ sections(menu.layout.blocks.column_two.sections) }}
+					</div>
+				</div>
+			</div>
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MENU DESCRIPTION ===========================================
+============================================================================= #}
+{#
+	Renders a menu description. Regardless of layout, the description and file
+	button always render the same if either exists.
+
+	@access public
+	@param {String} content 	- The menu's content/description.
+	@param {String} file		- A file path to a menu PDF.
+	@returns {HTML}
+#}
+{% macro description(content="", file="") %}
+	{%- if content or file %}
+		<div class="menu-description container-sm">
+			{{ content }}
+			{% if file %}<a href="{{ file }}" class="btn btn-brand" target="_blank" rel="noopener" download>Download PDF</a>{% endif %}
+		</div>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MENU SECTIONS ==============================================
+============================================================================= #}
+{#
+	This macro is responsible for rendering a list of sections and delegates the
+	rendering of a single section to the appropriate macro. (ie...itemized or
+	text section)
+
+	Note: Layouts are decided and handled in the menu_single() macro. A list of sections
+	renders the same regardless of layout type, so by this point, we don't care
+	what the layout is.
+
+	@access public
+	@param {List} sections 		- An array of menu sections. (boxes.menus.all.0.sections)
+	@returns {HTML}
+#}
+{% macro sections(sections=[]) %}
+	{%- if sections and sections|length > 0 %}
+		{%- for section in sections %}
+			{%- if section.is_itemized %}{{ section_itemized(section) }}
+			{%- else %}{{ section_text(section) }}
+			{%- endif %}
+		{%- endfor %}
+	{%- endif %}
+{% endmacro %}
+
+{#
+	This macro renders an itemized section including...
+	- a header that includes the section name and/or description
+	- the list of menus items in the section
+
+	Note: The rendering of menu items is delegated to the item() macro.
+
+	@access public
+	@param {Dict} section 		- A menu section object. (boxes.menus.all.0.sections.0)
+	@returns {HTML}
+#}
+{% macro section_itemized(section) %}
+	{%- if section %}
+		{% set has_header = true if (section.name or section.description) else false %}
+		{% set has_items = true if (section.menu_items and section.menu_items|length > 0) %}
+		{%- if has_header or has_items %}
+			<section class="menu-section">
+				{%- if has_header %}
+					<div class="menu-section__header">
+						{% if section.name %}<h2>{{ section.name }}</h2>{% endif %}
+						{{ section.description }}
+					</div>
+				{%- endif %}
+				{%- if has_items %}
+					<ul>
+						{%- for menu_item in section.menu_items %}
+							{{ item(menu_item) }}
+						{%- endfor %}
+					</ul>
+				{%- endif %}
+			</section>
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{#
+	This macro renders a simple text section. (ie...itemized=false)
+
+	@access public
+	@param {Dict} section 		- A menu section object. (boxes.menus.all.0.sections.0)
+	@returns {HTML}
+#}
+{% macro section_text(section) %}
+	{%- if section and section.description %}
+		<section class="menu-section menu-section--text">
+			{{ section.description }}
+		</section>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MENU ITEM ==================================================
+============================================================================= #}
+{#
+	This macro handles the complete rendering of a single menu item including
+	(where applicable)...
+	- Image
+	- Name
+	- Description
+	- List of Prices that may include...
+		-- Price and/or Price Max
+		-- Calories and/or Calories Max
+	- Concatenated list of Dietary info including...
+		-- Spicy Rating
+		-- List of Allergens
+		-- List of Dietary Types
+	- List of Menu Item Addons that may include...
+		-- Addon Name
+		-- Price and/or Price Max
+
+	@access public
+	@param {Dict} item 			- A menu section item object. (boxes.menus.all.0.sections.0.menu_items.0)
+	@returns {HTML}
+#}
+{% macro item(item) %}
+	{%- if item %}
+		<li class="menu-item">
+			{% if item.image %}<div class="image-thumbnail" style="background-image: url('{{ item.image|image_url }}');"><img class="sr-only" alt="{{ item.name }}"></div>{% endif %}
+			{% if item.name %}<p class="menu-item__heading">{{ item.name }}</p>{% endif %}
+			{% if item.description %}<p>{{ item.description }}</p>{% endif %}
+			{# prices #}
+			{%- if item.prices and item.prices|length > 0 %}
+				{%- for price in item.prices %}
+					{% set prices = [] %}
+					{% set calories = [] %}
+					{% if price.price %}{% do prices.append(_format_currency(value=price.price, strong=true)) %}{% endif %}
+					{% if price.price_max %}{% do prices.append(_format_currency(price.price_max)) %}{% endif %}
+					{% if price.calories %}{% do calories.append(price.calories) %}{% endif %}
+					{% if price.calories_max %}{% do calories.append(price.calories_max) %}{% endif %}
+					<p class="menu-item__details menu-item__details--price">
+						{{- price.label -}}{% if prices|length > 0 %} {{ prices|join(" - ") }}{% endif %}{% if price.unit %} per {{ price.unit }}{% endif %}{% if calories|length > 0 %} ({{ calories|join(" - ") }} cal.){% endif %}
+					</p>
+				{%- endfor %}
+			{%- endif %}
+			{# dietary info #}
+			{% set dietary_info = [] %}
+			{% if item.spicy_rating %}{% do dietary_info.append(item.spicy_rating) %}{% endif %}
+			{% if item.allergens and item.allergens|length > 0 %}{% set dietary_info = dietary_info + item.allergens %}{% endif %}
+			{% if item.dietary_types and item.dietary_types|length > 0 %}{% set dietary_info = dietary_info + item.dietary_types %}{% endif %}
+			{%- if dietary_info|length > 0 %}
+				<p class="menu-item__details menu-item__details--info">
+					<small>{{ dietary_info|join(", ") }}</small>
+				</p>
+			{%- endif %}
+			{# addons #}
+			{%- if item.addons and item.addons|length > 0 %}
+				{%- for addon in item.addons %}
+					{% set addon_prices = [] %}
+					{% if addon.price %}{% do addon_prices.append(_format_currency(addon.price)) %}{% endif %}
+					{% if addon.price_max %}{% do addon_prices.append(_format_currency(addon.price_max)) %}{% endif %}
+					<p class="menu-item__details menu-item__details--addon">
+						{{- (addon.name) if addon.name else "" -}}{% if addon_prices|length > 0 %} {{ addon_prices|join(" - ") }}{% endif %}
+					</p>
+				{%- endfor %}
+			{%- endif %}
+		</li>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MENU GALLERY ===============================================
+============================================================================= #}
+{#
+	This macro handles the rendering of a single menu gallery if applicable.
+	Please note, the major difference between a menu gallery and a gallery on
+	any other page is – (1) this isn't a full-width gallery as its wrapped in
+	a .container inside a tab, and (2) we are setting revealable=false because
+	there is already an in/out animation on the tab itself...so no real point to
+	animating the gallery individually.
+
+	@access public
+	@param {List} imgs 			- An array of image file paths.
+	@returns {HTML}
+#}
+{% macro gallery(imgs=[]) %}
+	{%- if imgs and imgs|length > 0 %}
+		<div class="menu-gallery container">
+			{{
+				bbMedia.gallery(
+					imgs=imgs,
+					type="std",
+					dimmed=false,
+					tag="div",
+					revealable=false
+				)
+			}}
+		</div>
+	{%- endif %}
+{% endmacro %}

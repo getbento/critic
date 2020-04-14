@@ -1,0 +1,218 @@
+////
+/// @group components-media
+/// @access public
+////
+
+// ============================================================================================================
+// =============== MEDIA : VARS ===============================================================================
+// ============================================================================================================
+/// Generic color to apply to a media elements background – usually only visible before the media has loaded or
+/// when media doesn't completely cover the entire background. For example – 9 instagram images instead of 10.
+/// @type Color
+$media-remainder-bg-color: $hidden-bg-color !default;
+
+/// Background color to apply to `.gallery` instances – usually only visible before the media has loaded.
+/// @type Color
+$gallery-bg-color: $media-remainder-bg-color !default;
+
+/// There are 3 types of gallery variants: `.gallery--std`, `.gallery--full`, and `gallery--popup`. They share
+/// many similar common styles, but are different enough they we need to add some extra flexibility beyond just
+/// simple sizing. This Map is a centralized place that allows us to add any valid css rules per breakpoint per
+/// gallery variant type. Please note, the breakpoint key must match an available key inside `$grid-breakpoints`.
+/// Also, its important to understand that this variable does not create gallery types – it simply assigns
+/// additional rules to existing gallery types.
+/// @type Map
+$gallery-item-rules-breakpoints: (
+  std: (xs: (height: 20rem), md: (padding-top: 56.25%, height: auto)),
+	full: (xs: (height: 20rem), md: (height: 100vh)),
+	popup:
+		(
+			xs: (padding: 0),
+			sm: (padding: 2rem 5rem),
+			md: (padding: 5rem 8rem),
+			lg: (padding: 10rem 15rem)
+		),
+  catering_store: (xs: (height: 20rem), md: (padding-top: 70%, height: auto)),
+  catering_store_srcset: (xs: (height: 20rem))
+) !default;
+
+/// Background color to apply to `.gallery-grid` instances. Only visible when column heights don't match and
+/// the *Match Column Heights* option is turned off.
+/// @type Color
+$gallery-grid-bg-color: $media-remainder-bg-color !default;
+
+/// At which breakpoint should the `.gallery-grid` go from stacked to side-by-side? Please note, this breakpoint
+/// value must match a key available in `$grid-breakpoints`.
+/// @type String
+$gallery-grid-expand-breakpoint: sm !default;
+
+// Padding for the arrow button when gallery type is catering_store
+$gallery-catering-store-arrow-btn-padding: 0.875rem !default;
+
+/// Background color to apply to `.instagram-grid` instances. Only visible when the images don't cover the
+/// entire background. For example – 9 instagram images instead of the full 10.
+/// @type Color
+$instagram-grid-bg-color: $media-remainder-bg-color !default;
+
+/// Background color to the apply to the outer `instagram-grid__item` element.
+///
+/// **Pro Tip:** If you set `$instagram-grid-active-scale` to a number less than 1, this color will be revealed
+/// creating an effect similar to a growing border on `:hover`.
+///
+/// @type Color
+$instagram-grid-active-bg-color: inherit !default;
+
+/// Scale to apply to the `.instagram-grid__item` element.
+///
+/// **Pro Tip: ** If you set this value to a number less than 1, it will scale down and reveal the
+/// `.instagram-grid__item` background color which would allow you to create an effect that looks similar to
+/// a growing border on `:hover`.
+///
+/// @type Number
+$instagram-grid-active-scale: 1.1 !default;
+
+/// Sizing to apply to `.instagram-grid__item` instances per breakpoint. This allows you to vary the number of
+/// items per row per breakpoint. Please note, each breakpoint key must match an available key in `$grid-breakpoints`.
+/// @type Map
+$instagram-grid-breakpoint-sizes: (
+	xs: 50%,
+	md: 20%
+) !default;
+
+// ============================================================================================================
+// =============== MEDIA : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-media-galleries() {
+	// =========== GALLERY ====================================================================================
+  // block: slick-carousel
+
+  //ADA: changing the carousel structure to use an unordered list, thus need to override some of the default css for ul
+  ul.slick-track {
+    margin-bottom: 0;
+    margin-block-start: 0;
+    margin-block-end: 0;
+	  padding-inline-start: 0;
+	  -webkit-margin-before: 0;
+    -webkit-margin-after: 0;
+    -webkit-margin-start: 0;
+    -webkit-margin-end: 0;
+    -webkit-padding-start: 0;
+    padding: 0;
+  }
+
+	.gallery {
+		@include gallery($gallery-bg-color: $gallery-bg-color);
+	}
+
+	// =========== GALLERY GRID ===============================================================================
+	// block
+	.gallery-grid {
+		@include clearfix;
+		@include bb-size($width: 100%);
+		background-color: $gallery-grid-bg-color;
+		overflow: hidden;
+
+		// element: optional button
+		&__btn {
+			display: block;
+			overflow: hidden;
+		}
+
+		// element
+		&__col {
+			@include bb-size($width: 100%);
+			float: left;
+
+			// immediate child
+			& > img {
+				@include bb-size($width: 100%, $height: auto);
+				display: block;
+			}
+		}
+
+		// element (added via js)
+		&__clip {
+			display: none;
+		}
+
+		// breakpoint
+		@include media-breakpoint-up($gallery-grid-expand-breakpoint) {
+			// element
+			&__col {
+				@include bb-size($width: 50%);
+			}
+
+			// element
+			&__clip {
+				display: block;
+			}
+		}
+	}
+
+	// =========== INSTAGRAM GRID =============================================================================
+	// block: This is the non-carousel instragram gallery.
+  .instagram-grid {
+		@include clearfix;
+		@include bb-size($width: 100%);
+		background-color: $instagram-grid-bg-color;
+
+		// element
+		&__item {
+			// @include bb-size($width: 50%);
+			background-color: $instagram-grid-active-bg-color;
+			overflow: hidden;
+			float: left;
+
+			// immediate child
+			& > a {
+				@include bb-size($width: 100%);
+				@include bb-background-cover-base;
+				@include bb-prefix-transition(
+					all $btn-transition-duration $btn-transition-ease 0s
+				);
+				display: block;
+				padding-top: 100%; // 1:1
+
+				// modifier
+				&:hover {
+					@include bb-prefix-transform(
+						scale(
+							$instagram-grid-active-scale,
+							$instagram-grid-active-scale
+						)
+					);
+				}
+			}
+
+			// breakpoint: sizes
+			@each $key, $val in $instagram-grid-breakpoint-sizes {
+				@if map-has-key($grid-breakpoints, $key) {
+					// if smallest size, we don't need a media query
+					@if map-get($grid-breakpoints, $key) == 0 {
+						@include bb-size($width: $val);
+					}
+					// anything larger than zero requires a media query
+					@else {
+						@include media-breakpoint-up($key) {
+							@include bb-size($width: $val);
+						}
+					}
+				}
+			}
+		}
+	}
+
+
+	// =========== OVERRIDES ==================================================================================
+	// bootstrap
+	.embed-responsive {
+		margin-bottom: 1.4rem; // magic number! to match other .content vertical rhythms.
+	}
+
+	@media (min-width: 992px) {
+		.gallery__item {
+			background-attachment: unset !important;
+		}
+	}
+}

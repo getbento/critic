@@ -1,0 +1,308 @@
+{# ============================================================================
+================== UTILITIES ==================================================
+============================================================================= #}
+{#
+	Checks a list of objects (array of dicts) to see if any of the object have
+	a populated image property. If at least one item in the list has an image,
+	the resulting output for all images should attempt to use images. If no
+	items have an image, then we won't attempt to output any images at all.
+
+	Please note, this macro returns a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+
+	@access public
+	@param {List} list 				- A list of object that should have an "image" property.
+	@returns {Boolean} - "0" or "1"
+#}
+{%- macro use_thumbnails(list) -%}
+	{%- if list and list|length > 0 -%}
+		{%- set total = list|length -%}
+		{#- {%- set total_without_images = list|selectattr("image", "equalto", "")|list|length -%} -#}
+		{#- {%- set total_without_images = (total_without_images + list|selectattr("image", "equalto", none)|list|length) -%} -#}
+		{%- set total_without_images = (list|rejectattr("image")|list|length) -%}
+		{{- 0 if (total <= total_without_images) else 1 -}}
+	{%- endif -%}
+{%- endmacro -%}
+
+{#
+	Gets the url of a page by matching the template used. Please note, this will
+	only match the first occurrence of the template, so be careful how and where
+	you use this.
+
+	@access public
+	@param {String} template 		- A template name (template.html) to lookup
+	@param {String} default_url		- A default url to return if no match is found.
+	@returns {String} - The url if a template is found, and "" if none are found.
+#}
+{%- macro get_url_by_template(template, default_url="") -%}
+	{%- set list = pages.all|selectattr("template", "equalto", template)|list -%}
+	{{- list.0.url if (list and (list|length > 0)) else default_url -}}
+{%- endmacro -%}
+
+{#
+	Gets the slug of a page by matching the template used. Please note, this will
+	only match the first occurrence of the template, so be careful how and where
+	you use this.
+
+	@access public
+	@param {String} template 		- A template name (template.html) to lookup
+	@returns {String} 				- The page slug if a template is found, and "" if none are found.
+#}
+{%- macro get_page_slug_by_template(template) -%}
+	{%- set list = pages.all|selectattr("template", "equalto", template)|list -%}
+	{{- list.0.slug if (list and (list|length > 0)) else "" -}}
+{%- endmacro -%}
+
+{#
+	Gets the slug of a page by matching the page's url. Please note, this will
+	only match the first occurrence of the template, so be careful how and where
+	you use this.
+
+	Important: We can't necessarily count on the url parameter and the `page.url`
+	parameter to be formatted exactly the same, so we have to normalize both using
+	the new `normalize_internal_url` filter. For example, a url like – "about",
+	"/about", or "/about/" will all result in "/about/".
+
+	@access public
+	@param {String} url 		- The url to lookup.
+	@returns {String} - The page's slug if the url is found. "" if it isn't found.
+#}
+{%- macro get_slug_by_url(url) -%}
+	{%- if url -%}
+		{%- set url = url|normalize_internal_url -%}
+		{%- for page in pages.all -%}
+			{%- set page_url = page.url|normalize_internal_url -%}
+			{%- if url == page_url -%}
+				{{- page.slug -}}
+			{%- endif -%}
+		{%- endfor -%}
+	{%- endif -%}
+{%- endmacro -%}
+
+{#
+	Checks a url to see whether it is an internal link (on this domain) or an
+	external link (not on this domain). Its important to understand that our
+	method is not foolproof. To determine whether a link is internal or external
+	we are...
+	1. Ensure the url is defined.
+	2. Splitting the url into an array to get the protocol ["http", "bentobox.com"]
+	3. If the protocol matches a protocol in our list, we are assuming its external.
+	** This means, we still can use things like "ftp", "file", etc, or even "//cdn"
+	   to stay in the same window.
+
+	Please note, this macro returns a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+
+	@access public
+	@param {String} url 			- A url string (relative, absolute, etc)
+	@param {List} protocols 		- An array of protocol strings that are assumed to be external.
+	@returns {Boolean} - "0" or "1"
+#}
+{%- macro is_external_url(url, protocols = ["http", "https"]) -%}
+	{%- if url -%}
+		{%- set segments = url.split("://") -%}
+		{{- 1 if ((segments|length > 1) and (segments.0|trim in protocols)) else 0 -}}
+	{%- else -%}
+		{{- 0 -}}
+	{%- endif -%}
+{%- endmacro -%}
+
+{#
+	Formats a price so that it conveys a +/- adjustment. For example, "1.00"
+	will be formatted as "+$1.00" and "-1.00" will be formatted as "-$1.00".
+	Optionally, we can also ignore zero values (0.00) or return "+$0.00".
+
+	@access public
+	@param {String} price 			- A current price variance value. ("1.00", "-1.00", etc)
+	@param {Boolean} allow_zeros 	- True if we should output "+$0.00" when applicable. False will return nothing
+									  if no price is provided or the price variance is "0.00".
+	@returns {String} - "+$1.00", "-$1.00", "+0.00", or null.
+#}
+{%- macro format_price_variance(price, allow_zero=true) -%}
+	{%- if (price and (price != "0.00")) -%}
+		{%- set sign = "" if (price[0] == "-") else "+" -%}
+		{{- sign ~ price|money -}}
+	{%- else -%}
+		{%- if allow_zero -%}
+			{{- "+$0.00" -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro -%}
+
+{#
+	Formats a price to conditionally use the dollar sign ($) and conditionally
+	include trailing double zeros (.00) if no "cents" have been included. This
+	macro is primarily utiltized on store templates where multiple price
+	instances should reflect a similar formatting.
+
+	IMPORTANT: Please note, this macro DOES NOT support negative prices.
+
+	@access public
+	@param {String} price 				- A current price. ("1.00", "25.49")
+	@param {Boolean} use_dollar_sign	- True will add a dollar sign, false will remove it.
+	@param {Boolean} use_decimal_zeros	- True will add ".00", false will remove it.
+	@returns {String} - "$1.00", "25.00", "$1.25", "25.98", $1", "25".
+#}
+{% macro format_price(price, use_dollar_sign=true, use_decimal_zeros=true) -%}
+	{%- if price -%}
+		{#- dollar sign: always add $, then remove doubled $$ -#}
+		{%- set formatted = ("$" ~ price)|replace("$$", "$") if use_dollar_sign else price|replace("$", "") -%}
+		{#- add zeros: if no ".", then its a whole number -#}
+		{%- set formatted = (formatted ~ ".00") if (use_decimal_zeros and (not "." in formatted)) else formatted -%}
+		{#- zeros: simply remove ".00"  -#}
+		{%- set formatted = formatted|replace(".00", "") if (not use_decimal_zeros) else formatted -%}
+		{#- return it! -#}
+		{{- formatted -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Normalizes the Custom Google Fonts field value into singular WebFontLoader
+	entries. The reason we need to do this is because the UI only provides a
+	single text field to enter values and there are a large number of ways/formats
+	designers have used this field – various formats, multiple fonts per field, etc
+	etc. There are also some quirks (listed below) that make the input/output not
+	always behave the way it should...or the way that its documented that it should.
+	Please review the below documentation carefully to see what the different
+	scenarios are and how we are individually addressing each.
+
+	IMPORTANT: This macro does not directly output/return anything. It is intended
+	to be used with a `{% do normalize_custom_google_font() %}` so that it can update
+	the `list` array reference.
+
+	GOOGLE FONTS AND WEBFONTLOADER QUIRKS (Not sure who is responsible for each quirk)
+
+	- Some fonts can be added by just their name. (ie...Roboto, Open+Sans).
+	  Others can't and require at least one font-weight/style. (ie...Open+Sans+Condensed:300)
+	- Some fonts can have a subset without font-weights/styles (ie...Open+Sans::latin-ext),
+	  Others can't and require at least one font-weight/style. (ie...Open+Sans+Condensed:300:latin-ext)
+	- Google assumes subsets added via `&amp;subset=` can be applied to any family in the pipe-sparated list.
+	  I don't know how it figures out what to do, but it appears it will ignore any subsets on fonts that
+	  don't support that subset.
+
+	@access public
+	@param {String} font 				- The value entered into the Custom Fonts > Google repeater field.
+	@param {List} list					- The current `google_fonts` array created in `templates/_layouts/_base.html`.
+#}
+{% macro normalize_custom_google_font(font, list) -%}
+	{%- if font and ((list is defined) and (list is iterable)) -%}
+		{#- normalize all tick marks (') to quotes -#}
+		{%- set font = font|replace("'", "\"") -%}
+
+		{#-
+			MULTIPLE FAMILES SEPARATED BY PIPE WITH OPTIONAL `&subset=latin-ext,greek,vietnamese`
+			`Alegreya+Sans:300,400,700|Cardo:400,400i,700|Yantramanav:300,400,700`
+			Please note, per the Google Fonts and WebfontLoader doumentation, this should work
+			just fine...and for a while, did. It inexplicibly stopped working, so we aren't going
+			to count on Google Fonts or the loader to get this right. We're gonna do all of our
+			own normalization and formatting here, and ensure we're always providing the loader
+			with singular font entries.
+		-#}
+		{%- if "|" in font -%}
+			{%- set font = font|replace("\"", "")|replace("&amp;", "&") -%}
+
+			{#- If someone copied the `&amp;subset=` part directly from Google Fonts, even though
+				this "should" work – we have a lot of work to do because it doesn't. :(
+			-#}
+			{%- if "&subset=" in font -%}
+				{%- set components = font.split("&subset=") -%}
+				{#- create array of families -#}
+				{%- set families = (components.0).split("|") if (components|length > 0) else "" -%}
+				{#  captures subsets #}
+				{%- set subsets = components.1|trim if (components|length == 2) else false -%}
+
+				{#- loop through all the families and attempt to figure out their formatting
+					and fix where necessary. -#}
+				{%- for family in families -%}
+					{%- set font_segments = family.split(":") -%}
+					{%- set font_segments_total = font_segments|length -%}
+					{#-
+						FAMILY ONLY: `Open+Sans`
+						- Add subsets (if defined) after a double colon.
+					-#}
+					{%- if font_segments_total == 1 -%}
+						{%- set gfont = font_segments.0|trim -%}
+						{%- set gsubsets = ("::" ~ subsets) if subsets else "" -%}
+						{%- do list.append("\"" ~ gfont ~ gsubsets  ~ "\"") -%}
+
+					{#-
+						FAMILY AND WEIGHTS: `Open+Sans:300`
+						- Add segments to array in their specific slots.
+						- If subsets are defined, add them as the 3rd slot.
+						- Join with a single colon.
+					-#}
+					{%- elif font_segments_total == 2 -%}
+						{%- set gfont = [font_segments.0|trim, font_segments.1|trim] -%}
+						{%- if subsets -%}{%- do gfont.append(subsets) -%}{%- endif -%}
+						{%- do list.append("\"" ~ gfont|join(":")  ~ "\"") -%}
+
+					{#-
+						FAMILY, WEIGHTS/STYLES, SUBSETS: `Open+Sans:300:latin-ext` or `Open+Sans::latin-ext`
+						- Add family and weights/styles to array in their specific slots.
+						- If subsets are defined, append them to the subset-segment directly,
+						  join them with a comma (",") and then append it to our initial array
+						  which puts subsets it in the 3rd slot.
+						- Join with a single colon. If weights/styles are empty for some reason,
+						  you will automatically get a double colon (::), which is a good thing.
+					-#}
+					{%- elif font_segments_total == 3 -%}
+						{%- set gfont = [font_segments.0|trim, font_segments.1|trim] -%}
+						{%- set gsubsets = [font_segments.2|trim] -%}
+						{%- if subsets -%}{%- do gsubsets.append(subsets) -%}{%- endif -%}
+						{%- do gfont.append(gsubsets|join(",")) -%}
+						{%- do list.append("\"" ~ gfont|join(":")  ~ "\"") -%}
+
+					{%- endif -%}
+				{%- endfor -%}
+
+			{#-
+				Pipes exist (copied from Google Fonts), but no subsets are included via `&amp;subset=`.
+				In this scenario, we have to assume the formats of each font entry is correct and valid.
+			-#}
+			{%- else -%}
+				{%- set segments = font.split("|") -%}
+				{%- for seg in segments -%}
+					{%- set gfont = seg|replace("\"", "")|trim -%}
+					{%- do list.append("\"" ~ gfont  ~ "\"") -%}
+				{%- endfor -%}
+
+			{%- endif -%}
+
+		{#-
+			If this wasn't copied directly from Google Fonts > Embed, there are a couple of
+			different ways that this "could" be entered. So, we have to figure out which format
+			this is entered in, and normalize it back to a standard single entry.
+		-#}
+		{%- else -%}
+			{#-
+				MULTIPLES FAMILES ENTERED AS ARRAY: LEGACY/BACKWARDS-COMPATIBILITY PATCH
+				`'Shrikhand::latin', 'Work+Sans::latin'`
+				If value is an "array", we're going to split this up into individual
+				entries, normalize the output by stripping any remaining quotes (""),
+				trim it, and then wrap it back in quotes ("") so its a valid string
+				to be placed in the array.
+			-#}
+			{%- if "\"," in font -%}
+				{%- set segments = font.split("\",") -%}
+				{%- for seg in segments -%}
+					{%- set gfont = seg|replace("\"", "")|trim -%}
+					{%- do list.append("\"" ~ gfont  ~ "\"") -%}
+				{%- endfor -%}
+
+			{#-
+				SINGLE FAMILY PER ENTRY: RECOMMENDED!!!
+				`Open+Sans+Condensed:300,700:cyrillic`
+				If this appears to be entered correctly and as a singular font family
+				entry – we have to normalize its output by stripping any quotes (""),
+				trim it, and then wrap it back in quotes ("") so its a valid javascript
+				string to be placed in the array.
+			-#}
+			{%- else -%}
+				{%- set gfont = font|replace("\"", "")|trim -%}
+				{%- do list.append("\"" ~ gfont  ~ "\"") -%}
+			{%- endif -%}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}

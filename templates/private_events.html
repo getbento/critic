@@ -1,0 +1,190 @@
+{% extends "_layouts/_basic.html" %}
+
+{# ============================================================================
+================== IMPORTANT NOTES ============================================
+============================================================================= #}
+{#
+	The Private Events Form (popup) associated with this page template/wireframe
+	can (and will) also be displayed inside a single Venue Box template –
+	`templates/boxes/private_events_venue.html`. However, there is no good way
+	to tie these two together in a more organized manner.
+
+	For this reason, please ensure that if you make changes to this template
+	that you are also ensuring the same applicable updates are made in the
+	single Venue Box template as well. If you don't, then the conflicts may
+	cause errors and/or appear out-of-sync.
+#}
+
+{# ============================================================================
+================== MACROS =====================================================
+============================================================================= #}
+{#
+	We need this set of macros before the macros in `_layouts._base.html` have
+	had an opportunity to load...so, we are adding them manually here.
+#}
+{% import "_macros/_tracking.html" as bbTrack with context %}
+
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{# overrides #}
+{% set autorender_intro = false %}
+
+{# 	Shortcuts
+	Please note: These variables can be overriden by a child-template. If
+	changing these variables or updating their logic, please ensure that any
+	child-templates account for these changes. For example, this template is
+	extended by `boxes_by_location.html` where these variables are overriden to
+	display only galleries relevant to the selected location.
+#}
+{% set venues = venues|default(boxes.venues.all) %}
+{% set form = form|default(current.fields.form) %}
+
+{# form id: This needs to be applied to the trigger buttons and the popup, so
+   we are declaring it here...once. #}
+{% set form_id = "popup-private-events-form" %}
+
+{# inquire button #}
+{# Note: default() seems redundent, but just in case. Also, for some reason the
+   actual inquirebutton needs to be applied as a string. I'm not sure why it
+   won't let me do a block set/endset, but it won't. Not a big deal.
+#}
+{% set inquire_cta_label = form.inquire_cta_label|default("Inquire Now") if (form and form.inquire_cta_label) else "Inquire Now" %}
+{% set tracking = bbTrack.button(label='Private Events', category='Inquire Trigger Button') %}
+{% set inquirebutton = "<button type=\"button\" class=\"btn btn-brand\" data-popup=\"inline\" data-popup-src=\"#" ~ form_id ~ "\"" ~ tracking ~ ">" ~ inquire_cta_label ~ "</button>" %}
+
+{# ============================================================================
+================== BLOCK : HEAD SCHEMA LOCAL ==================================
+============================================================================= #}
+{#
+	Note: Output template-specific json-ld here.
+#}
+{% block head_schema_local %}
+	{{ bbSchemaJson.venues_listing(venues) }}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : MAIN PREPEND =======================================
+============================================================================= #}
+{#
+	Note: We need to add an "inquire now" button that opens our popup form. By
+	default, our bbContent.intro() macro that is called in _layouts/_basic.html
+	does not look for elements/content to "append", so we need to add and render
+	it ourselves here.
+#}
+{% block main_prepend %}
+	{{ super() }}
+	{%- if intro %}
+		{{ bbContent.intro(
+				title=intro.title,
+				content=intro.content,
+				multibutton=intro.multibutton,
+				append=inquirebutton,
+				use_h1=(false if h1_used_in_hero else true)
+			)
+		}}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : MAIN ===============================================
+============================================================================= #}
+{#
+	Note: Even though we have created a template for a Single Venue Box, the
+	designs dictate that (if a list of venues exists) we should not have these
+	card click through to those Box urls. If, at any time, that decision changes,
+	all you have to do is change the macro's url parameter to venue.url. Easy.
+
+	Instead, we are opening a Venue Image Gallery if the following criteria are
+	met...
+	1. At least one venue needs to have images associated with it, for gallery
+	   functionality to be enabled.
+	2. An individual venue needs to have at least one image for its gallery
+	   and button functionality to be enabled.
+#}
+{% block main %}
+	{# add all venues if any exist. #}
+	{% if venues|length > 0 %}
+		{%- set use_thumbnails = true if (bbUtils.use_thumbnails(venues) == "1") else false %}
+		<section id="venues" class="content container">
+			<ul class="card-listing row">
+				{% for venue in venues %}
+					{%- set is_gallery = true if (use_thumbnails and venue.images|length > 0) else false %}
+					{{ bbCard.venue(
+							name=venue.name,
+							description=venue.description,
+							capacity=venue.capacity,
+							image=venue.image,
+							url=(("#popup-gallery-" ~ venue.slug) if is_gallery else false),
+							is_gallery=is_gallery,
+							use_thumbnails=use_thumbnails,
+							tag="li",
+							htag="h2",
+							revealable=true
+						)
+					}}
+				{% endfor %}
+			</ul>
+		</section>
+		{# add another inquire button only if we have a list of venues. #}
+		<aside class="content container revealable">
+			{{ inquirebutton }}
+		</aside>
+	{% endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : POPUPS =============================================
+============================================================================= #}
+{#
+	Note: We have a couple of different popups available in this template.
+
+	1. Our Popup Private Events form can be either a BentoBox Form or a Custom
+	   Embed Form. When a custom form is used, a .form-custom class is added
+	   to the container with the intention of making a useable css selecor
+	   available.
+
+	   Please note, our form types are currently ONLY set up to be included as
+	   a popup – however, it wouldn't be difficult to abstract the macro to
+	   allow for an in-page or popup based on admin preference.
+
+	2. The venue thumbnails should open Popup Galleries if venue images exist.
+#}
+{% block popups %}
+	{{ super() }}
+	{#- bentobox form  #}
+	{%- if not form.use_custom %}
+		{{ bbForms.private_events(
+				slug='private-dining-inquiry',
+				id=form_id,
+				title=form.title,
+				content=form.content,
+				button_label=form.button_label,
+				success_message=form.success_message|default("Thank you for your inquiry. We’ll be in touch shortly."),
+				use_alt_colors=form.use_alt_colors
+			)
+		}}
+	{#- custom form  #}
+	{%- else %}
+		<div id="{{ form_id }}" class="popup popup--form mfp-hide">
+			<div class="form-custom container-sm">
+				{{ form.embed }}
+			</div>
+		</div>
+	{%- endif %}
+
+	{#- venue popup galleries  #}
+	{%- if venues|length > 0 %}
+		{%- for venue in venues %}
+			<div id="popup-gallery-{{ venue.slug }}" class="popup popup--gallery mfp-hide">
+	      {{ bbMedia.gallery(
+	      		imgs=venue.images,
+	      		type="popup",
+	      		tag="div",
+	      		revealable=false
+	      	)
+	      }}
+	    </div>
+		{%- endfor %}
+	{%- endif %}
+{% endblock %}

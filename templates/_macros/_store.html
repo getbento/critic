@@ -1,0 +1,157 @@
+{# ============================================================================
+================== GETTERS  ===================================================
+============================================================================= #}
+{#
+	Creates a UID based on the product's id. This is intended to be used to
+	create consistent `id=""` and `data-popup-src=""` attributes that can be
+	used to hook up a "button" to its corresponding "popup modal".
+
+	Please note, we don't want to get any more specific with the UID value than
+	we need to. For example, we are trying to avoid something like –
+	`uid = popup-catering-product-form` – because we may need to reuse this
+	macro in the future for other purposes.
+
+	@access public
+	@param {Int} product_id 			- The id of the current product. Ideally, this is the literal
+										  `id` property assigned to the product, but it can actually
+										  be anything that is guarenteed to be unique.
+    @returns {String}
+#}
+{% macro get_product_popup_uid(product_id) -%}
+	{{- ("popup-product-" ~ product_id) if product_id else "" -}}
+{%- endmacro %}
+
+{#
+	IMPORTANT: Every Basic Product and Configurable Product (including Catering)
+	requires an element that wraps the form to include a specific data-attribute.
+	This data attribute is required for the JavaScript components to properly find
+	and initialize all the product's related elements – imgbrowser, form, modal,
+	etc. The intention of this macro is to make that requirement obvious, and
+	provide a consistent way of creating that element.
+
+	Example Output:
+		<section class="product" data-product-id="999">
+			<form>...</form>
+		</section>
+
+	@access public
+	@param {Int} product_id 			- The id of the current product. This must be the literal `id`
+										  property assigned to the product.
+    @returns {String | HTML Attribute}
+#}
+{% macro get_product_wrap_identifier(product_id) -%}
+	{{- "data-product-id=\"" ~ product_id ~ "\"" -}}
+{%- endmacro %}
+
+{#
+	Gets the store cart url. If it is provided in the context, we will use that.
+	If it is not provided in the context, we are just going to hard-code the
+	value. Its not changing any time soon, but this provides a single place to
+	update it easily.
+
+	@access public
+    @returns {String}
+#}
+{% macro get_cart_url() -%}
+	{{- store.cart.url if (store and store.cart and store.cart.url) else "/store/cart" -}}
+{%- endmacro %}
+
+{# ============================================================================
+================== ADDED TO CART MODAL ========================================
+============================================================================= #}
+{#
+	Renders a single "added to cart" modal to be used on store/product
+	templates/pages that utilize ajax form submission.
+
+	Please note, some store/product templates only allow a single product per
+	template. On those templates, we are guarenteed to know most of the details
+	that should be included in the modal when we initially render the modal to
+	the page (ie...if a product has an image). However, other templates
+	(ie...catering) allow multiple products per page and therefore we can't
+	know what is included at initial render time (ie...whether to include an
+	image column or not).
+
+	For this reason, all parameters are allowed to be initialized as "empty",
+	and there is a special `force_image` parameter that allows us to include
+	the image column even if `image` is currently empty or undefined. When
+	applicable, please take special care in ensuring that the proper JavaScript
+	is in place to properly populate and update this modal accordingly.
+
+	@access public
+	@param {String} name 				- The current name of the active product. (if applicable)
+	@param {String} options 			- The current options of the active product. (if applicable)
+	@param {String} price 				- The current price of the active product. (if applicable)
+	@param {String} image 				- The current image file path of the active product. (if appicable)
+	@param {Boolean} force_image		- True if you want to force the image column to be included even if the `image` is undefined.
+										  False will only add the column if the `image` exists.
+	@param {String} tag 	            - The html tag to use for the modal element.
+    @param {String} htag				- The html tag to use for the modal's heading tag.
+    @returns {HTML}
+#}
+{% macro added_to_cart_modal(name, options, categories, price, image, force_image=false, tag="aside", htag="h2") %}
+	<{{ tag }} id="modal-product" class="popup popup--product mfp-hide" data-popup-type="modal" data-bb-track-label="Added to Cart">
+		<div class="popup__details">
+			{%- if image or force_image %}
+				<div class="popup__col">
+					<div class="image-thumbnail"{% if image %} style="background-image: url('{{ image|image_url }}')"{% endif %}>
+						{% if image %}
+							<img class="sr-only" {{ bbImage.alt_text(image, img=True) }}>
+						{% endif %}
+					</div>
+				</div>
+			{%- endif %}
+			<div class="popup__col">
+				<{{ htag }} class="popup__heading">{{ name|default("") }}</{{ htag }}>
+				{%- if categories|length > 0 %}
+					<{{ htag }} class="popup__categories">{{ categories }}</{{htag}}>
+				{% endif %}
+				<p class="popup__options">{{ options|default("") }}</p>
+				<p class="popup__price">{{ bbUtils.format_price(price=price|default("0.00"), use_dollar_sign=true, use_decimal_zeros=true) }}</p>
+			</div>
+		</div>
+		{#- action buttons container  #}
+		<div class="popup__actions">
+			<div class="popup__col">
+				<button type="button" class="btn btn-brand btn-block js-popup-closebtn">Continue Shopping</button>
+			</div>
+			<div class="popup__col">
+				<a href="{{ get_cart_url() }}" class="btn btn-brand btn-block">Checkout</a>
+			</div>
+		</div>
+	</{{ tag }}>
+{% endmacro %}
+
+{# ============================================================================
+================== ALERT MODAL ================================================
+============================================================================= #}
+{#
+	Renders a single "store alert" modal to be used any store template when
+	`page_is_store=true`. This modal can be activated via JavaScript store
+	components via `this.store.api.openAlertModal("...")`, or it can be opened
+	automatically on page load by setting the `autoopen=true` macro parameter.
+
+	@access public
+	@param {String} content 		- Primary content to show in the alert.
+	@param {Boolean} is_error 		- True if the modal represents and error message, false if not.
+	@param {String} id 				- An id so other buttons can trigger this popup.
+	@param {Boolean} autoopen		- Should this popup open automatically after page load?
+	@param {String} tag 			- The html tag to use for the alert.
+	@returns {HTML}
+#}
+{% macro alert_modal(content="", is_error=true, id="modal-store-alert", autoopen=false, tag="aside") %}
+	<{{ tag }} id="{{ id }}" class="popup popup--store-alert mfp-hide" data-popup-type="modal" data-bb-track-label="Store Alert" {% if autoopen %} data-popup-auto-open="modal"{% endif %} >
+		{#- content message  #}
+		<div class="popup__content">
+			<p class="popup__message{% if is_error %} popup__message--error{% endif %}">{{ content }}</p>
+		</div>
+		{#- action buttons container #}
+		<div class="popup__actions">
+			<div class="popup__col">
+				<button type="button" class="btn btn-brand btn-block js-popup-closebtn">Continue Shopping</button>
+			</div>
+			<div class="popup__col">
+				<a href="{{ get_cart_url() }}" class="btn btn-brand btn-block">Checkout</a>
+			</div>
+		</div>
+	</{{ tag }}>
+{% endmacro %}

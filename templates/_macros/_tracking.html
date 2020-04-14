@@ -1,0 +1,98 @@
+{# ============================================================================
+================== TRACKING ===================================================
+============================================================================= #}
+{#
+	Creates a hidden tracking element to be included in a form. In JavaScript, 
+	each form will look for this tag inside itself, and if it exists, it will 
+	configure, listen for, and track the appropriate events in GA.
+
+	Please note, at this time only event="submit" is supported.
+	
+	@access public
+	@param {String} event 			- Event we should be tracking so JS is configured properly.
+	@param {String} category 		- The GA category assigned to the event.
+	@param {String} action 			- The GA action assigned to the event.
+	@param {String} label 			- The GA label assigned to the event. (Optional)
+	@param {String} value       - The value assigned to the event. (Optional)
+	@param {String} tag 			  - The html tag to assign to the DOM node.
+	@returns {HTML}
+#}
+{% macro form(event="submit", category="Forms", action="Submit", label="", value="", tag="div") %}
+	{%- if event and category and action and label %}
+		{%- set attrs = {
+				"data-bb-track": "form",
+				"data-bb-track-on": event,
+				"data-bb-track-category": category,
+				"data-bb-track-action": action,
+				"data-bb-track-label": label,
+				"aria-hidden": "true"
+			}
+		%}
+		{% if value %}
+			{% do attrs.update({ "data-bb-track-value" : value }) %}
+		{% endif %}
+		<{{ tag }}{{ attrs|xmlattr }}></{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Adds data-attributes to a button element so JavaScript can find it and configure, 
+	listen for, and track the appropriate events in GA.
+
+	Please note, at this time only event="click" is supported.
+	
+	@access public
+	@param {String} category 		- The GA category assigned to the event.
+	@param {String} label 			- The GA label assigned to the event. (Optional)
+	@param {String} action 			- The GA action assigned to the event.
+	@param {String} event 			- Event we should be tracking so JS is configured properly.
+	@returns {HTML}
+#}
+{% macro button(category, label, action="Click", event="click") %}
+	{%- if category and action and label -%}
+		{%- set attrs = {
+				"data-bb-track": "button",
+				"data-bb-track-on": event,
+				"data-bb-track-category": category,
+				"data-bb-track-action": action,
+				"data-bb-track-label": label
+			}
+		-%}
+		{{ attrs|xmlattr }}
+	{%- endif -%}
+{% endmacro %}
+
+{# ============================================================================
+================== SHORTCUTS ==================================================
+============================================================================= #}
+{#
+	Tracks various phone number buttons per "placement" on a page. For example, phone numbers in 
+	the desktop header should track separately than a button in the mobile footer. This macro is 
+	called from a few different places and different files, so this "shortcut" is provided to 
+	ensure the category naming is consisten and typo-free – internally calling the button() macro.
+	
+	@access public
+	@param {String} placement 		- The GA label assigned to the event. Should represent the button's placement on the page.
+	@returns {HTML}
+#}
+{% macro button_phone(placement) %}
+	{%- if placement %}
+		{{ button(category="Phone Number", label=placement) }}
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Tracks various address buttons per "placement" on a page. For example, address buttons in 
+	the desktop header should track separately than a button on the location page. This macro is 
+	called from a few different places and different files, so this "shortcut" is provided to 
+	ensure the category naming is consisten and typo-free – internally calling the button() macro.
+	
+	@access public
+	@param {String} placement 		- The GA label assigned to the event. Should represent the button's placement on the page.
+	@returns {HTML}
+#}
+{% macro button_address(placement) %}
+	{%- if placement %}
+		{{ button(category="Address", label=placement) }}
+	{%- endif %}
+{% endmacro %}

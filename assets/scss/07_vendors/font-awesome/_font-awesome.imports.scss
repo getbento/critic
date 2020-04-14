@@ -1,0 +1,13 @@
+// ============================================================================================================
+// =============== FONT-AWESOME IMPORTS ONLY ==================================================================
+// ============================================================================================================
+// BentoBox: 
+// - This file is derived from bower_components/font-awesome/scss/font-awesome.scss.
+// 			 
+// Intended use: 
+// - Override the default Font-Awesome imports and re-path to use our /assets/bower_components/ directory instead.
+// - Only @import files that have no immediate output. (ie...doesn't export classes)
+
+@import "./font-awesome.custom.variables"; // Set our BentoBox Sensei Font-Awesome variables!
+@import "../../bower_components/font-awesome/variables"; // Font-Awesome defaults to ensure updates don't break.
+@import "../../bower_components/font-awesome/mixins";

@@ -1,0 +1,60 @@
+{% extends "_layouts/_basic.html" %}
+
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{# 
+	Required: When the current page/template is Store-related, we need to add 
+	our Cart Button and initialize our Store-specific javascript utilities.
+#}
+{% set page_is_store = true %}
+
+{# 
+	OVERRIDEABLES
+	This is intended to be used to display explicit preemptive alert and/or 
+	warning messages above the header and content on page load. Currently, this 
+	is not being used anywhere.
+#}
+{% set store_alert_simple = store_alert_message|default(false) %}
+
+{# 
+	OVERRIDEABLES
+	This is intended to be used to immediately display an alert modal message 
+	on page load.
+#}
+{% set store_alert_modal = store_alert_modal|default("") %}
+
+{# ============================================================================
+================== BLOCK : NOTIFICATIONS ======================================
+============================================================================= #}
+{# 
+	This block allows us to add a preemptive alert above the header and content. 
+	Currently, the `store_alert_message` is intended to represents an explicit 
+	warning or error on page load.
+#}
+{% block notifications %}
+	{{ super() }}
+	{%- if store_alert_simple %}
+		{{ bbAlert.simple(content=store_alert_simple, is_warning=true) }}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : POPUPS =============================================
+============================================================================= #}
+{# 
+	This block adds an "alert modal" to all `page_is_store` templates. This 
+	modal can be triggered in JavaScript store components via 
+	`this.store.api.openAlertModal("...")` or it can be opened automatically on 
+	page load by setting the `bbStore.alert_modal(..., autoopen=true)` parameter.
+#}
+{% block popups %}
+	{{ super() }}
+
+	{{ bbStore.alert_modal(
+			content=store_alert_modal, 
+			is_error=true,
+			autoopen=(true if store_alert_modal else false)
+		) 
+	}}
+{% endblock %}

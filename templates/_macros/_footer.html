@@ -1,0 +1,343 @@
+{# ============================================================================
+================== HOSPITALITY FOOTER =========================================
+============================================================================= #}
+{#
+    Renders the hospitality footer – including the list of clickable images.
+    Please note, this macro accesses the global context directly. Please note,
+    any images assigned via Theme Options are intended served as their
+    uncompressed version.
+
+    @access public
+    @param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro hospitality(revealable=true) %}
+  {% if theme.options.general.hospitality_footer > 1 %}
+    {% set wrapper_tag = "div" %}
+    {% set item_tag = "div" %}
+  {% else %}
+    {% set wrapper_tag = "ul" %}
+    {% set item_tag ="li" %}
+  {% endif %}
+	<aside class="hospitality{% if revealable %} revealable{% endif %}">
+        <{{ wrapper_tag }} class="hospitality__list">
+            {%- for item in theme.options.general.hospitality_footer %}
+                <{{ item_tag }} class="hospitality__item">
+                    {%- if item.image %}
+                    {% set fallback = "Hospitality Image " + loop.index|string %}
+                    {% set target = "_blank" if (bbUtils.is_external_url(item.url)) else "_self" %}
+                    {% set noopener = " rel=\"noopener\"" if target == "_blank" else "" %}                    
+                        <a {% if item.url %}href="{{ item.url }}" target="{{ target }}"{{ noopener }}{% endif %}>
+                            <img src="{{ item.image|small }}" loading="lazy" {{ bbImage.alt_text(item.image, fallback, True) }} />
+                        </a>
+                    {%- endif %}
+                </{{ item_tag }}>
+            {%- endfor %}
+        </{{ wrapper_tag }}>
+    </aside>
+{% endmacro %}
+
+{# ============================================================================
+================== MOBI FOOTER ================================================
+============================================================================= #}
+{#
+    Renders the mobi footer – intended to (optionally) contain the site's
+    phone number, and any primary/secondary callout buttons that have been
+    assigned to the mobi footer via Theme Options.
+
+    Please note, at this point, other code has determined that the mobi-footer
+    has to exist. What we don't know is whether or not the primary_btn and
+    secondary_btn will exist – which is decided by the bbButton.multi() macro.
+    (ie...reservations button won't render if site doesn't allow reservations)
+    This means, it is entirely possible that we are about to render an empty
+    .mobi-footer...but, there's not much we can do about it without duplicating
+    a lot of processing and if/else blocks. In a perfect world we'd never have
+    to render empty elements, but this is a better option than duplicating a
+    ton of extra logic.
+
+    @access public
+	@param {String} phone           - The site's phone number (if not a mult-location site)
+    @param {Dict} primary_btn       - The primary_btn obtained from the context. (see bbButton._multi() for properties)
+	@param {Dict} secondary_btn       - The secondary_btn obtained from the context. (see bbButton._multi() for properties)
+    @returns {HTML}
+#}
+{% macro mobi(phone, primary_btn, secondary_btn) %}
+	{%- set btns = [primary_btn, secondary_btn] %}
+
+	<aside class="mobi-footer mobi-footer--sticky">
+	    <ul class="mobi-footer__list">
+	        {%- if phone %}
+				<li class="mobi-footer__item">
+					<a href="tel:{{ phone }}" class="btn btn-brand btn-block"{{ bbTrack.button_phone(placement="Footer") }}>Call {{ phone }}</a>
+				</li>
+	        {%- endif %}
+	        {%- for btn in btns if btn %}
+				<li class="mobi-footer__item">
+					{{ bbButton.multi(
+							opts=btn,
+							classes=["btn-block"],
+							track_placement="Callout, Footer"
+						)
+					}}
+				</li>
+	        {%- endfor %}
+	    </ul>
+	</aside>
+{% endmacro %}
+
+{# ============================================================================
+================== DESKTOP FOOTER : VARIABLES =================================
+============================================================================= #}
+{#
+    Note: The following variable is used to cache all of the values required
+    to render our desktop footer properly. The values of each property are
+    calculated/determined below within the following "with" blocks. Because the
+    logic is relatively complex and dynamic, it is a little easier to follow
+    and understand if we do this outside of the actual macro ahead of time.
+
+    - "renderable" will be true/false based on whether the required elements
+      are all present – allowing this to render more than a blank element.
+
+    - "stickable" will be true/false based on whether elements are marked as
+      "sticky" in Theme Options. We also need to know if both Primary and
+      Secondary have been marked "sticky", because in that scenario, we make
+      the entire element fixed instead of the inidividual elements themselves.
+
+    - "elements" will hold the rendered versions of their components. Please
+      note, we are using `|trim` when collecting these elements – which later
+      allows us to check them as if they were a Boolean. (ie...false if empty)
+#}
+{% set _site_footer_desktop = {
+        "renderable": {
+            "primary": false,
+            "secondary": false
+        },
+
+        "stickable": {
+            "primary": theme.options.footer.sticky,
+            "secondary": theme.options.footer.credit.sticky,
+            "both": true if (theme.options.footer.sticky and theme.options.footer.credit.sticky) else false
+        },
+
+        "social": false,
+        "location": false,
+        "nav": false,
+        "secondarybtn": false,
+        "powered_by": false
+    }
+%}
+
+{#
+    Desktop Footer Social Media or Location
+    ===========================================================================
+    This block determines if the social media accounts or the location should
+    be shown, renders the proper element, and updates our `_site_footer_desktop`
+    variable accordingly. The logic process is as follows...
+
+    - If `Footer > Display Social Media` is true in Theme Options, we need to
+      attempt to render our social accounts. If no social accounts are present,
+      we aren't going to render anything.
+
+    - If `Footer > Display Social Media` is false in Theme Options, we have to
+      check `Footer > Display Address`. If it is true, we then have to go through
+      the process of checking if the address can even be rendered – determined by
+      if this is a single location site only and all the required fields are
+      available. If we can render the address, we also need to check if we should
+      render the phone number – which is determined in `Address > Display Phone
+      Number`.
+
+    - If neither social media or location is (or can be) rendered, we aren't going
+      to render anything at all.
+
+    EXTREMELY IMPORTANT:
+
+    The logic in the "else" block which determines if and how to display, except
+    the address/phone is 99.99% EXACTLY the same as in in bbHeader. Unfortunately,
+    we need to change "just enough" to make it impossible to use the bbHeader
+    version directly...which is less than ideal, but definitely necessary without
+    refactoring a lot of code. Please note, if you make a change to this logic,
+    you ABSOLUTELY SHOULD CHANGE THE LOGIC IN BBHEADER!!!
+#}
+{% with %}
+    {# if theme options are set to display social media #}
+    {% if theme.options.footer.display_social %}
+        {# get rendered social media from bbHeader and replace tracking with "Footer" #}
+        {% set social = bbHeader.get_site_social_accounts_rendered(track_placement="Footer")|trim %}
+        {# if social is defined, update our main object with a rendered version #}
+        {% if social %}{% do _site_footer_desktop.update({ "social" : social }) %}{% endif %}
+
+    {# if theme options is NOT set to display social media #}
+    {% else %}
+        {# if themee options is set to display address #}
+        {% if theme.options.footer.display_address %}
+            {# use the display phone number setting from the navigation. no need to duplicate this! #}
+            {% set display_phone_number = theme.options.navigation.address.display_phone_number %}
+            {# if exactly one location, try and parse the address into a pretty format #}
+            {% set loc = boxes.location.all.0 if (boxes.location.all|length == 1) %}
+            {% set address_segments = [] %}
+            {% if loc and loc.address %}
+                {% set addr = loc.address|replace((loc.street ~ ","), (loc.street ~ ",<br>")) %}
+                {% for seg in addr.split("<br>") if seg %}
+                    {% do address_segments.append("<span>" ~ seg ~ "</span>") %}
+                {% endfor %}
+            {% endif %}
+
+            {# if either a phone number or address exists render our pretty versions #}
+            {% if loc and (loc.address or (loc.phone_number and display_phone_number)) %}
+                {# set the google maps href #}
+                {% set gmaps_href = bbLocation.get_gmaps_href(
+                        name=loc.name,
+                        address=loc.address,
+                        google_place_url=(loc.google_place_url if loc.use_gmaps_advanced else false)
+                    )
+                %}
+                {% set rendered %}
+                    {%- if address_segments|length > 0 %}
+                        <a href="{{ gmaps_href }}" class="site-location__address" target="_blank" rel="noopener" {{ bbTrack.button_address(placement="Footer") }}>{{ address_segments|join(" ") }}</a>
+                    {%- endif %}
+                    {%- if loc.phone_number and display_phone_number %}
+                        <a class="site-location__tel" href="tel:{{ loc.phone_number }}"{{ bbTrack.button_phone(placement="Footer") }}>{{ loc.phone_number }}</a>
+                    {%- endif %}
+                {% endset %}
+                {# if the rendering was successful, update our variable #}
+                {% do _site_footer_desktop.update({ "location" : rendered|trim }) %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% endwith %}
+
+{#
+    Desktop Footer Navigation, Secondary Button, Powered By, and Renderables
+    ===========================================================================
+    This block attempts to retreive/render the additional components,
+    determines whether the primary and secondary footer elements should be
+    rendered, and updates the `_site_footer_desktop` accordingly.
+
+    Please note, when retreiving/rendering these elements, we are running them
+    through the `|trim` filter. This allows us to later check them as if they
+    were Boolean values. (ie...false if empty)
+#}
+{% with %}
+    {#
+        Navigation
+        - Retreive from bbHeader
+    #}
+    {% set nav = bbHeader.get_site_footer_navigation_rendered()|trim %}
+    {% if nav %}
+        {% do _site_footer_desktop.update({ "nav" : nav }) %}
+    {% endif %}
+
+    {#
+        Secondary Button to include in Navigation
+        - If it is defined, and it is not set to `button_type == "none"`.
+    #}
+    {% set secondarybtn = theme.options.layout.multibutton_secondary if (theme.options.layout.multibutton_secondary and (theme.options.layout.multibutton_secondary.button_type != "none")) else false %}
+    {% if secondarybtn %}
+        {% do _site_footer_desktop.update({ "secondarybtn" : bbButton.multi(opts=secondarybtn, brand=true, track_placement="Callout, Footer")|trim }) %}
+    {% endif %}
+
+    {#
+        Powered By
+        Renderable: Secondary
+        - Retreive from bbHeader and change utm_source. If this element exists,
+          (which it always should), its also ok to set the secondary element as
+          renderable.
+    #}
+
+    {% if theme.options.footer.credit.display %}
+        {% set powered_by = bbHeader.get_site_powered_by_rendered(utm_source="footer")|trim %}
+    {% else %}
+        {% set powered_by = false %}
+    {% endif %}
+
+
+    {% if powered_by %}
+        {% do _site_footer_desktop.update({ "powered_by" : powered_by }) %}
+        {% do _site_footer_desktop.renderable.update({ "secondary" : true }) %}
+    {% endif %}
+
+    {#
+        Renderable: Primary
+        - If social, location, navigation, or secondarybtn are defined, it is ok
+          to render our primary element – so we mark it as "renderable".
+    #}
+    {% if _site_footer_desktop.social or _site_footer_desktop.location or _site_footer_desktop.nav or _site_footer_desktop.secondarybtn %}
+        {% do _site_footer_desktop.renderable.update({ "primary" : true }) %}
+    {% endif %}
+{% endwith %}
+
+
+{# ============================================================================
+================== DESKTOP FOOTER : MACRO =====================================
+============================================================================= #}
+{#
+    Renders our desktop footer and its possible variations. As much as
+    possible, we are leveraging all of the pre-cached/pre-determined variables
+    we created earlier (...above).
+
+    @access public
+    @returns {HTML}
+ #}
+{% macro desktop() %}
+    {#- variable shortcuts  #}
+    {%- set opts = _site_footer_desktop %}
+    {%- set renderables = opts.renderable %}
+    {%- set stickables = opts.stickable %}
+
+    {#- if either primary or secondary is renderable, go ahead and make the footer  #}
+    {%- if renderables.primary or renderables.secondary %}
+
+        {#- check if both primary and secondary are stickable. If so, apply sticky footer here instead!  #}
+        <footer>
+          <div class="site-footer-desktop"{% if stickables.both %} data-footer-sticky{% endif %}>
+
+              {#- primary footer: checks if stickable  #}
+              {%- if renderables.primary %}
+                  <div class="site-footer-desktop-primary"{% if stickables.primary and not stickables.both %} data-footer-sticky{% endif %}>
+                      <div class="site-footer-desktop-primary__container container">
+
+                          {#- social accounts: if this is defined, location won't be! #}
+                          {%- if opts.social %}
+                              {{ opts.social }}
+                          {%- endif %}
+
+                          {#- location/address: if this is defined, social accounts won't be! #}
+                          {%- if opts.location %}
+                              <div class="site-location">
+                                  {{ opts.location }}
+                              </div>
+                          {%- endif %}
+
+                          {#- if nav has items, or at a minimum has a secondary button  #}
+                          {%- if opts.nav or opts.secondarybtn %}
+                              <nav class="site-nav">
+                                  <ul class="site-nav-menu">
+
+                                      {#- footer navigation  #}
+                                      {%- if opts.nav %}
+                                          {{ _site_footer_desktop.nav }}
+                                      {%- endif %}
+
+                                      {#- secondary button  #}
+                                      {%- if opts.secondarybtn %}
+                                          <li>{{ opts.secondarybtn }}</li>
+                                      {%- endif %}
+                                  </ul>
+                              </nav>
+                          {%- endif %}
+                      </div>
+                  </div>
+              {%- endif %}
+
+              {#- primary footer: checks if stickable. also, only powered_by goes here, so if its renderable it is safe
+                  to assume powered_by is defined...so we don't have to check that as well. #}
+              {%- if renderables.secondary %}
+                  <div class="site-footer-desktop-secondary"{% if stickables.secondary and not stickables.both %} data-footer-sticky{% endif %}>
+                      {{ opts.powered_by }}
+                  </div>
+              {%- endif %}
+          </div>
+        </footer>
+    {%- endif %}
+{% endmacro %}
+

@@ -1,0 +1,78 @@
+// Important: Every @import that does not export anything goes in this file. The reason for this we want all
+// of our variables and mixiins accessible and parsed before we export anything. Although this requires a
+// little more initial setup, it is vastly more flexible. For example, by separating things this way, if we
+// wanted to we can have access to all Bootstrap variables and mixins without including a single Bootstrap class.
+
+// VARIABLE IMPORT ORDER
+// 1. Sensei global variables.
+// 2. Theme options settings.
+// 3. Theme option variables. (do not include !default declarations anywhere!)
+// 4. Vendor custom variables in 07_vendors/ directory. (always include !default declarations)
+// 5. Vendor default variables in bower_components/[directories]. (Never edit these files)
+// 6. Theme options additional css.
+
+@import './00_modules/functions';
+@import './00_modules/variables';
+@import './00_modules/variables.themeoptions';
+
+@import './07_vendors/bootstrap/bootstrap.imports';
+@import './07_vendors/font-awesome/font-awesome.imports';
+@import './07_vendors/slick-carousel/slick-carousel.imports';
+
+// Valid to use all variables (including vendor variables) beyond this point...
+
+@import './01_mixins/gutters';
+@import './01_mixins/prefixes';
+@import './01_mixins/layouts';
+@import './01_mixins/breakpoints';
+@import './01_mixins/typography';
+@import './01_mixins/backgrounds';
+@import './01_mixins/buttons';
+@import './01_mixins/forms';
+@import './01_mixins/social';
+@import './01_mixins/media';
+@import './01_mixins/popups';
+@import './01_mixins/site.header';
+
+// Overriding Bootstrap mixins
+@import './01_mixins/overrides.bootstrap';
+
+@import './02_base/reset';
+@import './02_base/typography';
+
+@import './03_elements/containers';
+@import './03_elements/buttons';
+@import './03_elements/images';
+@import './03_elements/revealables';
+@import './03_elements/forms';
+@import './07_vendors/react-dates/datepicker.scss';
+
+@import './04_components/alert';
+@import './04_components/hero';
+@import './04_components/breadcrumb';
+@import './04_components/site.header'; // must go before footers because some of the styles are used as defaults!
+@import './04_components/footer.hospitality';
+@import './04_components/footer.mobi';
+@import './04_components/footer.desktop';
+@import './04_components/media';
+@import './04_components/content';
+@import './04_components/tabs';
+@import './04_components/menus';
+@import './04_components/cards';
+@import './04_components/paginator';
+@import './04_components/storelocator';
+@import './04_components/facebookbanner';
+
+@import './04_components/popup';
+// special case: we need to set variables from popup first!
+@import './07_vendors/magnific-popup/magnific-popup.imports';
+
+@import './04_components/social'; // must come after site.header, footer.desktop, and popup
+@import './04_components/reservations';
+@import './04_components/gmaps';
+@import './04_components/cookieconsent';
+@import './04_components/store.checkout';
+@import './04_components/store.product';
+
+@import './05_layouts/site';
+@import './05_layouts/article';

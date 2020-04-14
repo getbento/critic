@@ -1,0 +1,498 @@
+{% extends "_layouts/_site.html" %}
+
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{#
+	DO NOT OVERRIDE
+	Any properties in the settings dictionary are intended to be set once, and
+	used/referenced globally. PLEASE DO NOT override these variables from other
+	templates. We are exposing acceptable overrideable variables down below.
+
+	Please note, current.request.is_preview does not currently exist in the
+	"store/gift-cards" context.
+#}
+{% set settings = {
+		"devMode": (true if (current and current.request and (current.request.is_preview or current.request.is_development)) else false),
+		"isPreview": (true if (current and current.request and current.request.is_preview) else false)
+	}
+%}
+
+{#
+	OVERRIDEABLES
+	The following set of page_* variables can be overwritten by a child template.
+	In some cases, not only is it recommended, it is required.
+#}
+{#
+	Optional: In some scenarios, current.name is not defined. We can provide a
+	name by overriding page_title
+#}
+{% set page_title = page_title|default(current.name) %}
+
+{#
+	Optional: In child templates related to a specific "single" location,
+	(ie...boxes/location.html, /boxes_by_location.html, etc), you can check if a
+	location allows reservations using the bbReservations.allows() macro. If it
+	does, you can override the page_reservations variable with the full location
+	object/dict. The intention is that the reservations form will then be able to
+	"autoset" the location dropdown with the current page's location IF it allows
+	reservations.
+#}
+{% set page_reservations = page_reservations|default(false) %}
+
+{#
+	Optional: If a valid hero (basic or landing) exists on this page. Please note,
+	heros set to `background_type="none"` are not considered a "valid intent"
+	because they are either completely empty or will be rendered as an "intro".
+	Although this variable is marked as "optional", it is always set in
+	`_layouts/_basic.html`, so it should always be defined.
+#}
+{% set page_has_hero_intent = page_has_hero_intent|default(false) %}
+
+{#
+	Required: When the current page/template is Store-related, we need to add our
+	Cart Button and initialize our Store-specific javascript utilities.
+
+	Unfortunately, in the case of our cart buttons, our mobile and desktop navigation
+	is relatively complex (and repetitive) so we have included/encapsulated it in
+	helper macros inside _macros/_header.html. Because the rendering happens inside
+	of a macro, we can't create a "block cartbutton". But, the header macros do have
+	access to the global context and THESE variables. So, any template that extends
+	_layouts/store.html will automatically set this variable to "true". Actually,
+	that's really the only thing that templates does. :) Also, this variable will be
+	set directly on our global theme variable below...allowing our Store-specific
+	javascript utilities to only initialize when required.
+#}
+{% set page_is_store = page_is_store|default(false) %}
+
+{#
+	Optional: Sometimes active navigation items (parent or child) cannot be
+	determined by the current url, and we need to set the active item by its
+	template instead.
+
+	For example, we may want the Event Listing item in the navigation to be
+	"active" when an Event Box is the current page/url. However, an Event box's url
+	(generated) will most likely have nothing in common with the Event Listing
+	Template's url (managed) – which means we can't count on urls to help us. So,
+	instead, we set the page_active_template="events.html" in the Event Box
+	Template. This allows the navigation to check (and mark as active) any
+	navigation items that use the Event Listing Template regardless of what url
+	is being used.
+#}
+{% set page_active_template = page_active_template|default(false) %}
+
+{# ============================================================================
+================== COMPUTED VARIABLES AND LOGIC ===============================
+============================================================================= #}
+{#
+	Mobi Footer Variables
+
+	We have to determine whether or not to add .has-mobi-footer to the <body> so our
+	javascript can calculate its height properly. In order to do that, we have to do
+	a bit of processing to determine if anything is available to even go in the
+	mobi footer.
+
+	Its important to call out here that we are only checking IF the button elements
+	have been assigned via theme options in an attempt to limit the number of
+	duplicate processes and if/else blocks. Meaning, if you use a button that ultimately
+	won't render (ie...reservations button when no reservations are allowed), the
+	mobi footer will still render – and the bbButton macros will ultimately decide
+	whether or not to actually render the button. This means, it is possible for
+	.has-mobi-footer to be added, but the mobi footer actually renders as an empty
+	block. In this scenario, the javascript is still smart enough to figure out the
+	proper height, its just not clean html markup anymore. (ie....we don't really
+	want to render empty items ever!)
+#}
+{% set mobi_footer_phone = boxes.location.all.0.phone_number if (theme.options.navigation.mobile.display_phone_number and (boxes.location.all|length == 1) and boxes.location.all.0.phone_number) %}
+
+{% set mobi_primary_btn = theme.options.layout.multibutton_primary if
+	theme.options.layout.multibutton_primary and
+	(theme.options.layout.multibutton_primary.button_type != "none") and
+	(theme.options.layout.multibutton_primary.mobile_position == "bottom" or theme.options.layout.multibutton_primary.mobile_position == "topbottom")
+%}
+
+{% set mobi_secondary_btn = theme.options.layout.multibutton_secondary if
+	theme.options.layout.multibutton_secondary and
+	(theme.options.layout.multibutton_secondary.button_type != "none") and
+	(theme.options.layout.multibutton_secondary.mobile_position == "bottom" or theme.options.layout.multibutton_secondary.mobile_position == "topbottom")
+%}
+{#
+	Body Classes
+
+	A few of our components and corresponding javascript libraries require us to
+	add a few specific classes to the <body> element including...
+	- 	has-hospitality : If the hospitality_footer is defined and has at least one item.
+	- 	has-mobi-footer : If the mobi footer should render based on the valid mobi- variables above.
+	-   has-hero-intent/no-hero-intent : If a valid hero (not "none") will be rendered to the page.
+
+	And, for good measure we are adding the template name so templates can be more
+	specifically targeted with additional css. And, adding `.is-preview-env` (when applicable) so
+	designers can test css without effecting live sites.
+#}
+{% set body_classes = ["has-hero-intent" if page_has_hero_intent else "no-hero-intent"] %}
+{% if settings.isPreview %}
+	{% do body_classes.append("is-preview-env") %}
+{% endif %}
+{% if (theme.options.general.site_boxed) %}
+	{% do body_classes.append("is-boxed") %}
+{% endif %}
+{% if (theme.options.general.display_hospitality and theme.options.general.hospitality_footer and theme.options.general.hospitality_footer|length > 0) %}
+	{% do body_classes.append("has-hospitality") %}
+{% endif %}
+{% if mobi_footer_phone or mobi_primary_btn or mobi_secondary_btn %}
+	{% do body_classes.append("has-mobi-footer") %}
+{% endif %}
+{% if current and current.template %}
+	{% set template_slug = current.template|replace(".html", "")|replace("_", "-")|replace("/", "-")|slugify ~ "-template" %}
+	{% do body_classes.append(template_slug) %}
+{% endif %}
+
+{# ============================================================================
+================== IMPORT MACROS ==============================================
+============================================================================= #}
+{#
+	Note, these imports are exactly the same in _layouts/_ajax.html. If you add
+	any, make sure to copy them there, too!
+
+	Please note, some of these macros run automatically when they are imported,
+	and some rely on the above variables being defined. Please do not move these
+	imports up or down within this file.
+#}
+{% import "_macros/_forms.platform.html" as bentoForms with context %}
+{% import "_macros/_tracking.html" as bbTrack with context %}
+{% import "_macros/_images.html" as bbImage with context %}
+{% import "_macros/_utils.html" as bbUtils with context %}
+{% import "_macros/_store.html" as bbStore with context %}
+{% import "_macros/_breadcrumb.html" as bbBreadcrumb with context %}
+{% import "_macros/_reservations.html" as bbReservations with context %}
+{% import "_macros/_paginator.html" as bbPaginator with context %}
+{% import "_macros/_button.html" as bbButton with context %}
+{% import "_macros/_card.html" as bbCard with context %}
+{% import "_macros/_social.html" as bbSocial with context %}
+{% import "_macros/_media.html" as bbMedia with context %}
+{% import "_macros/_forms.html" as bbForms with context %}
+{% import "_macros/_hero.html" as bbHero with context %}
+{% import "_macros/_alert.html" as bbAlert with context %}
+{% import "_macros/_content.html" as bbContent with context %}
+{% import "_macros/_menu.html" as bbMenu with context %}
+{% import "_macros/_flexiblecontent.html" as bbFlex with context %}
+{% import "_macros/_location.html" as bbLocation with context %}
+{% import "_macros/_header.html" as bbHeader with context %}
+{% import "_macros/_footer.html" as bbFooter with context %}
+{% import "_macros/_head.meta.html" as bbHeadMeta with context %}
+{% import "_macros/_schema.jsonld.html" as bbSchemaJson with context %}
+
+
+{# ============================================================================
+================== BLOCK : HEAD ===============================================
+============================================================================= #}
+{% block head %}
+	{#-
+		This includes all criteria metadata tags, social media, and SEO helpers.
+	#}
+	{{ bbHeadMeta.render() }}
+
+	{#- theme javascript #}
+	<script type="text/javascript" src="{{ static('js/head' ~ ('.min' if not settings.devMode) ~ '.js') ~ (('?cachebuster=' ~ range(1, 1000000000)|random)|safe if settings.devMode) }}"></script>	
+	{#- webfont loading
+		note: theme_fonts are the fonts that have been set in theme options. We need to do a special check for
+		h2 and h3 because they are optional. If we didn't do these "if" checks before we add them, jinja would complain.
+
+		Also, because `theme.options.footer.nav.fontpreset` is a later addition and may not be defined for some somes, we
+		also have to do a check to make sure it exists – otherwise, jinja will complain.
+	#}
+	{% with -%}
+		<script type="text/javascript">
+			{% set google_fonts = [] -%}
+			{%- set font_presets = {
+					"raleway": "\"Raleway:400,700:latin\"",
+					"montserrat": "\"Montserrat::latin\"",
+					"josefin_sans": "\"Josefin+Sans::latin\"",
+					"playfair_display": "\"Playfair+Display:400,700,900:latin\"",
+					"arvo": "\"Arvo::latin\""
+				}
+			-%}
+			{%- set theme_fonts = [theme.options.typography.general, theme.options.typography.h1, theme.options.navigation, theme.options.button_styles.main] -%}
+			{%- if theme.options.typography.h2.fontpreset -%}{%- do theme_fonts.append(theme.options.typography.h2) -%}{%- endif -%}
+			{%- if theme.options.typography.h3.fontpreset -%}{%- do theme_fonts.append(theme.options.typography.h3) -%}{%- endif -%}
+			{%- if theme.options.footer.nav.fontpreset -%}{%- do theme_fonts.append(theme.options.footer.nav) -%}{%- endif -%}
+
+			{%- for group in theme_fonts|groupby("fontpreset") -%}
+				{%- if font_presets[group.grouper] -%}{%- do google_fonts.append(font_presets[group.grouper]) -%}{%- endif -%}
+			{%- endfor -%}
+
+			WebFont.load({
+				{%- set comma = joiner(", ") -%}
+				{%- if theme.options.typography.customfonts and theme.options.typography.customfonts|length > 0 %}
+					{%- for group in theme.options.typography.customfonts|groupby("fonttype") %}
+						{%- if group.grouper == "typekit" and group.list|length > 0 and group.list[0].typekitid %}{{ comma() }}typekit: { id : "{{ group.list[0].typekitid }}" }
+						{%- elif group.grouper == "fontscom" and group.list|length > 0 and group.list[0].fontscomid %}{{ comma() }}monotype: { projectId : "{{ group.list[0].fontscomid }}" }
+						{%- elif group.grouper == "fontdeck" and group.list|length > 0 and group.list[0].fontdeckid %}{{ comma() }}fontdeck: { id : "{{ group.list[0].fontdeckid }}" }
+						{%- elif group.grouper == "selfhosted" and group.list|length > 0 %}
+							{%- set selfhosted_fonts = [] %}
+							{%- for item in group.list %}{% if item.selfhosted_name %}{% do selfhosted_fonts.append("\"" ~ item.selfhosted_name ~ "\"") %}{% endif %}{% endfor %}
+							{%- if selfhosted_fonts|length > 0 %}{{ comma() }}custom: { families: [{{ selfhosted_fonts|join(", ") }}] }{% endif %}
+						{%- elif group.grouper == "google" %}
+							{%- for item in group.list if item.googlefamilies %}
+								{%- do bbUtils.normalize_custom_google_font(item.googlefamilies, google_fonts) -%}
+							{%- endfor %}
+						{%- endif %}
+					{%- endfor %}
+				{%- endif -%}
+				{%- if google_fonts|length > 0 %}{{ comma() }}google: { families: [{{ google_fonts|join(", ") }}] }{% endif -%}
+			});
+		</script>
+		{%- if google_fonts|length > 0 %}
+			<noscript>
+			    <style type="text/css">
+			    	{# note: this method will only work with google fonts, but will not work correctly if multiple fonts are adding to a single field because
+			    		we cannot strip a comma followed by a space in jinja (ie...Raleway::latin|Oswald::latin, Raleway:400,600:latin) -#}
+			        {%- set googlequery = google_fonts|join("|")|replace("\"", "")|replace("'", "")|replace(", ", "") -%}
+			        <link href="https://fonts.googleapis.com/css?family={{ googlequery }}" rel="stylesheet" type="text/css">
+			    </style>
+			</noscript>
+		{%- endif %}
+	{% endwith -%}
+	{#- theme css  #}
+	<link rel="stylesheet" href="{{ scss('scss/main.scss', account) ~ (('?cachebuster=' ~ range(1, 1000000000)|random)|safe if settings.devMode) }}" />
+	{#- google analytics  #}
+	{%- if account.services.google_analytics %}
+	    <script type="text/javascript">
+	        window.ga=window.ga||function(){(ga.q=ga.q||[]).push(arguments)};ga.l=+new Date;
+	        ga("create", "{{ account.services.google_analytics.tracking_code }}", "auto");
+	        ga("require", "autotrack");
+	        ga("send", "pageview");
+	    </script>
+	    <script type="text/javascript" src="https://www.google-analytics.com/analytics{% if settings.devMode %}_debug{% endif %}.js" async></script>
+	{%- endif %}
+	{#-
+		Modernizr Custom Tests
+		maybemobile
+		This is the closest we can get to accurately identifying whether the current device is a mobile device. Currently,
+		this is used to fix a JCF Select bug that effects Windows browsers that support touch events (ie...Chrome) – where
+		the browser is incorrectly assumed a mobile device which shows an unstyled and partially usable native `<select>`
+		element.
+	#}
+	<script type="text/javascript">
+		{%- set modernizr_tests_javascript %}
+		    Modernizr.addTest("maybemobile", function(){
+		    	return (Modernizr.touchevents && Modernizr.mq("only screen and (max-width: 768px)")) ? true : false;
+		    });
+	    {%- endset %}
+	    {{ modernizr_tests_javascript.split()|join(" ") }}
+	</script>
+
+  {# Localize Scripts #}
+  {% if account.services.localize and account.services.localize.key %}
+    <script src="https://global.localizecdn.com/localize.js"></script>
+    <script>!function(a){if(!a.Localize){a.Localize={};for(var e=["translate","untranslate","phrase","initialize","translatePage","setLanguage","getLanguage","detectLanguage","getAvailableLanguages","untranslatePage","bootstrap","prefetch","on","off"],t=0;t<e.length;t++)a.Localize[e[t]]=function(){}}}(window);</script>
+
+    <script>
+      Localize.initialize({
+        key: "{{account.services.localize.key}}",
+        rememberLanguage: true
+      });
+    </script>
+
+  {%- endif %}
+
+  {# Facebook Pixel #}
+  {% if account.services.facebook_pixel and account.services.facebook_pixel.id %}
+  <script>
+	  !function(f,b,e,v,n,t,s)
+	  {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+	  n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+	  if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+	  n.queue=[];t=b.createElement(e);t.async=!0;
+	  t.src=v;s=b.getElementsByTagName(e)[0];
+	  s.parentNode.insertBefore(t,s)}(window, document,'script',
+	  'https://connect.facebook.net/en_US/fbevents.js');
+	  fbq('init', '{{ account.services.facebook_pixel.id }}');
+	  fbq('track', 'PageView');
+	</script>
+	<noscript>
+		<img height="1" width="1" style="display:none" src="https://www.facebook.com/tr?id={{ account.services.facebook_pixel.id }}&ev=PageView&noscript=1"/>
+	</noscript>
+	{% endif %}
+
+	{# Google Tracking Manager #}
+	{% if account.services.google_tag_manager and account.services.google_tag_manager.id %}
+	<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start': new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0], j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','{{ account.services.google_tag_manager.id }}');
+	</script>
+	{% endif %}
+
+	{# Ada Widget #}
+	{% if account.accessibility.ada_widget_enabled %}
+		<script>!function(){var t=function(){var t=document.createElement("script");t.src="https://ws.audioeye.com/ae.js",t.type="text/javascript",t.setAttribute("async",""),document.getElementsByTagName("body")[0].appendChild(t)};"complete"!==document.readyState?window.addEventListener?window.addEventListener("load",t):window.attachEvent&&window.attachEvent("onload",t):t()}();</script>
+	{% endif %}
+
+	{#-
+		Custom Theme Javascript
+		Please note: It is ok to not have a particular sub-propery, but each component does expect its root object to exist.
+		For example `Sensei.settings.gmaps = {}` has to be defined, but `Sensei.settings.gmaps.apikey` does not.
+
+		Please note, any images assigned in Theme Options are intended to be their uncompressed versions. (ie...Map Marker)
+
+		IMPORTANT:
+		`window.Sensei.settings.store.cart_quantity` needs to be a number or `null`. When it is `null`, the
+		JavaScript will automatically retrieve the cart data via AJAX on page load.
+	#}
+	<script type="text/javascript">
+		{%- set additional_javascript %}
+		    window.Sensei = {
+		      settings: {
+		        store: {
+		        	enabled: {{ "true" if page_is_store else "false" }},
+		        	cart_quantity: {% if (page_is_store and store.cart and (store.cart.quantity is defined)) %}{{ store.cart.quantity }}{% else %}null{% endif %}
+		        },
+		        gmaps: {
+		          apikey: "{{ account.services.google_maps.api_key }}",
+		          styles: {% if theme.options.general.map_styles %}{{ theme.options.general.map_styles }}{% else %}null{% endif %},
+							icon: {% if theme.options.general.map_marker %}"{{ theme.options.general.map_marker|image_url|raw_image }}"{% else %}null{% endif %},
+							mobile_icon: {% if theme.options.general.map_marker %}"{{ theme.options.general.map_marker|image_url|resize(50)|urlencode }}"{% else %}null{% endif %}
+		        },
+		        galleries: {
+		          autoplay: false,
+		          fade: {{ "true" if theme.options.general.fade_slider else "false" }}
+		      	},
+		        heros: {
+		          autoplay_galleries: true
+						},
+						srcset_enabled: {{ "true" if theme.options.general.srcset_enabled else "false" }}
+					},
+					modernizr: window.Modernizr
+		    };
+		    {{ theme.options.misc.additional_javascript }}
+	    {%- endset %}
+			{{ additional_javascript.split()|join(" ") }}
+	</script>
+	<!--[if lt IE 9]>
+	    <script type="text/javascript" src="{{ static('assets/js/ltie9' ~ ('.min' if not settings.devMode) ~ '.js') }} "></script>
+	<![endif] -->
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : HEAD SCHEMA ========================================
+============================================================================= #}
+{#
+	Note: This block is dedicated to outputing schema.org json-ld data. Please
+	note, each sub-template must use the `head_schema_local` block to ensure
+	the schema macros get initialized properly and that any page/template is
+	capable of rendering homepage-specific json-ld.
+#}
+{% block head_schema %}
+	{%- if bbSchemaJson.init() == "1" %}
+		{{ bbSchemaJson.organization() }}
+		{%- if current and current.homepage %}
+			{{ bbSchemaJson.website() }}
+			{{ bbSchemaJson.homepage() }}
+		{%- endif %}
+		{#- Sub-templates should use this block to output their json-ld #}
+		{%- block head_schema_local %}{% endblock %}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : BODY CLASS =========================================
+============================================================================= #}
+{#
+	Note: Possible modifiers include – has-hospitality and has-mobi-footer.
+	has-scroll-lock is a special case and is only added via javascript.
+#}
+{% block body_class %}{{ body_classes|join(" ") if body_classes|length > 0 }}{% endblock %}
+{# ============================================================================
+================== BLOCK : BODY ===============================================
+============================================================================= #}
+{% block body %}
+	{% if theme.options.general.site_boxed %}<div class="site-container">{% endif %}
+
+		{#- note: to avoid empty divs – this will only render `.site-notifications`
+			if at least one alert has been added to the notifications block. #}
+		{% block notification_center %}
+			{%- set notifiers = self.notifications() %}
+			{%- if notifiers|trim %}
+				<div class="site-notifications">
+					{{ notifiers }}
+				</div>
+			{%- endif %}
+		{% endblock %}
+
+		{% block header %}
+			{{ bbHeader.render() }}
+		{% endblock %}
+
+		<div class="site-content">
+
+			{% block pre_main %}{% endblock %}
+			<main class="site-content__main">
+        {%- if current.homepage %}
+          {#- a heading describing the contents of the page. Only accessible to screenreaders and search engine spiders. #}
+          <h1 class="sr-only">{{ current.name }}</h1>
+        {%- endif %}
+			  <span id="main-content" class="sr-only">Main content starts here, tab to start navigating</span>
+				{% block main_prepend %}{% endblock %}
+				{% block main %}{% endblock %}
+				{% block main_append %}{% endblock %}
+			</main>
+
+			{% block content_append %}
+				{%- if "has-hospitality" in body_classes %}
+					{{ bbFooter.hospitality(revealable=true) }}
+				{%- endif %}
+				{%- if "has-mobi-footer" in body_classes %}
+					{{ bbFooter.mobi(
+							phone=mobi_footer_phone,
+							primary_btn=mobi_primary_btn,
+							secondary_btn=mobi_secondary_btn
+						)
+					}}
+				{%- endif %}
+			{% endblock %}
+		</div>
+
+		{% block footer %}
+			{{ bbFooter.desktop() }}
+		{% endblock %}
+	{% if theme.options.general.site_boxed %}</div>{% endif %}
+
+	{% block popups %}
+		{{ bbForms.newsletter(use_alt_colors=theme.options.general.newsletter_form_uses_alt_colors) }}
+		{{ bbReservations.render(
+				active_location=page_reservations,
+				use_alt_colors=theme.options.general.reservations_form_uses_alt_colors
+			)
+		}}
+	{% endblock %}
+
+	{% block scripts %}
+		<script type="text/javascript" src="{{ static('js/foot.libs' ~ ('.min' if not settings.devMode) ~ '.js') ~ (('?cachebuster=' ~ range(1, 1000000000)|random)|safe if settings.devMode) }}"></script>
+        <script type="text/javascript" src="{{ static('js/bentobox' ~ ('.min' if not settings.devMode) ~ '.js') ~ (('?cachebuster=' ~ range(1, 1000000000)|random)|safe if settings.devMode) }}"></script>
+        {%- if account.services.chownow and account.services.chownow.id %}
+			<script type="text/javascript" src="https://cf.chownowcdn.com/latest/static/integrations/ordering-modal.min.js" data-chownow-company-id="{{ account.services.chownow.id }}"></script>
+        {%- endif %}
+
+        {# Google Tag Manager #}
+        {% if account.services.google_tag_manager and account.services.google_tag_manager.id %}
+        <noscript><iframe src="https://www.googletagmanager.com/ns.html?id={{ account.services.google_tag_manager.id }}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+				{% endif %}
+
+	{% endblock %}
+  {% block cookie_consent %}
+  	{% if account.privacy and account.privacy.show_cookie_consent %}
+
+    		<div id="cookieConsentContainer">
+    		</div>
+
+  	{% endif %}
+  {% endblock %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : NOTIFICATIONS ======================================
+============================================================================= #}
+{#
+	Note: Possible modifiers include – has-hospitality and has-mobi-footer.
+	has-scroll-lock is a special case and is only added via javascript.
+#}
+{% block notifications %}{% endblock %}
+

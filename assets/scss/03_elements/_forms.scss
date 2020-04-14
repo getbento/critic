@@ -1,0 +1,804 @@
+.center {
+  text-align: center !important;
+}
+.full-width {
+  width: 100% !important;
+}
+
+////
+/// @group elements-forms
+/// @access public
+////
+
+// ============================================================================================================
+// =============== FORMS : VARS ===============================================================================
+// ============================================================================================================
+/// Whether or not to export alternate form styles. This can be useful if you don't have a need for alternate
+/// styles and want to optimize the css output.
+/// @type Bool
+$form-export-alt-styles: true !default;
+
+/// At what breakpoint should `<form>` elements expand? For example – form input element going from stacked to
+/// side-by-side. This value **must** be a key availabe in `$grid-breakpoints`.
+/// @type String
+$form-expand-breakpoint: md !default;
+
+/// Color variant to apply to any non form-specific elements such as content and success messages.
+/// @type Color
+$form-color: null !default;
+
+/// Color variant to apply to `.h1, h1` elements inside the form header.
+/// @type Color
+$form-heading-color: $headings-h1-color !default;
+
+/// Text-align to apply to any form-specific elements such as inputs, labels, errors, etc.
+/// @type String
+$form-text-align: left !default;
+
+/// Text-align applied to `.form-actions` which primary contains a submit button.
+/// @type String
+$form-actions-text-align: center !default;
+
+/// Text-align to apply to any non form-specific elements such as headers and success/fail messages.
+/// @type String
+$form-content-text-align: center !default;
+
+/// Generic vertical spacing applied to various form elements.
+/// @type Number
+$form-spacer-y: 1.5rem !default;
+
+/// Margin-bottom applied to `.form-header` instances.
+/// @type Number
+$form-header-spacing-y: 2rem !default;
+
+/// Font size applied to `.form-heading` instances which are usually `h1, .h1` instances. By default, this value
+/// is intended to be 66% (2/3) the size of a normal `h1, .h1` heading.
+/// @type Number
+$form-heading-font-size: ($font-size-h1 * (2/3)) !default;
+
+/// Font-style to apply to form and input errors.
+/// @type String
+$form-error-font-style: italic !default;
+
+/// Vertical spacing applied to subsequent `.form-ui__group` elements. This allows to add extra separation between
+/// groups of related elements within the same form.
+/// @type Number
+$form-ui-group-spacing: 4rem !default;
+
+/// Text-transform to apply to all form input elements including any third-party components.
+/// (ex: uppercase)
+///
+/// **Theme Option:** Form Styles > Main Styles > Uppercase
+///
+/// @type String
+$input-text-transform: null !default;
+
+/// Transition shorthand to apply to all input elements. This is used on `:hover`, `:focus`, `:blur` and error states.
+/// Please provide the full shorthand for this value.
+/// @type String
+$input-transition: all 0.2s linear 0s !default;
+
+/// Color to apply to input icons such as dates, selects, time, etc.
+/// @type Color
+$input-icon-color: $input-color !default;
+
+/// Generic vertical spacing to apply to input label elements. In most cases, our `<label><span>...</span></label>` are
+/// only visible if `placholder` is not supported by the user's browser – however, we still want to account for that
+/// possibility.
+/// @type Number
+$input-label-spacer-y: 0.5rem !default; // only shown if placeholders are not supported
+
+/// Whether or not an input's text color should use the error color when that field is invalid. By default, an invalid
+/// input will be communicated by the border color and error messaging only.
+/// @type Bool
+$input-use-error-color: false !default;
+
+/// Color to apply to all form error elements such as error messages, borders, etc.
+/// @type Color
+$input-error-color: $brand-danger !default;
+
+/// Color to apply to all form input borders when an element is invalid. This allows us to provide different shades (or
+/// entirely different colors) than other error elements.
+/// @type Color
+$input-error-border-color: $input-error-color !default;
+
+/// Color to apply to all form input borders when a form input is empty, or has not yet been populated. This is the
+/// default state of form inputs. Please note, you can use `rgba()` values.
+/// @type Color
+$input-empty-border-color: rgba($input-border-color, 0.6) !default;
+
+/// Color to apply to all form input icons when a form input is empty, or has not yet been populated. This is the
+/// default state of form inputs. Please note, you can use `rgba()` values.
+/// @type Color
+$input-icon-empty-color: $input-empty-border-color !default;
+
+/// Opacity to apply to form input borders when a form input is disabled.
+/// @type Number
+$input-disabled-border-opacity: 0.4 !default;
+
+/// Padding-left to apply to form inputs that have icons. This ensures that the input text does not flow underneath
+/// the icons.
+/// @type Number
+$form-group-input-padding-left: ($input-padding-x * 3) !default;
+
+/// Padding-right to apply to form inputs that have icons. This ensures that the input text does not flow over
+/// the icons.
+/// @type Number
+$form-group-input-padding-right: ($input-padding-x * 3) !default;
+
+/// Font-size applied to form input icons. Please note, we are using FontAwesome for our icons – so their sizing is
+/// done via `font-size` and not via width and height properties.
+/// @type Number
+$input-icon-font-size: 1.2em !default;
+
+/// Alternate color variant to apply to any non form-specific elements such as headers and success messages.
+/// @type Color
+$form-alt-color: $body-alt-color !default;
+
+/// Alternate form heading color variant – usually `h1, .h1` elements.
+/// @type Color
+$form-alt-heading-color: $headings-h1-alt-color !default;
+
+/// Alternate form input text-transform variant. (ex: uppercase)
+///
+/// **Theme Option:** Form Styles > Alternate Styles > Uppercase
+///
+/// @type String
+$form-alt-input-text-transform: $input-text-transform !default;
+
+/// Alternate form input text color variant.
+///
+/// **Theme Option:** Form Styles > Alternate Styles > Color
+///
+/// @type Color
+$form-alt-input-color: $input-color !default;
+
+/// Alternate form input `placeholder` color variant.
+/// @type Color
+$form-alt-input-color-placeholder: rgba($form-alt-input-color, 0.3) !default;
+
+/// Alternate form input border color variant.
+///
+/// **Theme Option:** Form Styles > Alternate Styles > Field Stroke Color
+///
+/// @type Color
+$form-alt-input-border-color: $form-alt-input-color !default;
+
+/// Alternate form input color variant.
+///
+/// **Theme Option:** Form Styles > Alternate Styles > Field Background Color
+///
+/// @type Color
+$form-alt-input-bg: $input-bg !default;
+
+/// Alternate form input icon color variant.
+/// @type Color
+$form-alt-input-icon-color: $form-alt-input-color !default;
+
+/// Alternate form input border color variant to apply to empty inputs, or inputs that haven't been populated yet.
+/// @type Color
+$form-alt-input-empty-border-color: rgba(
+  $form-alt-input-border-color,
+  0.5
+) !default;
+
+/// Alternate form input icon color variant to apply to empty inputs, or inputs that haven't been populated yet.
+/// @type Color
+$form-alt-input-icon-empty-color: $form-alt-input-empty-border-color !default;
+
+/// Alternate form input error color variant.
+/// @type Color
+$form-alt-input-error-color: $brand-danger !default;
+
+/// Alternate form input border error color variant.
+/// @type Color
+$form-alt-input-error-border-color: $form-alt-input-error-color !default;
+
+/// Alternate form input border opacity when a form input is disabled.
+/// @type Number
+$form-alt-input-disabled-border-opacity: 0.25 !default;
+
+/// Alternate form input background color when a form input is disabled.
+/// @type Color
+$form-alt-input-bg-disabled: lighten(
+  rgba($form-alt-input-color, 0.15),
+  10%
+) !default;
+
+/// Alternate form input border stroke width. (Note: we use `-btn` because Bootstrap does with `$input-btn-border-width`
+/// and we want to keep our naming conventions relatlively consistent)
+///
+/// **Theme Option:** Form Styles > Alternate Styles > Field Stroke Weight
+///
+/// @type Number
+$form-alt-input-btn-border-width: $input-btn-border-width !default;
+
+/// Numeric stepper's up/down button width.
+/// @type Number
+$numeric-stepper-btn-width: 40px !default;
+
+/// Numeric stepper's button color.
+/// @type Color
+$numeric-stepper-btn-color: $btn-primary-color !default;
+
+/// Numeric stepper's background color.
+/// @type Color
+$numeric-stepper-btn-bg-color: $btn-primary-bg !default;
+
+/// Numeric stepper's `:hover` state color.
+/// @type Color
+$numeric-stepper-btn-active-color: $btn-brand-active-color !default;
+
+/// Numeric stepper's `:hover` state background color.
+/// @type Color
+$numeric-stepper-btn-active-bg: $btn-brand-active-bg !default;
+
+// ============================================================================================================
+// =============== FORMS : EXPORT =============================================================================
+// ============================================================================================================
+// Note: All color assigments and variants are handled via bb-form-variant() mixin
+@mixin bb-export-classes-forms() {
+  // =========== BASE ELEMENTS ==============================================================================
+  form {
+    text-align: $form-text-align;
+    margin-bottom: $form-spacer-y;
+  }
+
+  input[type='text'],
+  input[type='email'],
+  input[type='tel'],
+  input[type='number'],
+  input[type='time'],
+  input[type='date'],
+  input[type='password'],
+  textarea {
+    @include bb-prefix-appearance(none);
+  }
+
+  // commented this out - trying something
+  // Mobile Safari fix for date fields not rendering with height
+  // .form-control-group--date input[type='date'] {
+  //   min-height: 3.25rem;
+  // }
+
+  [type='submit'] {
+    @include bb-size($width: 100%);
+    // display: block; // for some reason, this will collapse the margins. We actually want to preserve our
+    // margins, so we are keeping inline-block;
+    margin-bottom: $input-padding-y;
+
+    // breakpoint
+    @include media-breakpoint-up($form-expand-breakpoint) {
+      &:not(.btn-block) {
+        @include bb-size($width: auto);
+        display: inline-block;
+      }
+    }
+  }
+
+  // strictly limiting the resizeablility
+  textarea {
+    @include bb-size(
+      $width: 100%,
+      $min-width: 100%,
+      $max-width: 100%,
+      $height: 9rem,
+      $min-height: 9rem,
+      $max-height: 12rem
+    );
+  }
+
+  select {
+    @include bb-size($width: 100%, $height: $input-height);
+    @include bb-prefix-appearance(none);
+    padding: $input-padding-y $input-padding-x;
+    border: $input-btn-border-width solid;
+  }
+
+  // this acts as a container for all of our form input elements
+  label,
+  .label {
+    @include bb-size($width: 100%);
+    display: block;
+    margin-bottom: $form-spacer-y;
+    position: relative;
+
+    & > span {
+      display: block;
+      margin-bottom: $input-label-spacer-y;
+      padding: 0 $input-padding-x;
+    }
+  }
+
+  // override bootstrap
+  .form-control {
+    @include bb-prefix-placeholder-color;
+    @include bb-prefix-transition($input-transition);
+  }
+
+  select.form-control.unselected {
+		color: $input-color-placeholder;
+  }
+
+  .form-alt .form-control.unselected {
+    color: $form-alt-input-color-placeholder;
+  }
+
+  // =========== GRID ELEMENTS ==============================================================================
+  .form-row {
+    @include make-row($gutter: bb-calc-gutter($breakpoint: xs, $divisor: 2));
+  }
+
+  .form-col-md-6 {
+    @include make-col($gutter: bb-calc-gutter($breakpoint: xs, $divisor: 2));
+
+    @include media-breakpoint-up(md) {
+      @include make-col-span(6);
+    }
+  }
+
+  .form-col-md-12 {
+    @include make-col($gutter: bb-calc-gutter($breakpoint: xs, $divisor: 2));
+
+    @include media-breakpoint-up(md) {
+      @include make-col-span(12);
+    }
+  }
+
+  .form-ui {
+    & hr {
+      @include bb-size($width: 100%);
+    }
+
+    &__group + &__group {
+      margin-top: $form-ui-group-spacing;
+    }
+
+    // pseudo element: this serves a very specific purpose. by adding an element at the end with a height
+    // assigned, we can ensure that the margins between .form-ui and .form-actions won't collapse.
+    &:after {
+      $form-ui-collapse-spacer: 1px;
+
+      @include bb-size($width: 100%, $height: $form-ui-collapse-spacer);
+      content: '';
+      display: block;
+      margin-bottom: ($form-ui-collapse-spacer * -1);
+    }
+  }
+
+  // =========== COMPONENT ELEMENTS =========================================================================
+  .form-header {
+    text-align: $form-content-text-align;
+    margin-bottom: $form-header-spacing-y;
+  }
+
+  .form-heading {
+    font-size: $form-heading-font-size;
+  }
+
+  .form-actions {
+    text-align: $form-actions-text-align;
+
+    // specificity battle w/ .content
+    & .btn[type='submit'] {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+
+  .form-ui {
+    .input-label {
+      position: absolute;
+      top: -14px;
+      padding-left: 3px;
+      font-size: 0.8rem;
+      transition: all 0.1s linear;
+      opacity: 0;
+      color: $form-heading-color;
+    }
+
+    .input-label-optional {
+      color: #b6b6b6;
+      font-style: italic;
+    }
+
+    .show {
+      top: -16px;
+      margin: -1px;
+      font-weight: bold;
+      opacity: 1;
+    }
+
+    .error-label{
+      display: none;
+    }
+
+    .show-error-label {
+      display: inline;
+    }
+  }
+
+  // our pseudo label that is hidden when placeholders are supported
+  //for product configuration forms that appear in modal and don't need labels to be flaoted
+  .product-input-label {
+    // modernizr modifier
+    .placeholder & {
+      @include sr-only;
+    }
+  }
+
+  .input-label-ticket {
+    padding: 0;
+    margin-bottom: $input-label-spacer-y;
+  }
+
+  // special case: file input wrapper (<label>)
+  .input-file {
+    // immediate child: basically the same as .input-label...except it is always visible
+    & > span {
+      display: block;
+      margin-bottom: $input-label-spacer-y;
+      padding: 0 $input-padding-x 0 0;
+      line-height: inherit;
+    }
+
+    // immeidate child: we need to adjust a little so the next is vertically aligned.
+    & > input {
+      line-height: 1;
+    }
+  }
+
+  [type='checkbox'] + span {
+    @include bb-size($width: 85%);
+    display: inline-block;
+    vertical-align: top;
+    margin-left: ($form-spacer-y / 2);
+  }
+
+  // special case: if reservations service is set on the site level and not any other locations, we want
+  // to hide the locations dropdown because its confusing and irrelevant.
+  .input--hidden {
+    display: none !important;
+  }
+
+  .error-message-link {
+    display: none;
+    &.active {
+      display: block;
+    }
+  }
+
+  .error-message-list {
+    display: none;
+    &.active {
+      display: block;
+    }
+  }
+
+  .error-message {
+    display: none;
+    &.active {
+      display: block;
+    }
+  }
+
+  .form-footer {
+    color: $brand-primary;
+    margin: 1em 0;
+    text-align: center;
+    width: 100%;
+
+    a {
+      text-decoration: underline;
+      color: $brand-primary;
+    }
+
+    // contact form is embedded so needs to inherit body color, not alt
+    &.contact a {
+      color: $brand-primary;
+    }
+  }
+
+  // =========== FORM-LEVEL MESSAGE ELEMENTS ================================================================
+  .form-success-msg {
+    display: none;
+    text-align: $form-content-text-align;
+
+    // immediate child
+    & > span {
+      display: block;
+      margin-bottom: $form-spacer-y;
+    }
+  }
+
+  .form-error-msg {
+    display: none;
+    font-style: $form-error-font-style;
+    text-align: $form-content-text-align;
+    margin-bottom: $input-padding-y;
+
+    // modifier: show it
+    &--show {
+      display: block;
+    }
+
+    // breakpoint
+    @include media-breakpoint-up($form-expand-breakpoint) {
+      text-align: center;
+      vertical-align: middle;
+      padding-left: $input-padding-x;
+      padding-right: $input-padding-x;
+    }
+  }
+
+  // =========== INPUT ICONS ================================================================================
+  // Note: You must wrap an input in this class to allow it to have an icon.
+  .form-control-group {
+    @include bb-position($position: relative);
+
+    &.has-icon-left {
+      .form-control,
+      input,
+      select {
+        padding-left: $form-group-input-padding-left;
+      }
+    }
+
+    &.has-icon-right {
+      .form-control,
+      input,
+      select {
+        padding-right: $form-group-input-padding-right;
+      }
+    }
+
+    &--icon {
+      pointer-events: none;
+      text-align: center;
+      @include bb-form-input-icon-base;
+    }
+
+    &--icon.is-positioned-right {
+      @include bb-position($right: 0);
+    }
+
+    &--icon.is-positioned-left {
+      @include bb-position($left: 0);
+    }
+  }
+
+  // error message: only if data-attribute exists. Note, this inherits its color from .input--error.
+  .input--error[data-input-error]:before {
+    content: attr(data-input-error);
+    display: block;
+    margin-bottom: $input-label-spacer-y;
+    font-style: $form-error-font-style;
+  }
+
+  // =========== COLOR VARIANTS =============================================================================
+  // default variant: equalivant of @root
+  @include bb-form-variant(
+    $bb-form-color: $form-color,
+    $bb-form-heading-color: $form-heading-color,
+    $bb-input-text-transform: $input-text-transform,
+    $bb-input-color: $input-color,
+    $bb-input-color-placeholder: $input-color-placeholder,
+    $bb-input-bg: $input-bg,
+    $bb-input-border-color: $input-border-color,
+    $bb-input-icon-color: $input-icon-color,
+    $bb-input-empty-icon-color: $input-icon-empty-color,
+    $bb-input-empty-border-color: $input-empty-border-color,
+    $bb-input-disabled-bg: $input-bg-disabled,
+    $bb-input-disabled-border-opacity: $input-disabled-border-opacity,
+    $bb-input-error-color: $input-error-color,
+    $bb-input-error-border-color: $input-error-border-color
+  );
+
+  // alt variant
+  @if $form-export-alt-styles {
+    .form-alt {
+      @include bb-form-variant(
+        $bb-form-color: $form-alt-color,
+        $bb-form-heading-color: $form-alt-heading-color,
+        $bb-input-text-transform: $form-alt-input-text-transform,
+        $bb-input-color: $form-alt-input-color,
+        $bb-input-color-placeholder: $form-alt-input-color-placeholder,
+        $bb-input-bg: $form-alt-input-bg,
+        $bb-input-border-color: $form-alt-input-border-color,
+        $bb-input-icon-color: $form-alt-input-icon-color,
+        $bb-input-empty-icon-color: $form-alt-input-icon-empty-color,
+        $bb-input-empty-border-color: $form-alt-input-empty-border-color,
+        $bb-input-disabled-bg: $form-alt-input-bg-disabled,
+        $bb-input-disabled-border-opacity:
+          $form-alt-input-disabled-border-opacity,
+        $bb-input-error-color: $form-alt-input-error-color,
+        $bb-input-error-border-color: $form-alt-input-error-border-color
+      );
+
+      // child: derived from bootstrap
+      & .form-control {
+        border-width: $form-alt-input-btn-border-width;
+      }
+
+      & .input-label {
+        color: $form-alt-heading-color;
+      }
+      .form-footer {
+        color: $form-alt-color;
+        a {
+          color: $form-alt-color;
+        }
+      }
+    }
+  }
+
+  // =========== SPECIAL CASE: STYLED CHECKBOX ==============================================================
+  // This component utilizes a very specific hack where clicking on a label with check and uncheck a nested
+  // checkbox even if that checkbox is hidden. From there, we can use the `:checked` pseudo modifier class to
+  // change the styles of elements that are "next to" the hidden checkbox.
+  // TODO: Currently is not effected by form color variants.
+
+  // block
+  .input-checkbox {
+    $checkbox_size: $font-size-root * $line-height;
+
+    @include bb-position($position: relative, $z-index: 0);
+    cursor: pointer;
+
+    // immediate child: displayable label
+    & > span {
+      display: block;
+      color: $input-color;
+      padding-left: 0;
+      margin-bottom: 0;
+      margin-left: (bb-px-to-rem($checkbox_size) + 1);
+
+      // pseudo child: fake checkbox
+      // note: this uses our button color styles
+      &:before {
+        @include fa-icon();
+        @include bb-position(
+          $position: absolute,
+          $top: 0,
+          $left: 0,
+          $z-index: 0
+        );
+        @include bb-size($width: $checkbox_size, $height: $checkbox_size);
+        @include bb-prefix-border-radius($input-border-radius);
+        content: '';
+        color: $btn-primary-color;
+        line-height: $checkbox_size; // important: must be called after fa-icon() to override properly!
+        text-align: center;
+        background-color: $btn-primary-bg;
+      }
+    }
+
+    // immediate child: actual checkbox input.
+    // note: we are hiding the checkbox, but because it is wrapped in a `<label>`, clicking
+    // anything inside the label still checks and unchecks the hidden checkbox...allow this
+    // trick to work.
+    // ADA note: instead of using display none where screen reader cannot read it, we add a 'sr-only' class
+    // to the input element in the html, so the screen reader can read it.
+    & > [type='checkbox'] {
+      // display: none;
+
+      // modifier: if the checkbox is checked, add the checkmark to the fake checkbox.
+      &:checked + span:before {
+        content: $fa-var-check;
+      }
+
+      &:focus + span:before {
+        outline: 3px solid #4d90fe;
+      }
+
+      // modifier: if anything is marked as disabled.
+      &:disabled + span,
+      &:disabled + span:before,
+      .input--disabled > &:disabled + span,
+      .input--disabled > &:disabled + span:before {
+        opacity: 0.65;
+      }
+    }
+
+    // shared disabled states - we're ensuring we get the disabled cursor no matter what
+    // is marked disabled.
+    &.input--disabled,
+    & > [type='checkbox']:disabled,
+    & > [type='checkbox']:disabled + span:before {
+      cursor: $cursor-disabled;
+    }
+  }
+
+  // =========== SPECIAL CASE: NUMERIC STEPPER ADDITION =====================================================
+  // Note: We created our own custom number stepper. So, for convenience, we're putting the styles here.
+  // TODO: Currently is not effected by form color variants.
+
+  // block
+  .numeric-stepper {
+    @include bb-position($position: relative, $z-index: 0);
+
+    // element .numeric-stepper__btn
+    &__btn {
+      @include bb-position(
+        $position: absolute,
+        $top: 0,
+        $bottom: 0,
+        $z-index: 0
+      );
+      @include bb-button-variant(
+        $color: $numeric-stepper-btn-color,
+        $background: $numeric-stepper-btn-bg-color,
+        $border: null,
+        $active-color: $numeric-stepper-btn-active-color,
+        $active-background: $numeric-stepper-btn-active-bg,
+        $active-border: null
+      );
+      @include bb-size($width: $numeric-stepper-btn-width);
+      @include bb-prefix-transition(
+        all $btn-transition-duration $btn-transition-ease 0s
+      );
+      display: block;
+      padding: $input-btn-border-width 0 0;
+      border: none;
+      margin: $input-btn-border-width;
+      cursor: pointer;
+
+      // pseudo child: icon
+      &:after {
+        @include fa-icon();
+        text-align: center;
+        line-height: 0;
+      }
+
+      // modifier: .numeric-stepper__btn--down
+      &--down {
+        @include bb-position($left: 0);
+        border-top-left-radius: $input-border-radius;
+        border-bottom-left-radius: $input-border-radius;
+        padding-right: $input-btn-border-width;
+
+        // pseudo child: icon
+        &:after {
+          content: $fa-var-minus;
+        }
+      }
+
+      // modifier: .numeric-stepper__btn--up
+      &--up {
+        @include bb-position($right: 0);
+        border-top-right-radius: $input-border-radius;
+        border-bottom-right-radius: $input-border-radius;
+        padding-left: $input-btn-border-width;
+
+        // pseudo child: icon
+        &:after {
+          content: $fa-var-plus;
+        }
+      }
+
+      // modifiers: disabled states (either on the parent or button itself)
+      .input--disabled &,
+      &.disabled,
+      &:disabled {
+        cursor: $cursor-disabled;
+        opacity: 0.65;
+
+        &:focus,
+        &.focus {
+          background-color: $btn-primary-bg;
+          border: none;
+          outline: 0;
+        }
+        @include hover {
+          background-color: $btn-primary-bg;
+          border: none;
+        }
+      }
+    }
+
+    // immediate child: actual input
+    & > input {
+      text-align: center;
+    }
+  }
+}

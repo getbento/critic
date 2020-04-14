@@ -1,0 +1,285 @@
+{# ============================================================================
+================== NOTES ======================================================
+============================================================================= #}
+{#
+	Instagram:
+	- Currently, Instagram heros use .hero--gallery.
+
+ 	Dimmed Backgrounds
+ 	- Videos and Galleries need to be dimmed differently...
+ 		- .gallery.gallery--dimmed
+ 		- .hero__video.hero__video--dimmed
+
+	Hero Galleries with Multiple Images
+	- Requires .hero.hero--gallery so we keep content away from prev/next buttons.
+	- If individual slides can have their own content, this requires us to set
+	  ignore_content=true, and figure out whether any slides actually have content
+	  to set has_content=true|false.
+
+	Hero Videos
+	- YouTube and Vimeo are added via JavaScript. Even though Vimeo doesn't
+	  require that, we are doing it for consistency based off the premise that
+	  YouTube requires the iFrame API to be autoplayed, chromeless, silent,
+	  loop, etc.
+
+	Hero Videos (Mobile)
+	- Videos are not allowed to autoplay on iOS devices...however, this will
+	  be changing in iOS 10. Currently, we are relying on YouTube and Vimeo to
+	  show their poster frames on iOS when they can't autoplay. Instead, it
+	  is a possible consideration to include a dedicated fallback image so we
+	  don't have to reply on YouTube/Vimeo or the JavaScript APIs at all.
+
+	Hero Scroll Button
+	- Requires .hero.hero--scrollable when available.
+	- A button is not required when hero.hero--no-media, because it is rendered
+	  to be similar to an intro block...meaning, there is no real separation
+	  between a hero.hero--no-media and the next sections...making the scroll
+	  button appear strangely out-of-place.
+
+	No background:
+	- Requires .hero.hero--no-media
+	- Does not requires a scroll button even if one is available. (see
+	  Hero Scroll Button comments above for more information)
+#}
+{# ============================================================================
+================== HERO MACROS : PUBLIC =======================================
+============================================================================= #}
+{#
+	Landing pages can have a special gallery-grid or a full browser height
+	swipeable gallery. This macro simply decides which it should be, and
+	delegates to the approprate macro.
+
+	@access public
+	@param {Dict} obj 				- A "herolanding" object obtained directly from the global context.
+	@param {Boolean} revealable 	- Whether this should have its own transition
+	@returns {HTML}
+#}
+{% macro landing(obj, revealable=true) %}
+	{%- if obj %}
+		{%- if obj.background_type == "grid" %}
+			{{ bbMedia.grid(
+					leftimgs=obj.grid_left|list,
+					rightimgs=obj.grid_right|list,
+					url=obj.grid_url,
+					url_target=obj.grid_url_target,
+					clip=obj.grid_clip
+				)
+			}}
+		{%- else %}
+			{{ basic(obj, revealable) }}
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Automatically renders the various basic hero types based on the available
+	herobasic parameters. This macro needs to figure out – what type of hero is
+	this, does it have content, does it have a background, should it be dimmed,
+	should it have a scroll to next arrow button, and whether or not the parameters
+	provided are valid enough to even render at all.
+
+	Supported herobasic types include...
+		none - If only content is available, this will render similar to an intro.
+		color - Adds a customizable color to the background instead of an image or video.
+		images - Adds a swipeable gallery with (optional) overlaid text.
+		images_multitext - Adds a swipeable gallery where each slide can have its own content/text.
+		youtube - Adds a silent autoplay YouTube video background.
+		vimeo - Adds a silent autoplay Vimeo video background.
+		instagram - Adds a swipeable gallery of instagram images.
+
+	@access public
+	@param {Dict} obj 				- A "herobasic" object obtained directly from the global context.
+	@param {Boolean} revealable 	- Whether this should have its own transition
+	@returns {HTML}
+#}
+{% macro basic(obj, revealable=true) %}
+	{%- if obj %}
+		{#- variables we can set immediately, but might override later -#}
+		{%- set classlist = [] -%}
+		{%- set has_content = (obj.title or obj.text or (obj.multibutton and obj.multibutton.button_type != "none")) -%}
+		{%- set ignore_content = false %}
+		{%- set dimmed = obj.darken -%}
+		{%- set scrollable = theme.options.general.always_add_scroll_button_to_heros -%}
+		{%- set videoautoplay = 0 if current.request.is_mobile else 1 -%}
+		{%- set has_fullheight = obj.fullheight if (obj.fullheight is defined) else false -%}
+		{%- set show_ada_button = true if account.accessibility and account.accessibility.motion_elements_player_control else false -%}
+
+		{#- variables we need to indentify (in the below switch statement) if and how to render the background -#}
+		{%- set valid = has_content -%}
+		{%- set background = false -%}
+		{%- set bgcolor = false -%}
+		{%- set has_gallery = false -%}
+		{%- set ada_button = false -%}
+
+		{#- switch: pseudo switch statement based on type -#}
+		{#- note, some mobile devices can't autoplay video, so if a mobile request, we are loading the thumbnail image instead. YouTube makes this easy. -#}
+		{%- if obj.background_type == "youtube" and obj.youtube_video_id -%}
+			{%- if videoautoplay -%}
+				{%- set background = _video(type="youtube", id=obj.youtube_video_id, title=obj.youtube_video_title, autoplay=videoautoplay, dimmed=dimmed) -%}
+				{%- set ada_button = bbButton.ada(obj.background_type) -%}
+			{%- else -%}{%- set background = bbMedia.gallery(imgs=["https://img.youtube.com/vi/" ~ obj.youtube_video_id ~ "/maxresdefault.jpg"], type="fit", dimmed=dimmed, tag="div", revealable=false) -%}
+			{%- endif -%}
+			{%- set valid = true -%}
+
+		{#- note, same autoplay considerations as YouTube. However, Vimeo requires using their API to load a thumbnail. So, instead, we are telling the video to NOT autoplay, which has a similar effect. -#}
+		{%- elif obj.background_type == "vimeo"  and obj.vimeo_video_id %}
+			{%- set background = _video(type="vimeo", id=obj.vimeo_video_id, title=obj.vimeo_video_title, autoplay=videoautoplay, dimmed=dimmed) -%}
+			{%- set ada_button = bbButton.ada(obj.background_type) -%}
+			{%- set valid = true -%}
+
+		{%- elif obj.background_type == "images" and obj.images and obj.images|length > 0 -%}
+			{%- set background = bbMedia.gallery(imgs=obj.images|list, type="fit", dimmed=dimmed, tag="div", revealable=false) -%}
+			{%- set has_gallery = true -%}
+			{%- set valid = true -%}
+			{%-if obj.images|length > 1 -%}
+					{%- set ada_button = bbButton.ada("gallery") -%}
+			{%- endif -%}
+
+		{%- elif obj.background_type == "images_multitext" and obj.images_multi_slides and obj.images_multi_slides|length > 0 -%}
+			{%- set slides_content_count = [] %}
+      {%- set total_slides = obj.images_multi_slides|length %}
+			{%- set slides -%}
+				{%- for item in obj.images_multi_slides -%}
+					{%- if item.title1 or item.text1 or (item.multibutton and (item.multibutton.button_type != "none")) -%}{%- do slides_content_count.append(1) -%}{%- endif -%}
+					{{ bbMedia.gallery_item(image=item.image1, title=item.title1, content=item.text1, multibutton=item.multibutton, dimmed=item.darken1, htag="h2", current_slide=loop.index, total_slides=total_slides) }}
+				{%- endfor -%}
+			{%- endset -%}
+			{%- set background = bbMedia.gallery_wrap(slides=slides, type="fit", dimmed=false, tag="div", revealable=false) -%}
+			{%- set ada_button = bbButton.ada("gallery") -%}
+			{%- set has_content = true if (slides_content_count|length > 0) else false -%}
+			{%- set ignore_content = true -%}
+			{%- set has_gallery = true -%}
+			{%- set valid = true -%}
+
+		{%- elif obj.background_type == "instagram" and account.services.instagram and account.services.instagram.media and account.services.instagram.media|length > 0 -%}
+			{%- set background = bbMedia.gallery(imgs=account.services.instagram.media|map(attribute="images.standard_resolution.url")|list, type="fit", dimmed=dimmed, tag="div", revealable=false) -%}
+			{%- set has_gallery = true -%}
+			{%- set ada_button = bbButton.ada("gallery") -%}
+			{%- set valid = true -%}
+
+		{%- elif obj.background_type == "none" -%}
+			{%- set scrollable = false -%}
+			{%- set dimmed = false -%}
+			{%- set has_fullheight = false -%}
+
+		{#- fallback to else which also equals obj.type == "color" -#}
+		{%- else -%}
+			{%- set dimmed = false -%}
+			{%- set bgcolor = obj.color if obj.color else false -%}
+		{%- endif -%}
+		{#- endswitch -#}
+
+		{#- when we get this far we have to decide which classes to add based on what was set above in the switch. -#}
+		{%- if obj.background_type == "none" -%}{%- do classlist.append("hero--no-media") -%}{%- endif -%}
+		{%- if not has_content -%}{% do classlist.append("hero--no-content") -%}{%- endif -%}
+		{%- if has_gallery -%}{%- do classlist.append("hero--gallery") -%}{%- endif -%}
+		{%- if scrollable -%}{%- do classlist.append("hero--scrollable") -%}{%- endif -%}
+		{%- if obj.fullheight -%}{%- do classlist.append("hero--fullheight") -%}{%- endif -%}
+		{%- if revealable -%}{%- do classlist.append("revealable") -%}{%- endif -%}
+
+		{#- render: we are only rendering the hero if either content or background is defined. Note, you can't have "color" or "none" without content. -#}
+		{%- if valid %}
+			<section id="hero" class="hero{% if classlist|length > 0 %} {{ classlist|join(" ") }}{% endif %}"{% if bgcolor %}style="background-color: {{ bgcolor }}"{% endif %}>
+				{% if has_content and not ignore_content %}{{ _content(obj.title, obj.text, obj.multibutton) }}{% endif %}
+				{% if scrollable %}{{ _scrollbtn() }}{% endif %}
+				{% if background %}{{ background }}{% endif %}
+				{% if show_ada_button and ada_button %} {{ ada_button }}{% endif %}
+			</section>
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Determines and returns whether or not a valid "herobasic" exists and has
+	been added to the page. Typically, other macros can use this information
+	to identify whether or not an <h1> tag is still available for use, or
+	if we should be adding a `.has-hero` to the `<body>` element.
+
+	Please note, this macro returns a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+
+	@param {Dict} obj 				- A "herobasic" object obtained directly from the global context.
+	@param {Boolean} include_none 	- True if a non-empty "none" type should be considered a valid hero, false if not.
+	@returns {Boolean} - "0" or "1"
+#}
+{% macro basic_exists(obj, include_none=true) -%}
+	{#- if there is a valid hero object... -#}
+	{%- if obj and obj.background_type -%}
+		{#- if the background type is set to "none", the hero can still have content... -#}
+		{%- if obj.background_type == "none" -%}
+			{#- If "none" is considered a valid hero type... -#}
+			{%- if include_none -%}
+				{#- is the hero completely empty? -#}
+				{{- 0 if (not obj.title and not obj.text and (obj.multibutton.button_type == "none")) else 1 -}}
+			{#- if "none" is not considered a valid hero type -#}
+			{%- else -%}
+				{{- 0 -}}
+			{%- endif -%}
+		{#- if background type is not "none", it is always valid. we could do a
+		    lot more processing here to ensure each type is populated enough to
+		    be valid, but for now, its not necessary.
+		-#}
+		{%- else -%}
+			{{- 1 -}}
+		{%- endif -%}
+	{#- no valid hero object -#}
+	{%- else -%}
+		{{- 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+{# ============================================================================
+================== PRIVATE : HELPER MACROS ====================================
+============================================================================= #}
+{#
+	Renders the hero text-based content.
+
+	@access private
+	@param {String} title 			- Hero heading.
+	@param {String} text 			- Hero content.
+	@param {Dict} multibutton       - Multibutton opts. (See bbButton._multi() for parameters)
+	@returns {HTML}
+#}
+{% macro _content(title, text, multibutton) %}
+	<div class="hero__content container">
+        {% if title %}<h1>{{ title }}</h1>{% endif %}
+        {% if text %}{{ text }}{% endif %}
+        {{ bbButton.multi(multibutton) }}
+	</div>
+{% endmacro %}
+
+{#
+	Renders the hero video background. Please note, because rendering a
+	background video with no sound requires us to use the YouTube iFrame API,
+	this macro simply creates a container with the proper data-attributes so
+	our JavaScript can take over and load the appropriate APIs and videos for
+	both YouTube and Vimeo.
+
+	@access private
+	@todo Should we add a dedicated fallback image and not rely on the YouTube/Vimeo poster frames?
+	@param {String} type 			- "youtube" or "vimeo"
+	@param {String} id 				- The YouTube or Vimeo video id.
+	@param {String} title 		    - The title for the iframe.	
+	@param {Int} autoplay			- 1 will autoplay the video. 0 will be paused on load.
+	@param {Boolean} dimmed			- Should we add a dimmer above the video for visual text separation?
+	@returns {HTML}
+#}
+{% macro _video(type, id, title, autoplay=1, dimmed=true) %}
+	{%- if type and id %}
+		<div class="hero__video{% if dimmed %} hero__video--dimmed{% endif %}" data-video-type="{{ type }}" data-video-title="{{ title }}" data-video-id="{{ id }}" data-video-autoplay="{{ autoplay }}">
+	        <div class="hero__video-inner"></div>
+	    </div>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Renders the hero's "scroll to next section" arrow button.
+
+	@access private
+	@returns {HTML}
+#}
+{% macro _scrollbtn() %}
+	<button type="button" class="hero__scroll-btn arrow-btn arrow-btn--down">
+        <span class="sr-only">Scroll Down to Content</span>
+    </button>
+{% endmacro %}

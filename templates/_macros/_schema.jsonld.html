@@ -1,0 +1,2116 @@
+{# ============================================================================
+================== IMPORTANT NOTES ============================================
+============================================================================= #}
+{#
+	The file contains all of the macros and actions required to populate
+	Schema.org json-ld data in each template. Our schema structure is as
+	follows:
+
+	Organization (or main entity)
+	|
+	|---- FoodEstablishment (each location)
+	|	  |
+	|	  |---- Boxes/Actions/Things (anything that can be attached/related to a location)
+	|
+	|---- Boxes/Actions/Things (anything that cannot be directly attached/related to a location)
+	|
+	Anything that lives completely independently of Organization (webpage, etc)
+
+
+	Please note, `_templates/_layouts/_base.html` is responsible for
+	initializing our schema data (ie...building a location cache) and outputting
+	our top-level Organization. Each template, thereafter, is responsible to
+	output its own json-ld data using the required/corresponding macros.
+
+	You can validate structured data using the following Google url, however,
+	its important to understand that Google validation and Schema.org validation
+	are not the same thing. The most notable things to be aware of are...
+
+	@see https://search.google.com/structured-data/testing-tool
+
+	1. Google does not understand all Schema.org types.
+	2. Google may require a particular @type be used in certain situations.
+	3. Getting an error in Google's validator (usually because you are missing
+	   properties that Google has marked as "required") usually means that
+	   Google needs those values to create Rich Snippets (cards, etc) and
+	   DOES NOT mean that your data is invalid. Unfortunately, we can meet all
+	   of Google's criteria all the time, so its good to know there's nothing
+	   wrong with your data.
+	4. Per the research, Google will follow `url` values and use `@id` values
+	   to link data that is on different pages. However, Google validation tool
+	   only looks at the data you have given it. For example, if you are only
+	   giving the validator a list of `@id` and `url` values, it might throw
+	   an error because it isn't following the `url` to get more information.
+	   Please note, this should be fine in a live environment when the "real
+	   Google" consumer is the client.
+#}
+
+{# ============================================================================
+================== PRIVATE : VARIABLES ========================================
+============================================================================= #}
+{#
+	Private
+	This is a master "kill" switch that enables or disables all json-ld data
+	from being created and output. You can use this to conditionally
+	enable/disable particular domains, dev, etc – or, you can indiscrimenantly
+	enable/disable all domains.
+#}
+{% set _ALLOW_SCHEMA_OUTPUT = true %}
+
+{#
+	Private
+	Stores locations related to a box by key/value pair where the key is the
+	box's unique url, and the value is an array of json references to the
+	related locations. Please note, you have to manually populate this variable
+	before attempting to retrieve values. (See its usage in the macros below)
+
+	Ex:
+	{
+	     "/jobs/head-chef": [loc1, loc2, ...],
+	     "jobs/manager": ...
+	}
+
+#}
+{% set _related_locations_by_box_url = {} %}
+
+{#
+	Private
+	Stores fully rendered (expanded) and reference (reference) versions of every
+	location. This is populated automatically inside the `init()` macro which calls
+	the `_generate_locations_cache()` macro. Once this variable is populated, the
+	`_locations_cached` variable acts as a "lock", so we can only ever process and
+	popuplate our cache once.
+
+	Ex:
+	{
+	     "/location/location-one": {
+			"reference": {
+				"@type": "FoodEstablishment",
+				"@id": "http://.../location/location-one/#foodestablishment"
+			},
+			"expanded": {
+				... full output here ...
+			}
+	     },
+	     "/location/location-two": {
+			"reference": {
+				"@type": "FoodEstablishment",
+				"@id": "http://.../location/location-two/#foodestablishment"
+			},
+			"expanded": {
+				... full output here ...
+			}
+	     }
+	}
+#}
+{% set _locations_cache_json = {} %}
+{% set _locations_cached = [] %}
+
+{# ============================================================================
+================== INITIALIZATION =============================================
+============================================================================= #}
+{#
+	This macro serves two purposes. (1) It can be used to disable enable/disable
+	all json-ld output (from the `_layouts/_base.html` template), and (2) it
+	generates a cache of location json-ld data that we can retrieve later. The
+	intention here is – because we are iterating over and processing every
+	location (and its data) we only want to do this type of processing once.
+	After the `_generate_locations_cache()` macro has been run the first time,
+	it will be locked on subsquent calls ensuring we only ever can call this once.
+
+	@access public
+	@returns {HTML}
+#}
+{% macro init() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- do _generate_locations_cache() -%}
+		{{- 1 -}}
+	{%- else -%}
+		{{- 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== WEBSITE / WEBPAGES =========================================
+============================================================================= #}
+{#
+	Renders the homepage WebSite json-ld. (Derived from http://apple.com)
+
+	@access public
+	@returns {HTML}
+#}
+{% macro website() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{{- _render_script({
+				"@context": "http://schema.org",
+				"@type": "WebSite",
+				"@id": _get_absolute_url("/#website"),
+				"url": _get_absolute_url(),
+				"name": account.name
+			})
+		-}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders the homepage WebPage json-ld. (Derived from http://apple.com)
+
+	@access public
+	@returns {HTML}
+#}
+{% macro homepage() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{{- _render_script({
+				"@context": "http://schema.org",
+				"@type": "WebPage",
+				"@id": _get_absolute_url("/#webpage"),
+				"url": _get_absolute_url(),
+				"name": account.name
+			})
+		-}}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== ORGANIZATION (TOP-LEVEL) ===================================
+============================================================================= #}
+{#
+	Renders the top-level Organization – in which all locations are added as
+	`subOrganizations`. Please note, this macro also attempts to identify which
+	"potential actions" are available such as Reservations, Online Ordering,
+	Store Purchases, etc.
+
+	@access public
+	@see https://schema.org/Orgnization
+	@returns {HTML} - proxied script tag.
+#}
+{% macro organization() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Arrays of potential actions to be populated later.
+		-#}
+		{%- set potential_actions = [] -%}
+
+		{#-
+			Create our base Organization json object.
+		-#}
+		{%- set org_json = {
+				"@context": "http://schema.org",
+				"@type": "Organization",
+				"@id": _get_absolute_url("/#organization"),
+				"url": _get_absolute_url(),
+				"name": account.name,
+				"description": account.site.meta_description|default(""),
+				"logo": account.logo|default("")
+			}
+		-%}
+		{#-
+			Gather locations json-ld from cache and add as subOrganizations.
+		-#}
+		{%- if boxes.location.all|length -%}
+			{%- set locations = [] -%}
+			{%- for loc in boxes.location.all -%}
+				{%- do locations.append(_locations_cache_json[loc.url].expanded) -%}
+			{%- endfor -%}
+			{%- do org_json.update({
+					"subOrganization": locations.0 if (locations|length == 1) else locations
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Add email address if available in social data.
+		-#}
+		{%- if account.services and account.services.social_icon_email_address and account.services.social_icon_email_address.url -%}
+			{%- do org_json.update({
+					"email": account.services.social_icon_email_address.url|obfuscate_string
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Add social accounts (if available) to sameAs. Please note, we are excluding email
+			for the supported listed because we are adding the email address to the dedicated
+			email slot above.
+		-#}
+		{%- if account.services -%}
+			{%- set social_supported = ["facebook", "instagram", "foursquare", "yelp", "google_plus", "tripadvisor", "youtube", "linkedin", "pinterest"] -%}
+			{%- set social_accounts = [] -%}
+			{%- for key, value in account.services.iteritems() -%}
+				{%- if (key in social_supported) and value.url -%}
+					{%- do social_accounts.append(value.url) -%}
+				{%- endif -%}
+			{%- endfor -%}
+			{%- if social_accounts|length -%}
+				{%- do org_json.update({
+					"sameAs": social_accounts.0 if (social_accounts|length == 1) else social_accounts
+				})
+			-%}
+			{%- endif -%}
+		{%- endif -%}
+		{#-
+			Potential Action: Reservations
+			- If reservations are allowed anywhere.
+			- Attaches an ActionKeyword URL that will automatically pop open the reservations panel
+			  when navigating directly.
+		-#}
+		{%- if bbReservations.any_allows() -%}
+			{%- do potential_actions.append({
+					"@type": "ReserveAction",
+					"object": {
+						"@type": "Reservation",
+						"name": "Table",
+						"url": _get_absolute_url("/#action-reservations")
+					},
+					"result": {
+						"@type": "Reservation",
+						"name": "Table"
+					},
+					"target": _get_absolute_url()
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Potential Action: Subscribe to Newsletter
+			- If newsletter signup is configured.
+		-#}
+		{%- if account.newsletter -%}
+			{%- do potential_actions.append({
+					"@type": "SubscribeAction",
+					"object": {
+						"@type": "Product",
+						"name": "Mailing List"
+					},
+					"target": _get_absolute_url()
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Potential Action: ChowNow/Online Ordering
+			- If ChowNow is configured.
+		-#}
+		{%- if account.services and account.services.chownow and account.services.chownow.id %}
+			{%- do potential_actions.append({
+					"@type": "OrderAction",
+					"object": {
+						"@type": "Product",
+						"name": "ChowNow"
+					},
+					"target": _get_absolute_url()
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Potential Action: Product purchases.
+			- If at least one product, custom product, or gift card exists.
+		-#}
+		{%- if store and store.products and store.products.all and store.products.all|length -%}
+			{%- do potential_actions.append({
+					"@type": "BuyAction",
+					"object": {
+						"@type": "Product",
+						"name": "Product"
+					},
+					"target": _get_absolute_url(store.home)
+				})
+			-%}
+		{%- endif -%}
+
+		{#-
+			Potential Action: Catering Product purchases.
+			- If at least one catering product exists.
+		-#}
+		{%- if store and store.catering_products and store.catering_products.all and store.catering_products.all|length -%}
+			{%- do potential_actions.append({
+					"@type": "BuyAction",
+					"object": {
+						"@type": "Product",
+						"name": "Catering Product"
+					},
+					"target": _get_absolute_url(
+						bbUtils.get_url_by_template(
+							template="store/index_catering.html",
+							default_url="/store/catering/"
+						)
+					)
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Potential Action: Ticketed Event
+			- If at least one ticketed event is available.
+		-#}
+		{%- if store and store.events and store.events.all and store.events.all|length -%}
+			{%- do potential_actions.append({
+					"@type": "ReserveAction",
+					"object": {
+						"@type": "Reservation",
+						"name": "Ticketed Event"
+					},
+					"target": _get_absolute_url()
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			If we found at least one potential action, output. Please note, if only one was found we
+			are outputting a Dict/Object. Otherwise, we're outputting an Array.
+		-#}
+		{%- if potential_actions|length -%}
+			{%- do org_json.update({
+					"potentialAction": potential_actions.0 if (potential_actions|length == 1) else potential_actions
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(org_json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : EVENTS ===============================================
+============================================================================= #}
+{#
+	Renders a single Event json-ld item with references to related
+	locations (if applicable).
+
+	@access public
+	@see https://schema.org/Event
+	@returns {HTML} - proxied script tag.
+#}
+{% macro event_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base event json object. Please note, we are always referencing
+			the organizer.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "Event",
+				"@id": _get_absolute_url(current.url ~ "/#event"),
+				"url": _get_absolute_url(current.url),
+				"name": current.name,
+				"description": current.description|default("")|striptags,
+				"startDate": current.starts|date("%Y-%m-%d"),
+				"endDate": current.ends|date("%Y-%m-%d"),
+				"sameAs": current.external_url|default(""),
+				"organizer": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			Add an image if applicable.
+		-#}
+		{%- if current.image -%}
+			{%- do json.update({
+					"image": current.image,
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("events", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"location": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{#-
+			If we didn't find any associated locations, we have to add something for
+			Event json-ld to be as valid as possible – so, we are adding the
+			top-level Organization as a fallback.
+		-#}
+		{%- else -%}
+			{%- do json.update({
+					"location": {
+						"@type": "Place",
+						"@id": _get_absolute_url("/#organization")
+					}
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to Event items/pages.
+
+	@access public
+	@see https://schema.org/Event
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of event boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro events_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of news references from list.
+			-#}
+			{% set list_json = [] %}
+			{%- for event in list -%}
+				{%- do list_json.append({
+						"@type": "Event",
+						"@id": _get_absolute_url(event.url ~ "#event"),
+						"url": _get_absolute_url(event.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add event references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : GALLERIES ============================================
+============================================================================= #}
+{#
+	Renders a single ImageGallery json-ld item with references to related
+	locations (if applicable). Please note, ImageGallery items are actually
+	WebPage items.
+
+	@access public
+	@see https://schema.org/ImageGallery
+	@see https://schema.org/ImageObject
+	@returns {HTML} - proxied script tag.
+#}
+{% macro gallery_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base gallery json object. Please note, we are always referencing
+			the publisher.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "ImageGallery",
+				"@id": _get_absolute_url(current.url ~ "#imagegallery"),
+				"url": _get_absolute_url(current.url),
+				"name": current.name,
+				"headline": current.name,
+				"dateCreated": current.created|date("%Y-%m-%d"),
+				"dateModified": current.updated|date("%Y-%m-%d"),
+				"publisher": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			Create array of ImageObjects to put in associatedMedia slot.
+		-#}
+		{%- if current.images and current.images|length -%}
+			{%- set images_json = [] -%}
+			{%- for img in current.images -%}
+				{%- do images_json.append({
+						"@type": "ImageObject",
+						"url": img|default("")
+					})
+				-%}
+			{%- endfor -%}
+			{%- do json.update({
+					"associatedMedia": images_json
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("galleries", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"contentLocation": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to ImageGallery items/pages.
+
+	@access public
+	@see https://schema.org/ImageGallery
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of gallery boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro gallery_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of job references from list.
+			-#}
+			{%- set list_json = [] -%}
+			{%- for gallery in list -%}
+				{%- do list_json.append({
+						"@type": "ImageGallery",
+						"@id": _get_absolute_url(gallery.url ~ "#imagegallery"),
+						"url": _get_absolute_url(gallery.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add jobs references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : JOBS =================================================
+============================================================================= #}
+{#
+	Renders a single JobPosting json-ld item with references to related
+	locations (if applicable).
+
+	@access public
+	@see https://schema.org/JobPosting
+	@returns {HTML} - proxied script tag.
+#}
+{% macro job_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base jobs json object. Please note, we are always referencing
+			the hiringOrganization.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "JobPosting",
+				"@id": _get_absolute_url(current.url ~ "/#jobposting"),
+				"url": _get_absolute_url(current.url),
+				"title": current.name,
+				"description": current.description|default("")|striptags,
+				"datePosted": current.created|date("%Y-%m-%d"),
+				"industry": "Food Service",
+				"hiringOrganization": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("jobs", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"jobLocation": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to JobPosting items/pages.
+
+	@access public
+	@see https://schema.org/JobPosting
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of job boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro jobs_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of job references from list.
+			-#}
+			{%- set list_json = [] -%}
+			{%- for job in list -%}
+				{%- do list_json.append({
+						"@type": "JobPosting",
+						"@id": _get_absolute_url(job.url ~ "/#jobposting"),
+						"url": _get_absolute_url(job.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add jobs references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : LOCATIONS ============================================
+============================================================================= #}
+{#
+	SPECIAL CASE: Renders a special single reference json-ld item. Please note,
+	this does not use the reference in the `_locations_cache_json` variable
+	because we need to add the `mainEntityOfPage` to this reference, but we don't
+	want that to apply to ALL the references used on the page. (ie...in Jinja2
+	you can't make a copy of an Object/Dict – it is always an instance reference).
+
+	Also, please note that the single location template has the ability to
+	display full versions of related menus. For this reason, we are also
+	outputting our full menus if the list is passed in as a parameter.
+
+	@access public
+	@see https://schema.org/FoodEstablishment
+	@param {List} 			- An array of menus that are related to this location (if applicable).
+	@returns {HTML} - proxied script tag.
+#}
+{% macro location_single(menus) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#- shorcut variable: because we use it more than once -#}
+		{%- set url = _get_absolute_url(current.url) -%}
+		{#- render the location reference script! -#}
+		{%- set location_json = {
+				"@context": "http://schema.org",
+				"@type": "FoodEstablishment",
+				"@id": (url ~ "#foodestablishment"),
+				"mainEntityOfPage": url,
+			}
+		-%}
+
+		{{- _render_script(location_json)
+		}}
+		{#- render the related menus (if applicable) #}
+		{{ menus_listing(menus) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	SPECIAL CASE: For consistency we are including this macro, but it does not
+	render anything because our locations are already being output in fulll as
+	an Array of `subOrganization`s that belong to the top-level Organization.
+	If, in the future, it becomes necessary to ouput additional information, you
+	should only have to create the logic – because it is already implemented on
+	any templates that "might" use it.
+
+	@access public
+	@see https://schema.org/FoodEstablishment
+	@param {List} list 			- An array of location boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro locations_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#- DON'T DO ANYTHING!!! -#}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : MENUS ================================================
+============================================================================= #}
+{#
+	SPECIAL CASE: Renders a single Menu json-ld item (and all its child
+	MenuSection and MenuItem) with references to related locations (if
+	applicable). Please note, these `@types` are not currently supported by
+	Google....yet.
+
+	What makes this special is – we aren't using implicitly using `current` as
+	the data source. Instead, we are explicitly using a menu box as a parameter.
+	The reason for this is that menus don't follow the same conventions as other
+	"listing" pages that only show part of their content – menus are always shown
+	in full. So, we want to always render full menus even on listings pages –
+	which means this macro needs to be re-usable and configurable.
+	(see `menus_listing()` macro below)
+
+	@access public
+	@see http://webschemas.org/Menu
+	@see http://webschemas.org/MenuSection
+	@see http://webschemas.org/MenuItem
+	@param {Dict} 			- A single menu box directly from the `context`.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro menu_single(box) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if box.sections and box.sections|length -%}
+			{#-
+				Create our base Menu json-ld.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@type": "Menu",
+					"@id": _get_absolute_url(box.url ~ "#menu"),
+					"name": box.name,
+					"description": box.description|default("")|striptags
+				}
+			-%}
+			{#-
+				If the menu has an image assigned, add it.
+			-#}
+			{%- if box.image and box.image|length -%}
+				{%- do json.update({
+						"image": box.image|default("")
+					})
+				-%}
+			{%- endif -%}
+			{#-
+				If the menu has a file assigned, add it to `associatedMedia` as a
+				generic `MediaObject` – because we don't really know what type of
+				file this is.
+			-#}
+			{%- if box.file and box.file|length -%}
+				{%- do json.update({
+							"associatedMedia": {
+								"@type": "MediaObject",
+								"contentUrl": box.file
+							}
+						})
+					-%}
+			{%- endif -%}
+			{#-
+				Loop through and create all the sections in the menu.
+			-#}
+			{%- set sections_list = [] -%}
+			{%- for section in box.sections -%}
+				{%- if section.is_itemized and section.menu_items|length -%}
+					{#-
+						Create base MenuSection
+					-#}
+					{%- set section_json = {
+							"@type": "MenuSection",
+							"name": section.name|default(""),
+							"description": section.description|default("")|striptags
+						}
+					-%}
+					{#-
+						Loop through and create all menu items in section.
+					-#}
+					{%- set items_list = [] -%}
+					{%- for item in section.menu_items -%}
+						{#-
+							Create base MenuItem.
+						-#}
+						{%- set item_json = {
+								"@type": "MenuItem",
+								"name": item.name|default(""),
+								"description": item.description|default("")|striptags,
+								"image": item.image|default("")
+							}
+						-%}
+
+						{%- if item.prices|length -%}
+							{% set priceCurrency = "USD" %}
+							{%- set offers_list = [] -%}
+							{%- for price in item.prices -%}
+								{%- set offer = {
+									"@type": "Offer"
+								} -%}
+								{%- if price.price -%}
+									{%- do offer.update({"price": price.price, "priceCurrency": priceCurrency}) -%}
+								{%- endif -%}
+								{%- if price.price and price.price_max -%}
+									{%- do offer.update({"priceSpecification": {
+												"@type": "PriceSpecification",
+												"maxPrice": price.price_max,
+												"price": price.price,
+												"description": price.label if price.label else ""
+											}
+										})
+									%}
+								{%- endif -%}
+
+								{%- if price.label -%}
+									{%- do offer.update({"description": price.label}) -%}
+								{%- endif -%}
+
+								{%- do offers_list.append(offer) -%}
+							{%- endfor -%}
+
+							{%- do item_json.update({
+									"offers": offers_list.0 if (offers_list|length == 1) else offers_list
+								})
+							-%}
+						{%- endif -%}
+
+						{#-
+							Menu Item: Suitable For Diets
+							- Combining dietary_types, allergens, and spicy rating.
+						-#}
+						{%- set diets = item.dietary_types + item.allergens + (["Spicy"] if item.spicy_rating else []) -%}
+						{%- if diets|length -%}
+							{%- set diets_list = [] -%}
+							{%- for diet in diets -%}
+								{%- do diets_list.append({
+										"@type": "RestrictedDiet",
+										"name": diet
+									})
+								-%}
+							{%- endfor -%}
+							{%- do item_json.update({
+									"suitableForDiet": diets_list.0 if (diets_list|length == 1) else diets_list
+								})
+							-%}
+						{%- endif -%}
+						{#-
+							Menu Item: Addons
+							- Name only.
+						-#}
+						{%- if item.addons and item.addons|length -%}
+							{%- set addons_list = [] -%}
+							{%- for addon in item.addons if addon.name -%}
+								{%- do addons_list.append({
+										"@type": "MenuSection",
+										"hasMenuItem": {
+											"@type": "MenuItem",
+											"name": addon.name
+										}
+									})
+								-%}
+							{%- endfor -%}
+							{%- do item_json.update({
+									"menuAddOn": addons_list.0 if (addons_list|length == 1) else addons_list
+								})
+							-%}
+						{%- endif -%}
+						{#-
+							Add the menu item to the list of items in this section.
+						-#}
+						{%- do items_list.append(item_json) -%}
+					{%- endfor -%}
+					{#-
+						After we have created all our menu items in the section, if we have at least one,
+						go ahead and add the list to `hasMenuItem` as either a single Dict/Object or Array.
+					-#}
+					{%- if items_list|length -%}
+						{%- do section_json.update({
+								"hasMenuItem": items_list.0 if (items_list|length == 1) else items_list
+							})
+						-%}
+					{%- endif -%}
+					{#-
+						Add this menu section to the list of sections.
+					- #}
+					{%- do sections_list.append(section_json) -%}
+				{%- endif -%}
+			{%- endfor -%}
+			{#-
+				After we have created all of our menu sections (and child items), add the sections to
+				the Menu's `hasMenuSection` as either a single Dict/Object or as an Array.
+			-#}
+			{%- do json.update({
+					"hasMenuSection": sections_list.0 if (sections_list|length == 1) else sections_list
+				})
+			-%}
+			{#-
+				This macro attempts to find related locations and (if found) populates
+				the `_related_locations_by_box_url[box.url]` key with an array.
+			-#}
+			{%- do _populate_related_locations_by_box("menus", box.url) -%}
+			{#-
+				Now we check to see if our url key exists, and if at least one related
+				location we found. If so, we are adding references to our related
+				locations. Please note, if only one location was found we are outputting
+				an an Object/Dict – otherwise, as an Array/List.
+			-#}
+			{%- if _related_locations_by_box_url[box.url]|length -%}
+				{%- set related_locs = _related_locations_by_box_url[box.url] -%}
+				{%- do json.update({
+						"creator": related_locs.0 if (related_locs|length == 1) else related_locs,
+						"locationCreated": related_locs.0 if (related_locs|length == 1) else related_locs
+					})
+				-%}
+			{%- else -%}
+				{%- do json.update({
+						"creator": {
+							"@id": _get_absolute_url("/#organization")
+						}
+					})
+				-%}
+			{%- endif -%}
+			{#- finally, render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	SPECIAL CASE: We are rendering separate json-ld script tags for each menu. The
+	reason for this is – menus are extremely complex to render AND they are always
+	show in full on their containing pages. So, we want to be able to re-use our
+	macro that renders the full menus...and this is the easiest way to achieve that.
+
+	@access public
+	@param {List} list 			- An array of menu boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro menus_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{%- for menu in list -%}
+				{{- menu_single(menu) -}}
+			{%- endfor -%}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : NEWS =================================================
+============================================================================= #}
+{#
+	Renders a single Article json-ld item with references to related
+	locations (if applicable).
+
+	@access public
+	@see https://schema.org/Article
+	@returns {HTML} - proxied script tag.
+#}
+{% macro news_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base news json object. Please note, we are always referencing
+			the `author` and `publisher`.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "Article",
+				"@id": _get_absolute_url(current.url ~ "#article-news"),
+				"url": _get_absolute_url(current.url),
+				"headline": current.name,
+				"dateCreated": current.created|date("%Y-%m-%d"),
+				"dateModified": current.updated|date("%Y-%m-%d"),
+				"datePublished": current.date|date("%Y-%m-%d"),
+				"isAccessibleForFree": "true",
+				"articleBody": current.content|default("")|striptags,
+				"author": {
+					"@id": _get_absolute_url("/#organization")
+				},
+				"publisher": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			If an image exists, we need to add it to our json. Please note, Google requires
+			the verbose ImageObject and width/height values to validation, so we need to
+			create a cropped version of this image so we know the exact dimensions.
+		-#}
+		{%- if current.image and current.image|length -%}
+			{%- set img16by9 = current.image|resize(width=1000, height=562, fit="crop") -%}
+			{%- do json.update({
+					"image": {
+						"@type": "ImageObject",
+						"url": img16by9,
+						"width": "1000px",
+						"height": "562px"
+					}
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("news", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"contentLocation": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to Article (news) items/pages.
+
+	@access public
+	@see https://schema.org/Article
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of new article boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro news_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of news references from list.
+			-#}
+			{% set list_json = [] %}
+			{%- for article in list -%}
+				{%- do list_json.append({
+						"@type": "Article",
+						"@id": _get_absolute_url(article.url ~ "#article-news"),
+						"url": _get_absolute_url(article.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add news references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : PRESS ================================================
+============================================================================= #}
+{#
+	SPECIAL CASE
+	Renders a list of press boxes that each include their full json-ld
+	representations. The reason for this is, currently, BentoBox does not
+	support local, single press box urls – meaning, an article is always
+	external and never has an admin-entered content.
+
+	@access public
+	@see https://schema.org/Article
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of press boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro press_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of press boxes from list.
+			-#}
+			{%- set list_json = [] -%}
+			{%- for press in list -%}
+				{#-
+					Create our base press json object.
+				-#}
+				{%- set press_json = {
+						"@context": "http://schema.org",
+						"@type": "Article",
+						"url": press.external_url|default(""),
+						"headline": press.name,
+						"dateCreated": press.created|date("%Y-%m-%d"),
+						"dateModified": press.updated|date("%Y-%m-%d"),
+						"datePublished": press.date|date("%Y-%m-%d")
+					}
+				-%}
+				{#-
+					If a source is available, we need to apply it to both the `author` and
+					`publisher` slot. Please note, `publisher` requires and Organization or
+					Person, so its slightly more verbose than `author`. Also, we have no
+					real way of knowing the root url to the source, nor do we know if there
+					is any json-ld `@id`s available that we can link to. So, this is the
+					best we can do for now.
+				-#}
+				{%- if press.source -%}
+					{%- do press_json.update({
+							"author": press.source|default(""),
+							"publisher": {
+								"@type": "Organization",
+								"name": press.source|default(""),
+							}
+						})
+					-%}
+				{%- endif -%}
+				{#-
+					If an image exists, we need to add it to our json. Please note, Google requires
+					the verbose ImageObject and width/height values to validation, so we need to
+					create a cropped version of this image so we know the exact dimensions.
+				-#}
+				{%- if press.image and press.image|length -%}
+					{%- set img16by9 = press.image|resize(width=1000, height=562, fit="crop") -%}
+					{%- do press_json.update({
+							"image": {
+								"@type": "ImageObject",
+								"url": img16by9,
+								"width": "1000px",
+								"height": "562px"
+							}
+						})
+					-%}
+				{%- endif -%}
+				{#-
+					If there is a file, we are going to add it to `associatedMedia` as a
+					descript MediaObject – because we can't really know what type of file this is.
+					(ie...pdf, jpg, video, etc)
+				-#}
+				{%- if press.file -%}
+					{%- do press_json.update({
+							"associatedMedia": {
+								"@type": "MediaObject",
+								"contentUrl": press.file
+							}
+						})
+					-%}
+				{%- endif -%}
+				{#-
+					This macro attempts to find related locations and (if found) populates
+					the `_related_locations_by_box_url[press.url]` key with an array.
+				-#}
+				{%- do _populate_related_locations_by_box("press", press.url) -%}
+				{#-
+					Now we check to see if our url key exists, and if at least one related
+					location we found. If so, we are adding references to our related
+					locations. Please note, if only one location was found we are outputting
+					an an Object/Dict – otherwise, as an Array/List.
+				-#}
+				{%- if _related_locations_by_box_url[press.url]|length -%}
+					{%- set related_locs = _related_locations_by_box_url[press.url] -%}
+					{%- do press_json.update({
+							"contentLocation": related_locs.0 if (related_locs|length == 1) else related_locs
+						})
+					-%}
+				{#-
+					If we didn't find any related locations, we are going to use our top-level
+					Organization as a fallback...otherwise, there's no way to relate this to
+					any of our own data types.
+				-#}
+				{%- else -%}
+					{%- do press_json.update({
+							"contentLocation": {
+								"@type": "Place",
+								"@id": _get_absolute_url("/#organization")
+							}
+						})
+					-%}
+				{%- endif -%}
+				{#-
+					Now, we add the single press box to our list.
+				-#}
+				{%- do list_json.append(press_json) -%}
+			{%- endfor -%}
+			{#-
+				Create the json and add the list of press boxes to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : VENUES ===============================================
+============================================================================= #}
+{#
+	Renders a single EventVenue json-ld item with references to related
+	locations (if applicable).
+
+	@access public
+	@see https://schema.org/EventVenue
+	@returns {HTML} - proxied script tag.
+#}
+{% macro venue_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{# shortcut variable: We need this more than once below #}
+		{%- set image_url = current.image|image_url|default("") -%}
+		{#-
+			Create our base venue json object.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "EventVenue",
+				"@id": _get_absolute_url(current.url ~ "#eventvenue"),
+				"url": _get_absolute_url(current.url),
+				"name": current.name,
+				"description": current.description|default("")|striptags,
+				"image": image_url,
+				"photo": image_url,
+			}
+		-%}
+		{#-
+			We want to add in the capacity as an "amenity" if its available.
+		-#}
+		{%- if current.capacity -%}
+			{%- do json.update({
+					"amenityFeature": {
+						"@type": "LocationFeatureSpecification",
+						"name": "Capacity",
+						"value": current.capacity
+					}
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("venues", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"containedInPlace": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{#-
+			If no related locations exists, we still have to associate this will a
+			`Place` somehow. So, if there is exactly one location, we are automatically
+			associating this venue. Otherwise, we are associating this to the top-level
+			`Organization` as a fallback.
+		-#}
+		{%- else -%}
+			{%- set total_locations = boxes.location.all|length -%}
+			{%- if total_locations == 1 -%}
+				{%- do json.update({
+						"containedInPlace": _locations_cache_json[boxes.location.all.0.url]
+					})
+				-%}
+			{%- else -%}
+				{%- do json.update({
+						"containedInPlace": {
+							"@type": "Place",
+							"@id": _get_absolute_url("/#organization")
+						}
+					})
+				-%}
+			{%- endif -%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to venues items/pages.
+
+	@access public
+	@see https://schema.org/EventVenue
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of venue boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro venues_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of venues references from list.
+			-#}
+			{% set list_json = [] %}
+			{%- for article in list -%}
+				{%- do list_json.append({
+						"@type": "EventVenue",
+						"@id": _get_absolute_url(article.url ~ "#eventvenue"),
+						"url": _get_absolute_url(article.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add venues references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== BOX : TEAM =================================================
+============================================================================= #}
+{#
+	Renders a single Person json-ld item with references to related
+	locations (if applicable).
+
+	@access public
+	@see https://schema.org/Person
+	@returns {HTML} - proxied script tag.
+#}
+{% macro team_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base person json object. Please note, we are always referencing
+			the affilication and memberOf.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "Person",
+				"@id": _get_absolute_url(current.url ~ "#person"),
+				"url": _get_absolute_url(current.url),
+				"name": current.name,
+				"description": current.bio|default("")|striptags,
+				"jobTitle": current.title|default(""),
+				"affiliation": {
+					"@id": _get_absolute_url("/#organization")
+				},
+				"memberOf": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			Create image if applicable.
+		-#}
+		{%- if current.image and current.image|length -%}
+			{%- do json.update({
+					"image": current.image
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Add all social media accounts (if applicable) as a `sameAs` array.
+		-#}
+		{%- if current.social -%}
+			{%- set social = [] -%}
+			{%- for key, value in current.social.iteritems() -%}
+				{%- if value -%}
+					{%- do social.append(value) -%}
+				{%- endif -%}
+			{%- endfor -%}
+			{%- if social|length -%}
+				{%- do json.update({
+						"sameAs": social.0 if (social|length == 1) else social
+					})
+				-%}
+			{%- endif -%}
+		{%- endif -%}
+		{#-
+			This macro attempts to find related locations and (if found) populates
+			the `_related_locations_by_box_url[current.url]` key with an array.
+		-#}
+		{%- do _populate_related_locations_by_box("team", current.url) -%}
+		{#-
+			Now we check to see if our url key exists, and if at least one related
+			location we found. If so, we are adding references to our related
+			locations. Please note, if only one location was found we are outputting
+			an an Object/Dict – otherwise, as an Array/List.
+		-#}
+		{%- if _related_locations_by_box_url[current.url]|length -%}
+			{%- set related_locs = _related_locations_by_box_url[current.url] -%}
+			{%- do json.update({
+					"workLocation": related_locs.0 if (related_locs|length == 1) else related_locs,
+					"worksFor": related_locs.0 if (related_locs|length == 1) else related_locs
+				})
+			-%}
+		{#-
+			If no related locations were found, we are going to output the top-level
+			Organization in the `worksFor` slot as a fallback.
+		-#}
+		{%- else -%}
+			{%- do json.update({
+					"worksFor": {
+						"@id": _get_absolute_url("/#organization")
+					}
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to team items/pages.
+
+	@access public
+	@see https://schema.org/Person
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of team boxes available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro team_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of team member references from list.
+			-#}
+			{% set list_json = [] %}
+			{%- for member in list -%}
+				{%- do list_json.append({
+						"@type": "Person",
+						"@id": _get_absolute_url(member.url ~ "#person"),
+						"url": _get_absolute_url(member.url)
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add team member references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== STORE : PRODUCT ============================================
+============================================================================= #}
+{#
+	Renders a single Product json-ld item.
+
+	@access public
+	@see https://schema.org/Product
+	@param {String} name 			- The name of the product.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro product_single(name) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base product json object. Please note, we are always
+			referencing the `brand` as the top-level Organization.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "Product",
+				"@id": _get_absolute_url(current.url ~ "#product"),
+				"url": _get_absolute_url(current.url),
+				"name": name if name else current.name|default("Product"),
+				"description": current.description|default("")|striptags,
+				"brand": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			If an image exists, add the url.
+		-#}
+		{%- if current.image and current.image|length -%}
+			{%- do json.update({
+					"image": current.image
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Renders a list of references to Product items/pages.
+
+	@access public
+	@see https://schema.org/Product
+	@see http://www.w3.org/TR/json-ld/#named-graphs
+	@param {List} list 			- An array of products available on the current page.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro products_listing(list) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if list and list|length -%}
+			{#-
+				Create array of product references from list.
+			-#}
+			{% set list_json = [] %}
+			{%- for product in list -%}
+				{%- do list_json.append({
+						"@type": "Product",
+						"@id": _get_absolute_url(product.url ~ "#product"),
+						"url": _get_absolute_url(product.url),
+						"name": product.name
+					})
+				-%}
+			{%- endfor -%}
+			{#-
+				Create the json and add product references to `@graph`.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@graph": list_json
+				}
+			-%}
+			{#- render it! -#}
+			{{- _render_script(json) -}}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== STORE : TICKETED EVENT =====================================
+============================================================================= #}
+{#
+	Renders a single Ticketed Event json-ld item.
+
+	@access public
+	@see https://schema.org/Event
+	@returns {HTML} - proxied script tag.
+#}
+{% macro ticketed_event_single() -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Create our base event json object. Please note, we are always referencing
+			the organizer.
+		-#}
+		{%- set json = {
+				"@context": "http://schema.org",
+				"@type": "Event",
+				"@id": _get_absolute_url(current.url ~ "/#event"),
+				"url": _get_absolute_url(current.url),
+				"name": current.name,
+				"description": current.description|default("")|striptags,
+				"sameAs": current.external_url|default(""),
+				"organizer": {
+					"@id": _get_absolute_url("/#organization")
+				}
+			}
+		-%}
+		{#-
+			Add an image if applicable. Please note, for some reason this image already
+			has a protocol attached. Most other images do not.
+		-#}
+		{%- if current.image -%}
+			{%- do json.update({
+					"image": current.image,
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Add a start and end date with times if applicable.
+		-#}
+		{%- if current.date -%}
+			{%- set start_time = ("T" ~ current.start_time ~ "Z") if current.start_time else "" -%}
+			{%- set end_time = ("T" ~ current.end_time ~ "Z") if current.end_time else "" %}
+			{%- do json.update({
+					"startDate": (current.date ~ start_time),
+					"endDate": (current.date ~ end_time)
+				})
+			-%}
+		{%- endif -%}
+		{#-
+			Add a location. Please note, Google does not recognize `Text` based
+			full addresses in this slot so we have to provide a PostalAddress.
+			However, postal addresses also require a `name`, which we don't have...
+			so, we're just providing a generic "Event Location" as the name.
+		-#}
+		{%- if current.street and current.city and current.state and current.postal_code -%}
+			{%- do json.update({
+					"location": {
+						"@type": "PostalAddress",
+						"name": "Event Location",
+						"streetAddress": current.street,
+						"addressLocality": current.city,
+						"addressRegion": current.state,
+						"postalCode": current.postal_code
+					}
+				})
+			-%}
+		{%- endif -%}
+		{#- render it! -#}
+		{{- _render_script(json) -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== STORE : CATERING ===========================================
+============================================================================= #}
+{#
+	Renders all categorized and uncategorized Catering Products. Categories are
+	rendered as `MenuSection` elements, and their corresponding products are
+	rendered as `MenuItem` elements. Uncategorized items are rendered in a
+	special-case "Miscellaneous" menu section. Also, please be aware of these
+	three important criteria for rendering our items...
+
+	1. You need at least one category or uncategorized item for this script to
+	   render anything at all.
+	2. The standard catering listing template/page renders both uncategorized
+	   products and all categories.
+	3. Catering category template/pages ONLY render a single category and
+	   do not render ANY uncategorized products at all.
+
+	Please note, you need at least one category or uncategorized item for this
+	script to render. Also, uncategorized items
+
+	@access public
+	@see http://webschemas.org/Menu
+	@see http://webschemas.org/MenuSection
+	@see http://webschemas.org/MenuItem
+	@param {List} categorized 		- A list/array of all Catering Product categories. (store.catering_products.categories)
+	@param {List} uncategorized     - A list of all individual Catering Products that DO NOT belong to any category.
+	@returns {HTML} - proxied script tag.
+#}
+{% macro catering_products(categorized, uncategorized) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{#-
+			Requires at least one category or at at least one uncategorized item to render.
+		-#}
+		{%- if (categorized and (categorized|length > 0)) or (uncategorized and (uncategorized|length > 0)) -%}
+			{#-
+				We need a reference to our listing url to use for ids.
+			-#}
+			{%- set listing_url = bbUtils.get_url_by_template(template="store/index_catering.html", default_url="/store/catering/") -%}
+			{#-
+				Create our base Menu json-ld.
+			-#}
+			{%- set json = {
+					"@context": "http://schema.org",
+					"@type": "Menu",
+					"@id": _get_absolute_url(listing_url ~ "#menu"),
+					"url": _get_absolute_url(listing_url),
+					"name": "Catering Menu",
+					"creator": {
+						"@id": _get_absolute_url("/#organization")
+					}
+				}
+			-%}
+			{#-
+				MenuSection list. We will push any populated category or uncategorized group into this list
+				as we create them.
+			-#}
+			{%- set sections_list = [] -%}
+			{#-
+				If categories exist, loop through all categories and create corresponding MenuSection(s).
+			-#}
+			{%- if (categorized and (categorized|length > 0)) -%}
+				{%- for category in categorized if category.all -%}
+					{#-
+						Create base MenuSection from category
+					-#}
+					{%- set section_json = {
+							"@type": "MenuSection",
+							"@id": _get_absolute_url(category.url ~ "#menusection"),
+							"url": _get_absolute_url(category.url),
+							"name": category.name
+						}
+					-%}
+					{#-
+						Loop through and create all menu items in section from single catering products.
+					-#}
+					{%- set items_list = [] -%}
+					{%- for item in category.all -%}
+						{% do items_list.append({
+								"@type": "MenuItem",
+								"name": item.name,
+								"description": item.description|default("")|striptags,
+								"image": item.image|default("")
+							})
+						%}
+					{%- endfor -%}
+					{#-
+						If we have at least one product in the items list, add it to the section json.
+					-#}
+					{%- if items_list|length -%}
+						{%- do section_json.update({
+								"hasMenuItem": items_list.0 if (items_list|length == 1) else items_list
+							})
+						-%}
+						{#-
+							If at least one item has been added to the section/category, add it to our
+							list of populated sections.
+						-#}
+						{%- do sections_list.append(section_json) -%}
+					{%- endif -%}
+				{%- endfor -%}
+			{%- endif -%}
+
+			{#-
+				If uncategorized products exist, loop through them all and add them to a generic MenuSection.
+				This chunk is almost identical to the "categorized" logic above. Unfortunately, Jinja doesn't
+				let us return "objects" from macros so we can't abstract this and have to double-up the code.
+			-#}
+			{%- if (uncategorized and (uncategorized|length > 0)) -%}
+				{#-
+					Create base MenuSection from category
+				-#}
+				{%- set section_json = {
+						"@type": "MenuSection",
+						"@id": _get_absolute_url(listing_url ~ "#menusection-uncategorized"),
+						"url": _get_absolute_url(listing_url),
+						"name": "Miscellaneous"
+					}
+				-%}
+				{#-
+					Loop through and create all menu items in section from single catering products.
+				-#}
+				{%- set items_list = [] -%}
+				{%- for item in uncategorized -%}
+					{% do items_list.append({
+							"@type": "MenuItem",
+							"name": item.name,
+							"description": item.description|default("")|striptags,
+							"image": item.image|default("")
+						})
+					%}
+				{%- endfor -%}
+				{#-
+					If we have at least one product in the items list, add it to the section json.
+				-#}
+				{%- if items_list|length -%}
+					{%- do section_json.update({
+							"hasMenuItem": items_list.0 if (items_list|length == 1) else items_list
+						})
+					-%}
+					{#-
+						If at least one item has been added to the section/category, add it to our
+						list of populated sections.
+					-#}
+					{%- do sections_list.append(section_json) -%}
+				{%- endif -%}
+			{%- endif -%}
+
+			{#-
+				After we have created all of our menu sections (and child items), add the sections to
+				the Menu's `hasMenuSection` as either a single Dict/Object or as an Array.
+			-#}
+			{%- if sections_list|length -%}
+				{%- do json.update({
+						"hasMenuSection": sections_list.0 if (sections_list|length == 1) else sections_list
+					})
+				-%}
+				{#- If at least one menu section exists, render the script!-#}
+				{{- _render_script(json) -}}
+			{%- endif -%}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{# ============================================================================
+================== MACROS : PRIVATE ===========================================
+============================================================================= #}
+{#
+	Gets the website's absolute url and append's an optional uri and optional
+	hash node identifier. This is used throughout the other macros, and most
+	notably – to create `@id` node identifiers. Please note, if including a hash
+	value please ensure there is a leading slash and use ONLY lowercase identifiers.
+	(ie...jobposting and not JobPosting)
+
+	@access private
+	@param {String} uri 			- A relative url (with leading slash) and optional trailing hash value (#)
+	@returns {String} - "http://sensei.getbento.com/jobs/head-chef/#jobposting".
+#}
+{% macro _get_absolute_url(uri="") -%}
+	{{- account.site.url ~ uri -}}
+{%- endmacro %}
+
+{#
+	Gets an absolute url (including protocol) for an image asset. The intention
+	here is – imgix.net CDN urls do not include a protocol, but, we need to
+	include one. Even though it would be safe to assume `http:`, we are
+	future-proofing by retrieving the protocol from the site's url.
+
+	Ex: "//getbento.imgix.net/accounts/35ddb2b117d65b4fe622bf79c1d51975/media/accounts/media/...."
+
+	@access private
+	@param {String} path 			- An imgix.net CDN image url (starting with "//getbento.imgix.net")
+	@returns {String} - "http://getbento.imgix.net/..."
+#}
+
+{#
+	Attempts to find locations that are related to a particular box, and then set a key/value pair in
+	the pseudo-global `_related_locations_by_box_url` variable in this file where the key is the unique
+	url of the box, and the value is an array of json references to related locations. Please note, if
+	a url key/value is already populated in the variable, it will not be overriden on subsequent calls.
+
+	Please note, this macro does not output anything. For this reason, it should only be run inside
+	a `do` tag.
+
+	@access private
+	@param {String} type 			- The box type slug (ie..."jobs", "galleries", "venues", etc)
+	@param {String} url 			- The single box's associated url.
+#}
+{% macro _populate_related_locations_by_box(type, url) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT -%}
+		{%- if type and url -%}
+			{#- If a url key doesn't already exists... -#}
+			{%- if not _related_locations_by_box_url[url] -%}
+				{%- set related_locs = [] -%}
+				{#-
+					Loop through every location and check to see if it has the related box type we are
+					looking for...
+				-#}
+				{%- for loc in boxes.location.all -%}
+					{%- set found = [] -%}
+					{%- if loc.related_by_slug and loc.related_by_slug[type]|length > 0 -%}
+						{%- for box in get_related_boxes(loc.related_by_slug[type], type, boxes) -%}
+							{#-
+								If we found the same box in the location's related list (by comparing urls),
+								we can (1) add the location's reference to our related list, and (2) mark
+								this location as "found" because we only ever want the location to be associated
+								with a single box a max of one time.
+							-#}
+							{%- if (found|length == 0) and (url == box.url) -%}
+								{%- do related_locs.append(_locations_cache_json[loc.url].reference) -%}
+								{%- do found.append(1) -%}
+							{%- endif -%}
+						{%- endfor -%}
+					{%- endif -%}
+				{%- endfor -%}
+				{#-
+					Now, if we have at least one reference to a related location, we need to update our
+					pseudo-global variable so we can retrieve it later.
+				-#}
+				{%- if related_locs|length -%}
+					{%- do _related_locations_by_box_url.update({ url : related_locs }) -%}
+				{%- endif -%}
+			{%- endif -%}
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	Creates a key/value cache of each location's FoodEstablishment json data. The intention is that
+	we only want to do this level of processing once, and then use the "key" to retrieve the structured
+	data later in other macros. Each "key" represents the location's unique url, and each value is a
+	Dict/Object including a "reference" and "expanded" version of the location's json-ld. The intention
+	is – we are outputting the "expanded" json within the top-level Organization, and then any other
+	references can simply use the reference version to link to the expanded version.
+
+	TODOS
+	- Menus. Should we put the entire menu here? That's probably a bad idea.
+	- Other associations by reference? (containsPlace, events, news, etc)
+
+	Ex Output:
+		{
+			"/location/location-one/": {
+				"reference": {
+					"@type": "FoodEstablishment",
+					"@id": "http://.../location/location-one/#foodestablishment"
+				},
+				"expanded": {
+					...full version of location...
+				}
+			}
+		}
+
+	@access private
+	@see https://schema.org/FoodEstablishment
+#}
+{% macro _generate_locations_cache() %}
+	{# Make sure this macro can only run a maximum of one time. #}
+	{% if _ALLOW_SCHEMA_OUTPUT and _locations_cached|length == 0 %}
+		{% do _locations_cached.append(1) %}
+
+		{#
+			Loop through every location and create "reference" and "expanded" versions of each. Please
+			note, in some instances we are creating shortcut variables so they are only processed once.
+		#}
+		{% for loc in boxes.location.all %}
+			{# shortcut variables #}
+			{% set url = _get_absolute_url(loc.url) %}
+			{% set image_url = loc.image|image_url|default("") %}
+
+			{# Create "reference" json #}
+			{% set reference_json = {
+					"@type": "FoodEstablishment",
+					"@id": (url ~ "#foodestablishment")
+				}
+			%}
+
+			{# Create address because we are going to use it twice – address and location slot. #}
+			{% set loc_address = {
+					"@type": "PostalAddress",
+					"name": loc.name,
+					"streetAddress": loc.street|default(""),
+					"addressLocality": loc.city|default(""),
+					"addressRegion": loc.state|default(""),
+					"postalCode": loc.postal_code|default("")
+				}
+			%}
+
+			{# Create "expanded" json #}
+			{% set expanded_json = {
+					"@type": "FoodEstablishment",
+					"@id": (url ~ "#foodestablishment"),
+					"url": url,
+					"name": loc.name,
+					"description": loc.description|default("")|striptags,
+					"image": image_url,
+					"photo": image_url,
+					"address": loc_address,
+					"location": loc_address,
+					"telephone": loc.phone_number|default(""),
+					"hasMap": url if (loc.address) else "false",
+					"parentOrganization": {
+						"@type": "Organization",
+						"@id": _get_absolute_url("/#organization")
+					}
+				}
+			%}
+
+			{# Add LocalSync Structured Hours #}
+			{% if loc.structured_hours %}
+				{% with formatted_hours = [] %}
+					{% for day_str, structured_array in loc.structured_hours.items() %}
+						{% if structured_array %}
+							{% if day_str|lower == 'monday' %}
+								{% set day_abbrv = 'Mo' %}
+							{% elif day_str|lower == 'tuesday' %}
+								{% set day_abbrv = 'Tu' %}
+							{% elif day_str|lower == 'wednesday' %}
+								{% set day_abbrv = 'We' %}
+							{% elif day_str|lower == 'thursday' %}
+								{% set day_abbrv = 'Th' %}
+							{% elif day_str|lower == 'friday' %}
+								{% set day_abbrv = 'Fr' %}
+							{% elif day_str|lower == 'saturday' %}
+								{% set day_abbrv = 'Sa' %}
+							{% elif day_str|lower == 'sunday' %}
+								{% set day_abbrv = 'Su' %}
+							{% endif %}
+
+							{% for obj in structured_array %}
+								{% set output_strings = [day_abbrv] %}
+								{% do output_strings.append(obj.open_time[:5] + '-' + obj.close_time[:5]) %}
+								{% do formatted_hours.append(output_strings|join(' ')) %}
+							{% endfor %}
+
+						{% endif %}
+					{% endfor %}
+
+					{% if formatted_hours %}
+						{% do expanded_json.update({
+							"openingHours": formatted_hours
+						})%}
+					{% endif %}
+				{% endwith %}
+			{% endif %}
+
+			{# Add additional optional fields from account object #}
+			{% if account.site.cuisine and account.site.cuisine != '' %}
+				{% do expanded_json.update({
+						"servesCuisine": account.site.cuisine
+					})
+				%}
+			{% endif %}
+			{% if account.site.price_range and account.site.price_range != '' %}
+				{% do expanded_json.update({
+						"priceRange": account.site.price_range
+					})
+				%}
+			{% endif %}
+
+			{#
+				Reservations: We have to do a little work here to figure out if a location allows
+				reservations, what url we should point to, and if we don't have enough information
+				to point it anywhere.
+			#}
+			{% with %}
+				{% set reservations_url = [] %}
+				{# If this location allows reservations, point the url to the location's page. #}
+				{% if bbReservations.location_allows(loc) == "1" %}
+					{% do reservations_url.append(url) %}
+				{# If it doesn't allow reservations... #}
+				{% else %}
+					{# Is this a single-location site that has global reservations set up? If so,
+					   reservations are for this location, but we are going to point the url to
+					   the homepage.
+
+					   If this is not a single-location that and it has global reservations, we
+					   don't have enough information to allow us to assume those reservation details
+					   belong to this location...so, we have to skip it.
+					#}
+					{% if (boxes.location.all|length < 2) and (bbReservations.any_allows() == "1") %}
+						{% do reservations_url.append(_get_absolute_url()) %}
+					{% endif %}
+				{% endif %}
+				{# If we have a url, add the property to the json. If not, we don't want any mentions
+				   of reservations in our location's json. #}
+				{% if reservations_url|length %}
+					{% do expanded_json.update({
+							"acceptsReservations": reservations_url.0,
+							"potentialAction": {
+								"@type": "ReserveAction",
+								"object": {
+									"@type": "Reservation",
+									"name": ("Table at " ~ loc.name)
+								},
+								"result": {
+									"@type": "Reservation",
+									"name": ("Table at " ~ loc.name)
+								},
+								"target": url,
+								"location": {
+									"@id": (url ~ "#foodestablishment")
+								}
+							}
+						})
+					%}
+				{% endif %}
+			{% endwith %}
+
+			{# Finally, we create our location's entry in the `_locations_cache_json` so we can
+			   retrieve information quickly and easily later by using the location's url as a key. #}
+			{% do _locations_cache_json.update({
+					loc.url : {
+						"reference": reference_json,
+						"expanded" : expanded_json
+					}
+				})
+			%}
+		{% endfor %}
+	{% endif %}
+{% endmacro %}
+
+{#
+	Renders a single `<script type="application/ld+json>` tag with the corresponding json data.
+
+	@access private
+	@param {Dict} json 			- The key/value object that will be directly convertered to json.
+	@returns {HTML} - A single `<script type="application/ld+json>` tag.
+#}
+{% macro _render_script(json) -%}
+	{%- if _ALLOW_SCHEMA_OUTPUT and json -%}
+		{%- set json_str = json|tojson -%}
+		{%- if json_str|length -%}
+			<script type="application/ld+json">
+				{{- json_str -}}
+			</script>
+		{%- endif -%}
+	{%- endif -%}
+{%- endmacro %}
+
+
+
+

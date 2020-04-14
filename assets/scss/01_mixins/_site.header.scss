@@ -1,0 +1,96 @@
+////
+/// @access public
+/// @group mixins-header-desktop-floatable
+//// 
+
+// ============================================================================================================
+// =============== MIXINS : FLOATABLE =========================================================================
+// ============================================================================================================
+/// Creates a color variant that is applied to a single expanded/collapsed state of the 
+/// `site-header-desktop-primary` element and its child elements and components when the 
+/// `Theme Options > Navigation > Overlays Hero Image` option is enabled.
+/// 
+/// Please note, this mixin has the potential to generate a lot of high-specificity styles/classes that 
+/// many unnecessarily bloat the final the CSS output. For that reason, these styles/classes are only 
+/// ever exported if a site has enabled this feature.
+/// 
+/// **Important:** The only time this mixin will ignore and not output a rule is when a particular value 
+/// variable is set to `null`. In theory, we could limit the amount of CSS output by doing some advanced 
+/// checking to see if a value assignment would be the same result as not setting it at all (inheriting 
+/// from other less-specific elements), but there are too many possibilities to check that can have 
+/// unexpected results.
+/// 
+/// **Workaround:** This mixin only exists to limit the amount of duplicate code we need to support this 
+/// feature. It obviously would be best if this code was placed directly in `04_components/_site.header.scss`, 
+/// but it would require two exact copies. Most notably, we want to limit the amount of places we have to 
+/// maintain `.site-nav` selectors because there are A LOT. The best compromise was to separate this code 
+/// into its own mixin. Just be aware, this is less than ideal.
+/// 
+/// @parameter {Color} $bg-color [null] - Color to apply to the nav background.
+/// @parameter {Boolean} $bg-use-gradient [false] - If true, a linear gradient is generated using the `$bg-color` to `transparent`, and will ignore the `$bg-image` parameter.
+/// @parameter {String} $bg-image [null] - An image path to be used as a tileable background pattern. This will be ignored if `$bg-use-gradient` is `true`.
+/// @parameter {Color} $nav-btn-color [null] - Text color applied to top-level nav buttons.
+/// @parameter {Color} $nav-btn-hover-color [null] - The `:hover` color applied to top-level nav buttons.
+/// @parameter {Color} $nav-btn-active-color [null] - The color applied to top-level nav buttons when it is `.is-active`.
+/// @parameter {Color} $nav-btn-active-hover-color [null] - The color applied to top-level nav buttons when `:hover` on an `.is-active` item.
+@mixin bb-desktop-primary-floatable-variant(
+		$bg-color: null,
+		$bg-use-gradient: false,
+		$bg-image: null,
+		$nav-btn-color: null,
+		$nav-btn-hover-color: null,
+		$nav-btn-active-color: null,
+		$nav-btn-active-hover-color: null
+	){
+
+	@at-root {
+		& {
+			// if use gradient is `true`, we are going to create a linear gradient that goes from `$bg-color` 
+			// to `transparent`. Please note, because the gradient goes in `background-image`, we are going to 
+			// override/ignore any values applied to `$bg-image`.
+			@if $bg-use-gradient {
+				@if (($bg-color != null) and ($bg-color != transparent)) {
+					@include bb-prefix-linear-gradient-vertical($start-color: $bg-color, $end-color: transparent);
+				}
+				// to ensure the gradient renders properly, we need to remove any background colors applied.
+				background-color: transparent;
+			}
+			@else {
+				background-color: $bg-color;
+				@if $bg-image != null {
+					@include bb-background-pattern-base($image: $bg-image);
+				}	
+			}
+			
+			// modified child element
+			& .site-nav {
+				// top-level menu items (not including inner submenus)
+				&-menu > li > a,
+				&-menu > li.site-nav-submenu > button.site-nav-submenu-toggle, // this is gross but it's a bandaid that has to happen
+				&-submenu > span,
+				&-submenu > a {
+					color: $nav-btn-color;
+
+					&:hover {
+						color: $nav-btn-hover-color;
+					}
+				}
+
+				// modified top-level active menu items
+				&-menu > li > a,
+				&-menu > li.site-nav-submenu > button.site-nav-submenu-toggle,
+				&-submenu {
+					&.is-active > a,
+					&.is-active > button, 
+					&.is_active > span {
+						color: $nav-btn-active-color;
+
+						&:hover {
+							color: $nav-btn-active-hover-color;
+						}
+					}
+				}
+			}
+		}
+	}	
+}

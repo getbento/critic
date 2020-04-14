@@ -1,0 +1,105 @@
+////
+/// @access public
+/// @group mixins-social
+//// 
+
+// ============================================================================================================
+// =============== MIXINS : SOCIAL ============================================================================
+// ============================================================================================================
+
+/// Creates the structural base elements for social accounts.
+@mixin bb-social-accounts(){
+	@include list-unstyled;
+	display: block;
+	text-align: center;
+	
+	// immediate child
+	& > li {
+		display: inline-block;
+	}
+
+	// child
+	& a {
+		@include bb-size($width: 100%, $height: 100%);
+		@include bb-prefix-transition(all $btn-transition-duration $btn-transition-ease 0s);
+		display: inline-block;
+	}
+}
+
+/// Creates a social accounts variant and social accounts color variant in one go!
+/// @parameter {Number} $size [$social-accounts-size] - The size of the icon container.
+/// @parameter {Number} $font-size [$social-accounts-font-size] - The font size to apply to the FontAwesome icon.
+/// @parameter {Color} $color [$social-accounts-color] - The initial color of the icon.
+/// @parameter {Color} $bg-color [$social-accounts-bg-color] - The initial color of the background circle.
+/// @parameter {Color} $active-color [$social-accounts-active-color] - The `:hover` color of the icon.
+/// @parameter {Color} $active-bg-color [$social-accounts-active-bg-color] - The `:hover` color of the background circle.
+/// @parameter {Number} $hspacing [$social-accounts-hspacing] - The horizontal margins to apply to an icon container.
+/// @parameter {Number} $vspacing [$social-accounts-vspacing] - The vertical margins to apply to an icon container.
+/// @parameter {Bool} $is-circle-icon [$social-accounts-circle-icon] - true uses the background circle. false omits the circle.
+@mixin bb-social-accounts-variant(
+		$size: $social-accounts-size,
+		$font-size: $social-accounts-font-size,
+		$color: $social-accounts-color,
+		$bg-color: $social-accounts-bg-color,
+		$active-color: $social-accounts-active-color,
+		$active-bg-color: $social-accounts-active-bg-color,
+		$hspacing: $social-accounts-hspacing,
+		$vspacing: $social-accounts-vspacing,
+		$is-circle-icon: $social-accounts-circle-icon
+	){
+	@include bb-social-accounts-color-variant(
+		$color: $color,
+		$bg-color: $bg-color,
+		$active-color: $active-color,
+		$active-bg-color: $active-bg-color,
+		$is-circle-icon: $is-circle-icon
+	);
+	font-size: $font-size;
+
+	// immediate child
+	& > li {
+		@include bb-size($width: $size, $height: $size);
+		line-height: $size;
+		margin: 0 ($hspacing / 2) $vspacing; 
+	}
+
+	// child: icon
+	// note: ensures vertical and horizontal centering.
+	& .fa {
+		line-height: inherit;
+		letter-spacing: 0;
+	}
+}
+
+/// Creates a social accounts color variant only.
+/// @parameter {Color} $color [$social-accounts-color] - The initial color of the icon.
+/// @parameter {Color} $bg-color [$social-accounts-bg-color] - The initial color of the background circle.
+/// @parameter {Color} $active-color [$social-accounts-active-color] - The `:hover` color of the icon.
+/// @parameter {Color} $active-bg-color [$social-accounts-active-bg-color] - The `:hover` color of the background circle.
+/// @parameter {Bool} $is-circle-icon [$social-accounts-circle-icon] - true uses the background circle. false omits the circle.
+@mixin bb-social-accounts-color-variant(
+		$color: $social-accounts-color,
+		$bg-color: $social-accounts-bg-color,
+		$active-color: $social-accounts-active-color,
+		$active-bg-color: $social-accounts-active-bg-color,
+		$is-circle-icon: $social-accounts-circle-icon
+	){
+	@at-root {
+		& {
+			// child
+			& a {
+				color: $color;
+				background-color: if($is-circle-icon, $bg-color, transparent);
+				@if $is-circle-icon {
+					@include bb-prefix-border-radius(50%);
+				}
+
+				// hover modifier
+				&:hover {
+					color: $active-color;
+					background-color: if($is-circle-icon, $active-bg-color, transparent);
+				}
+			}
+		}
+	}
+}

@@ -1,0 +1,346 @@
+{# ============================================================================
+================== MULTI-BUTTON : PRIVATE MACROS ==============================
+============================================================================= #}
+{#
+	Decides which single button to create and calls the corresponding macro
+	with the appropriate parameters.
+
+	IMPORTANT:
+	- The reason for the verbose opts={} parameters is that it is intended to
+	  directly accept the parameters driven by display_logic in the main context.
+	  Because of this, initially all these parameters exist on every button –
+	  allowing us to simply "pass-in" the whole object and let the macro figure
+	  out what to do.
+	- Please note, only some of these buttons currently allow/support Tracking.
+
+	@access private
+	@param {Dict} opts 				- Buttons configuration parameters.
+		{
+			{String} button_type	- Which button? (url, file, email_signup, online_ordering, scroll_page, reservations)
+			{String} label 			- Visible label applied to the button.
+			{String} url			- The url the button should click through to (if applicable)
+			{String} url_target		- How should the url open? (_blank, _self, etc if applicable)
+			{String} file			- Url to a file (if applicalble)
+			{String} file_target	- How sould the file open? (_blank, self, etc if applicable)
+			{String} scroll_target	- A valid jQuery selector corresponding to where you want to scroll (#form, etc)
+			{Boolean} button_alt_colors - Should the button use the alternate color scheme?
+		}
+	@param {List} classes 			- An array of additional classes to add to the button.
+	@param {Boolean} brand 			- Whether or not to use the `.btn-brand`.
+	@param {String} track_placement - GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro _make_multi(opts={
+				"button_type": "none",
+				"label": false,
+				"url": false,
+				"url_target": false,
+				"file": false,
+				"file_target": false,
+				"scroll_target": false,
+				"button_alt_colors": false
+			},
+			classes=[],
+			brand=true,
+			track_placement="Multi Button"
+		)
+	%}
+	{%- if opts and opts.button_type %}
+		{%- if opts.button_type == "url" %}
+			{{ url(
+					url=opts.url,
+					label=opts.label,
+					open_new_window=opts.url_target,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand
+				)
+			}}
+		{%- elif opts.button_type == "file" %}
+			{{ url(
+					url=opts.file,
+					label=opts.label,
+					open_new_window=opts.file_target,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand
+				)
+			}}
+		{%- elif opts.button_type == "email_signup" %}
+			{{ email_signup(
+					label=opts.label,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand,
+					tracking=bbTrack.button(category="Email Sign Up Trigger Button", label=track_placement)
+				)
+			}}
+		{%- elif opts.button_type == "online_ordering" %}
+			{{ online_ordering(
+					label=opts.label,
+					open_new_window=opts.url_target,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand,
+					tracking=bbTrack.button(category="Online Ordering", label=track_placement)
+				)
+			}}
+		{%- elif opts.button_type == "scroll_page" %}
+			{{ scroll_to(
+					label=opts.label,
+					target=opts.scroll_target,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand
+				)
+			}}
+		{%- elif opts.button_type == "reservations" %}
+			{{ reservations(
+					label=opts.label,
+					use_alt_colors=opts.button_alt_colors,
+					classes=classes,
+					brand=brand,
+					tracking=bbTrack.button(category="Reservations Trigger Button", label=track_placement)
+				)
+			}}
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MULTI-BUTTON : PUBLIC MACROS ===============================
+============================================================================= #}
+{#
+	Use this method to automatically generate the correct multi-button. This
+	macro's opts={} parameter accepts either a single opts={} Dict, or a list
+	of dicts [{}, {}, {}] – allowing you to create multiple buttons all at once.
+
+	IMPORTANT:
+	- The reason for the verbose opts={} parameters is that it is intended to
+	  directly accept the parameters driven by display_logic in the main context.
+	  Because of this, initially all these parameters exist on every button –
+	  allowing us to simply "pass-in" the whole object and let the macro figure
+	  out what to do.
+	- Please note, only some of these buttons currently allow/support Tracking.
+
+	@access public
+	@param {Dict | List} opts 		- Single Dict or a list of Dicts. (see parameter descriptions at _make_multi() above)
+	@param {List} classes 			- An array of additional classes to add to the button.
+	@param {Boolean} brand 			- Whether or not to use the `.btn-brand`.
+	@param {String} track_placement - GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro multi(opts={
+				"button_type": "none",
+				"label": false,
+				"url": false,
+				"url_target": false,
+				"file": false,
+				"file_target": false,
+				"scroll_target": false,
+				"button_alt_colors": false
+			},
+			classes=[],
+			brand=true,
+			track_placement="Multi Button"
+		)
+	%}
+	{% if opts is mapping %}
+		{{ _make_multi(opts, classes, brand, track_placement) }}
+	{% elif opts is sequence %}
+		{% for btn in opts %}
+			{{ _make_multi(btn, classes, brand, track_placement) }}
+		{% endfor %}
+	{% endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== MULTI-BUTTON : INDIVIDUAL : PUBLIC =========================
+============================================================================= #}
+{#
+	Creates a url button. You can call this directly or use the multi() macro.
+
+	@access public
+	{String} url				- The url the button should click through to
+	{String} label 				- Visible label applied to the button.
+	{String} open_new_window	- Should the url open in a new window? (_blank)
+	{Boolean} use_alt_colors	- Should the button use the alternate color scheme?
+	@param {List} classes 		- An array of additional classes to add to the button.
+	@param {Boolean} brand 		- Whether or not to use the `.btn-brand`.
+	@returns {HTML}
+#}
+{% macro url(url, label, open_new_window=false, use_alt_colors=false, classes=[], brand=true) %}
+	{%- if url %}
+		{%- set class = (("btn btn-brand" ~ ("-alt" if use_alt_colors else "")) if brand else "") %}
+		{%- set class = class ~ " " ~ (classes|join(" ") if (classes|length > 0) else "") %}
+		{%- set attrs = {
+				"href": url,
+				"class": class|trim,
+				"target": ("_blank" if open_new_window else none),
+				"rel": ("noopener" if open_new_window else none),
+			}
+		%}
+		<a{{ attrs|xmlattr }}>{{ label if label else url }}</a>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates an online ordering button that triggers ChowNow. Please note, this button
+	will not render if ChowNow is not configured by the admin. You can call this
+	directly or use the multi() macro.
+
+	@access public
+	{String} label 				- Visible label applied to the button.
+	{String} open_new_window	- Should this open in a new window or in the modal?
+	{Boolean} use_alt_colors	- Should the button use the alternate color scheme?
+	@param {List} classes 		- An array of additional classes to add to the button.
+	@param {Boolean} brand 		- Whether or not to use the `.btn-brand`.
+	@param {String} tracking	- GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro online_ordering(label, open_new_window=false, use_alt_colors=false, classes=[], brand=true, tracking="") %}
+	{%- if account.services.chownow and account.services.chownow.id %}
+		{%- set class = (("btn btn-brand" ~ ("-alt" if use_alt_colors else "")) if brand else "") %}
+		{%- set class = class ~ " " ~ (classes|join(" ") if (classes|length > 0) else "") %}
+		{%- set class = class ~ " " ~ ("chownow-order-online" if not open_new_window else "")  %}
+		{%- set attrs = {
+				"href": ("https://ordering.chownow.com/order/" ~ account.services.chownow.id ~ "/locations"),
+				"class": class|trim,
+				"target": ("_blank" if open_new_window else none)
+			}
+		%}
+		<a{{ attrs|xmlattr }}{{ tracking }} tabindex="0">{{ label if label else "Order Online" }}</a>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates an email signup button that opens the newsletter form. Please note, this
+	button will not render if the Newsletter provider has not been configured by the
+	admin. You can call this directly or use the multi() macro.
+
+	@access public
+	{String} label 				- Visible label applied to the button.
+	{Boolean} use_alt_colors	- Should the button use the alternate color scheme?
+	@param {List} classes 		- An array of additional classes to add to the button.
+	@param {Boolean} brand 		- Whether or not to use the `.btn-brand`.
+	@param {String} tracking	- GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro email_signup(label, use_alt_colors=false, classes=[], brand=true, tracking="") %}
+	{%- if account.newsletter %}
+		{%- set class = (("btn btn-brand" ~ ("-alt" if use_alt_colors else "")) if brand else "") %}
+		{%- set class = class ~ " " ~ (classes|join(" ") if (classes|length > 0) else "") %}
+		{%- set attrs = {
+				"type": "button",
+				"class": class|trim,
+				"data-popup": "inline",
+				"data-popup-src": "#popup-newsletter-form"
+			}
+		%}
+		<button{{ attrs|xmlattr }}{{ tracking }}>{{ label if label else "Email Update" }}</button>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates a scrollto button that, when clicked, will scroll to the first matching page
+	element specified by the target selector. Please note, the `target` element must exist
+	for this button to function properly. You can call this directly or use the multi() macro.
+
+	@access public
+	{String} label 				- Visible label applied to the button.
+	{String} scroll_target		- A valid jQuery selector corresponding to where you want to scroll (#form, etc)
+	{Boolean} use_alt_colors	- Should the button use the alternate color scheme?
+	@param {List} classes 		- An array of additional classes to add to the button.
+	@param {Boolean} brand 		- Whether or not to use the `.btn-brand`.
+	@returns {HTML}
+#}
+{% macro scroll_to(label, target, use_alt_colors=false, classes=[], brand=true) %}
+	{%- if label %}
+		{%- set class = (("btn btn-brand" ~ ("-alt" if use_alt_colors else "")) if brand else "") %}
+		{%- set class = class ~ " " ~ (classes|join(" ") if (classes|length > 0) else "") %}
+		{%- set attrs = {
+				"type": "button",
+				"class": class|trim,
+				"data-scrollto": (target if target else "")
+			}
+		%}
+		<button{{ attrs|xmlattr }}>{{ label }}</button>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates a reservations button that opens the reservations popup form. Please note, this
+	button will not render if no locations (or General > Reservations) are configured to
+	allow reservations. You can call this directly or use the multi() macro.
+
+	@access public
+	{String} label 				- Visible label applied to the button.
+	{Boolean} use_alt_colors	- Should the button use the alternate color scheme?
+	@param {List} classes 		- An array of additional classes to add to the button.
+	@param {Boolean} brand 		- Whether or not to use the `.btn-brand`.
+	@param {String} tracking	- GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro reservations(label, use_alt_colors=false, classes=[], brand=true, tracking="") %}
+	{%- if bbReservations.any_allows() == "1" %}
+		{%- set class = (("btn btn-brand" ~ ("-alt" if use_alt_colors else "")) if brand else "") %}
+		{%- set class = class ~ " " ~ (classes|join(" ") if (classes|length > 0) else "") %}
+		{%- set attrs = {
+				"type": "button",
+				"class": class|trim,
+				"data-popup": "inline",
+				"data-popup-src": "#popup-reservations-form"
+			}
+		%}
+		<button{{ attrs|xmlattr }} {{ tracking }}>{{ label if label else "Reservations" }}</button>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates a shopping cart button that will navigate to the shopping cart. Please note, `store.cart`
+	is not always available in the context – typically in templates that are not at their specified
+	platform urls such as `/gift-card/` instead of `/store/gift-cards/`. When this occurs we have
+	to fall back to some initial default hard-coded values. On page load, (if necessary) the
+	JavaScript will retrieve the current cart JSON via AJAX and notify all the buttons to update their
+	counts, and re-enable themselves.
+
+	@access public
+	@returns {HTML}
+#}
+{% macro cart() %}
+	{%- set quantity = store.cart.quantity if (store and store.cart and store.cart.quantity) else 0 %}
+	{%- set label = "Item" if (quantity == 1) else "Items" %}
+
+	<a class="btn btn-cart{% if quantity == 0 %} btn-cart--empty{% endif %}" href="{{ bbStore.get_cart_url() }}" arial-label="{{ quantity }} {{ label }} In Shopping Cart" data-cart-label="{{ label }}">{{ quantity }}</a>
+{% endmacro %}
+
+{#
+	Creates a play pause button to be displayed on the hero section.
+
+	@access public
+	{String} background_type 				- background type such as youtube, gallery, or vimeo determine screen reader text.
+	@returns {HTML}
+#}
+{% macro ada(background_type) %}
+	<div id="motion-elements-control-section">
+		<button class='btn fa fa-play play-motion ada-motion-toggle-btns hide-motion' data-action='play'>
+		{%- if background_type == "gallery" %}
+			<span class='sr-only'>hero gallery paused, press to play images slides</span>
+		{%- else %}
+			<span class='sr-only'>hero video paused, press to play video</span>
+		{%- endif %}
+		</button>
+		<button class='btn fa fa-pause pause-motion ada-motion-toggle-btns' data-action='pause'>
+		{%- if background_type == "gallery" %}
+			<span class='sr-only'>Playing hero gallery, press to pause images slides</span>
+		{%- else %}
+			<span class='sr-only'>Playing hero video, press to pause video</span>
+		{%- endif %}
+		</button>
+	</div>
+{% endmacro %}
+
+
+
+
+

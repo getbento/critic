@@ -1,0 +1,35 @@
+{# ============================================================================
+================== LEGACY PLATFORM FORM MACROS ================================
+============================================================================= #}
+{#
+    Note: The following helper macros were previously provided by the platform
+    at `bentobox/templates/macros/forms.html`. They have now been moved to live
+    inside each theme for reasons that facilitate the development of the
+    platform's local development environment.
+
+    TODO: When applicable, these can be integrated directly into the individual
+    forms themselves so we can retired these macros completely.
+#}
+{% macro email_form(action='/form_to_email/', class='') -%}
+    <form class="{{ class }}" data-form-endpoint="{{ action }}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <div style="display: none;">
+        <label>leave this field blank
+            <input type="text" name="comment_body" value="" />
+        </label>
+    </div>
+    {{ caller() }}
+    </form>
+{%- endmacro %}
+
+{% macro newsletter_form(action='/email_provider_subscribe/', class='') -%}
+    <form id="newsletter" class="{{ class }}" data-form-endpoint="{{ action }}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <div style="display: none;">
+        <label>leave this field blank
+            <input type="text" name="comment_body" value="" />
+        </label>
+    </div>
+    {{ caller() }}
+    </form>
+{%- endmacro %}

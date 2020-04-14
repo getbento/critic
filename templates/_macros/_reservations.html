@@ -1,0 +1,300 @@
+{# ============================================================================
+================== NOTES ======================================================
+============================================================================= #}
+{#
+	It is important to understand that there are numerous places throughout this
+	theme that need to make informed decisions based on our reservations system.
+	bbButton.reservations(), location-specific templates, and our Reservations
+	Form all need to know how many (if any) site-level and/or location-level
+	reservations settings are being utilized.
+
+	Because of this, it is necessary to standardize/normalize our reservations
+	system and create a simple (yet thorough) API for retrieving the required
+	information. To keep things as DRY as possible, below, we are creating a
+	precompiled list of reservations settings that are used directly by our
+	API macros.
+
+	Ideally, in the future, BentoBox will offer this functionality at the
+	platform level via macros, filters, variables, etc – however, for now, this
+	is the next best solution.
+#}
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{#
+	Below, we are setting _reservations_list to a list of all locations that
+	allow reservations, including our site-level reservations set in the CMS via
+	the General tab.
+
+	The intention is to compile a single reusable list that normalizes all of
+	our values – making it easier to iterate over them later. There are two
+	important concepts to understand:
+		1. We are using "main" to differentiate between the site-level
+		   reservations and location-level reservations.
+		2. Because most fields in BentoBox are optional, we have to ensure that
+		   all fields required (per service) are populated before we designate
+		   them as "allowing reservations." If any fields are missing (for example
+		   the resy apikey), that specific location will not be added to our list.
+#}
+{% set _reservations_list = [] %}
+{% with %}
+	{# site-level reservations #}
+	{% if account.reservations and account.reservations.provider and account.reservations.id %}
+		{% do _reservations_list.append({
+				"slug": "site",
+				"name": account.site.title,
+				"service": account.reservations.provider,
+				"id": account.reservations.id,
+				"apikey": (account.reservations.api_key if account.reservations.apikey else ""),
+				"main": true
+			})
+		%}
+	{% endif %}
+	{# location-level reservations #}
+	{% if boxes.location and boxes.location.all %}
+		{% for loc in boxes.location.all if (loc.fields.reservations and loc.fields.reservations.service and (loc.fields.reservations.service != "none")) %}
+			{% set reservations = loc.fields.reservations %}
+			{% set loc_opts = {
+					"slug": loc.slug,
+					"name": loc.name,
+					"service": loc.fields.reservations.service,
+					"id": "",
+					"apikey": "",
+					"main": false
+				}
+			%}
+			{% if reservations.service == "opentable" and reservations.opentable_id %}
+				{% do loc_opts.update({ "id" : reservations.opentable_id }) %}
+				{% do _reservations_list.append(loc_opts) %}
+
+			{% elif reservations.service == "resy" and reservations.resy_venue_id and reservations.resy_api_key %}
+				{% do loc_opts.update({ "id" : reservations.resy_venue_id, "apikey" : reservations.resy_api_key }) %}
+				{% do _reservations_list.append(loc_opts) %}
+
+			{% elif reservations.service == "sevenrooms" and reservations.sevenrooms_venue_id %}
+				{% do loc_opts.update({ "id": reservations.sevenrooms_venue_id }) %}
+				{% do _reservations_list.append(loc_opts) %}				
+
+			{% elif reservations.service == "seatme" and reservations.seatme_id %}
+				{% do loc_opts.update({ "id" : reservations.seatme_id }) %}
+				{% do _reservations_list.append(loc_opts) %}
+
+			{% endif %}
+		{% endfor %}
+	{% endif %}
+{% endwith %}
+
+{#
+	This list holds the options available to a Reservation form's time field.
+	By default the options are rendered from latest to earliest. Later if the 
+	theme option to sort from earliest to latest is selected this list can be 
+	reversed before output is generated.
+#}
+{%- set reservation_times = [
+	{'value': '2300', 'label': '11:00 PM'},
+	{'value': '2230', 'label': '10:30 PM'},
+	{'value': '2200', 'label': '10:00 PM'},
+	{'value': '2130', 'label': '9:30 PM'},
+	{'value': '2100', 'label': '9:00 PM'},
+	{'value': '2030', 'label': '8:30 PM'},
+	{'value': '2000', 'label': '8:00 PM'},
+	{'value': '1930', 'label': '7:30 PM'},
+	{'value': '1900', 'label': '7:00 PM'},
+	{'value': '1830', 'label': '6:30 PM'},
+	{'value': '1800', 'label': '6:00 PM'},
+	{'value': '1730', 'label': '5:30 PM'},
+	{'value': '1700', 'label': '5:00 PM'},
+	{'value': '1630', 'label': '4:30 PM'},
+	{'value': '1600', 'label': '4:00 PM'},
+	{'value': '1530', 'label': '3:30 PM'},
+	{'value': '1500', 'label': '3:00 PM'},
+	{'value': '1430', 'label': '2:30 PM'},
+	{'value': '1400', 'label': '2:00 PM'},
+	{'value': '1330', 'label': '1:30 PM'},
+	{'value': '1300', 'label': '1:00 PM'},
+	{'value': '1230', 'label': '12:30 PM'},
+	{'value': '1200', 'label': '12:00 PM'},
+	{'value': '1130', 'label': '11:30 AM'},
+	{'value': '1100', 'label': '11:00 AM'},
+	{'value': '1030', 'label': '10:30 AM'},
+	{'value': '1000', 'label': '10:00 AM'},
+	{'value': '0930', 'label': '9:30 AM'},
+	{'value': '0900', 'label': '9:00 AM'},
+	{'value': '0830', 'label': '8:30 AM'},
+	{'value': '0800', 'label': '8:00 AM'},
+	{'value': '0730', 'label': '7:30 AM'},
+	{'value': '0700', 'label': '7:00 AM'}
+] %}
+
+{# ============================================================================
+================== MACROS : PUBLIC : HELPERS ==================================
+============================================================================= #}
+{#
+	This macro is intended to be used on single location-specific templates, for
+	example – boxes/location.html or boxes_by_location.html. By passing in the
+	current location object we can determine if that location is available in
+	our _reservations_list array. This then allows us to set the global
+	page_reservations variable to our location which can then auto-set our
+	Reservations Form > Locations dropdown.
+
+	Please note, this macro returns a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+
+	@access public
+    @param {Dict} location          - Single location object (boxes.location.all.0)
+    @returns {Boolean} - "0" or "1"
+#}
+{% macro location_allows(location) -%}
+	{%- if location and location.slug and (_reservations_list|length > 0) -%}
+		{{- 1 if (_reservations_list|selectattr("slug", "equalto", location.slug)|list|length == 1) else 0 -}}
+	{%- endif -%}
+{%- endmacro %}
+
+{#
+	This macro is intended to be used by our bbButton.multi() when set to a
+	reservations button-type to determine whether or not the button should even be
+	rendered. For example, if no locations (or site-level) allow for reservations,
+	a Reservations Button should not be allowed to render...because, what would be
+	the point? The button would appear broken or open a useless panel/form. So,
+	instead, we don't allow the button to render in the first place.
+
+	Please note, this macro returns a "0" (false) or a "1" (true). This is the
+	closest we can come in a Jinja2 macro to returning a Boolean.
+	IMPORTANT: all whitespace must be trimmed for this to work properly.
+
+	@access public
+    @returns {Boolean} - "0" or "1"
+#}
+{% macro any_allows() -%}
+	{{- 1 if (_reservations_list|length > 0) else 0 -}}
+{%- endmacro %}
+
+{# ============================================================================
+================== MACROS : PUBLIC : RESERVATION POPUP FORM  ==================
+============================================================================= #}
+{#
+	This macro renders our Reservations Popup Form. There is a lot of logic
+	happening here that uses our precompiled _reservations_list above. For us
+	to render our Reservations Form correctly, we have to do the following
+	processes:
+
+	1. Does our _reservations_list have at least one item? If not, don't bother
+	   rendering the form at all!
+	2. Are reservations only allowed at the site-level? Meaning, no other location
+	   allows for location-level reservations. If only site-level reservations are
+	   allowed, we can remove the Form > Locations dropdown because its an unnecessary
+	   step and a little confusing for the user.
+	3. Do we have an active location, which is determined by our global
+	   page_reservations variable? This can happen when we are on a location-specific
+	   template and allows us the opportunity to auto-set the Form > Locations dropdown
+	   to the current/active location.
+	4. Last, we have to apply all of the required data-reservation-* attributes to the
+	   Form > Locations > <option> items so that the javascript can take over and
+	   configure and handle our service adapters correctly.
+
+	@access public
+    @param {String} id              	- unique id so buttons can trigger this popup.
+    @param {String} title           	- Form heading.
+    @param {Dict} active_location		- Single location object (if applicable)
+    @param {Boolean} use_alt_colors 	- True if the form should use the alternate color scheme (including the submit button)
+    @returns {HTML}
+#}
+{% macro render(
+			id="popup-reservations-form",
+			title="Reservations",
+			active_location="",
+			use_alt_colors=true
+		)
+	%}
+	{%- if _reservations_list|length > 0 %}
+		{%- set site_only = true if ((_reservations_list|length == 1) and (_reservations_list.0.slug == "site")) else false %}
+		{%- set has_active_location = true if (active_location and (_reservations_list|selectattr("slug", "equalto", active_location.slug)|list|length == 1)) else false %}
+		<div id="{{ id }}" class="popup popup--form mfp-hide">
+			<form class="reservations-form{% if use_alt_colors %} form-alt{% endif %} container-sm">
+				{{ bbTrack.form(label="Reservations") }}
+				{#- form header #}
+          <div class="form-header">
+            {%- if title %}<h2 class="h1 form-heading">{{ title }}</h2>{%- endif %}
+          </div>
+		    	{#- form ui #}
+		      <div class="form-ui">
+						<label for="location"{% if site_only %} class="input--hidden"{% endif %}{% if has_active_location %} class="input--populated"{% endif %}>
+	          	<i class="error-label"></i>
+							<span class="input-label">Location</span>
+							<div class="form-control-group has-icon-right">
+								<select id="location" class="form-control unselected" name="location" required aria-describedby="location-error">
+									<option value=""{% if not has_active_location and not site_only %} selected{% endif %} disabled>Location</option>
+									{%- for item in _reservations_list %}
+										{%- set is_active = true if (site_only or (active_location and active_location.slug == item.slug)) else false %}
+										<option value="{{ item.slug }}"{% if is_active %} selected{% endif %}
+												data-reservation-service="{{ item.service }}"
+												data-reservation-id="{{ item.id }}"
+												data-reservation-api-key{% if item.apikey %}="{{ item.apikey}}"{% endif %}>{{ item.name }}
+										</option>
+									{%- endfor %}
+								</select>
+								<span class="form-control-group--icon is-positioned-right" aria-hidden="true">
+									<i class="fa fa-chevron-down"></i>
+								</span>
+							</div>
+	        	</label>
+						<label for="seats">
+							<span class="input-label">Number of People <span class="input-label-optional">- Optional</span></span>
+							<div class="form-control-group has-icon-right">
+								<select id="seats" class="form-control unselected" name="seats">
+									<option value="" selected disabled>Number of People</option>
+									<option value="1">1 Person</option>
+									<option value="2">2 People</option>
+									<option value="3">3 People</option>
+									<option value="4">4 People</option>
+									<option value="5">5 People</option>
+									<option value="6">6 People</option>
+									<option value="7">7 People</option>
+									<option value="8">8+ People</option>
+								</select>
+								<span class="form-control-group--icon is-positioned-right" aria-hidden="true">
+									<i class="fa fa-chevron-down"></i>
+								</span>
+							</div>
+						</label>
+						<label for="date">
+							<i class="error-label"></i>
+							<span class="input-label">Date</span>
+							<div data-react-component="accessible-date-picker"></div>
+						</label>
+						<label for="time">
+							<span class="input-label">Time <span class="input-label-optional">- Optional</span></span>
+							<div class="form-control-group has-icon-left has-icon-right">
+								<span class="form-control-group--icon is-positioned-left" aria-hidden="true">
+									<i class="fa fa-clock-o"></i>
+								</span>
+								<select id="time" class="form-control unselected" name="time">
+									<option value="" selected disabled>Time</option>
+									{%- set time_sort = theme.options.form_styles.reservations.sort_reservation_time %}
+									{% if time_sort == 'earliest_to_latest' %}
+										{%- set reservation_times = reservation_times|reverse %}									
+									{% endif %}
+									{% for reservation_time in reservation_times %}
+										<option value="{{ reservation_time['value'] }}">{{ reservation_time['label'] }}</option>
+									{% endfor %}
+								</select>
+								<span class="form-control-group--icon is-positioned-right" aria-hidden="true">
+									<i class="fa fa-chevron-down"></i>
+								</span>
+							</div>
+						</label>
+		      </div>
+		      {#- form actions #}
+		      <div class="form-actions">
+		        <button type="submit" class="btn btn-brand{% if use_alt_colors %}-alt{% endif %}">Find A Table</button>
+		        <span class="form-error-msg">Please check errors in the form above</span>
+		      </div>
+		      {#- form success msg #}
+		      <div class="form-success-msg">
+		        <span>Thanks!</span>
+		      </div>
+				</form>
+			</div>
+	{%- endif %}
+{% endmacro %}

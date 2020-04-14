@@ -1,0 +1,124 @@
+////
+/// @group layouts-site
+/// @access public
+//// 
+
+// ============================================================================================================
+// =============== BUTTONS : VARS =============================================================================
+// ============================================================================================================
+// Available vars to override.
+
+/// The site can be displayed as **Full Width** or **Boxed**. When the site is displayed as **Boxed**, the Main 
+/// Content Area's width will be limited at specified breakpoints – allowing for the `<body>` background to be 
+/// visible to the left/right of the Main Content Box. Please note, when `$site-is-boxed: true`, the `$body-bg-*` 
+/// variables are still used – but instead they will be applied to the `site-content` so they continue to 
+/// represent the "Main Content Area" accurately.
+/// 
+/// This variable is marked **Private** because you should never have a reason to set this manually.
+/// 
+/// **Theme Option:** General Style Settings > Main Content Boxed
+/// 
+/// @access private
+/// @type Bool
+$site-is-boxed: false !default;
+
+/// Background color applied to the `<body>` when `$site-is-boxed: true` and `body.is-boxed` is present. Please 
+/// note, when `$site-is-boxed: true`, `$body-bg` will still be used – but instead applied to `.site-content`.
+/// 
+/// **Theme Option:** General Style Settings > Base Background Color
+/// 
+/// @type Color
+$site-boxed-bg-color: #FFFFFF !default;
+
+/// An image file to add as the `<body>` background image when `$site-is-boxed: true` and `body.is-boxed is 
+/// present. By default, the image will be used as a tileable pattern. Please note, when `$site-is-boxed: true`, 
+/// `$body-bg-image` will still be used – but instead be applied to `.site-content`.
+/// 
+/// **Theme Option:** General Style Settings > Base Background Image
+/// 
+/// @type String
+$site-boxed-bg-image: null !default;
+
+/// Max-width applied to the various elements (`.site-container`, headers, footers, etc) when 
+/// `$site-is-boxed: true`. If this value is set to `null`, no `max-width` will be applied. Instead, content 
+/// will only be limited by their own individual containers.
+/// 
+/// By default, this variable is set automatically to the `xl` breakpoint size in `$grid-breakpoints` in an 
+/// attempt to keep things **relative** as well as low maintenance. However, if you have a need to change this 
+/// variable, it is completely valid to just provide a fixed number. (see example below)
+/// 
+/// @example
+/// 	$site-boxed-max-width: 1100px !default;
+/// 
+/// @type Number
+$site-boxed-max-width: if(map-has-key($grid-breakpoints, xl), map-get($grid-breakpoints, xl), 1200px) !default;
+
+/// Applies width-related rules to various elements (`.site-container`, headers, footers, etc) when 
+/// `$site-is-boxed: true`. Each map key is required to match a corresponding breakpoint in `$grid-breakpoints`, 
+/// and each value can be a comma-separated list of rules to apply at that specific breakpoint and up.
+/// 
+/// Please note, although any rules can be added per breakpoint – the intended usage of this variable is apply 
+/// width-related rules only. This is because these rules will be applied to all relevant elements the 
+/// same, and more than likely, these elements share nothing in common other than these common width rules. 
+/// Adding anything other than width-related rules should "at your own risk" and should be tested thoroughly to 
+/// avoid any unexpected results.
+/// 
+/// @type Map
+$site-container-widths: (
+	md: (width: 80%)
+) !default;
+
+// ============================================================================================================
+// =============== SITE : EXPORT ==============================================================================
+// ============================================================================================================
+// Site structural elements.
+
+@mixin bb-export-classes-site() {
+	
+	// special case: only included/active when Theme Options 
+	.site-container {
+		@include bb-position($position: relative);
+		@include bb-size($height: 100%);
+		@include bb-hmargins-auto();
+		@include bb-site-boxed-widths();
+	}
+
+	.site-content {
+		@include bb-position($position: relative);
+
+		// body modifier: when not full width, we have to put the "main content area" background stuff here 
+		// instead.
+		.is-boxed & {
+			background-color: $body-bg;
+
+			@if $body-bg-image {
+				@include bb-background-pattern-base($image: $body-bg-image);
+			}
+		}
+
+		// body modifier: height is altered via javascript
+		.has-mobi-footer &:after {
+			content: "";
+			display: block;
+		}
+
+		.no-js .has-mobi-footer &:after {
+			height: 117px; // hard-coded just in case
+		}
+
+		// breakpoints
+		@include bb-mobi-breakpoint-up() {
+			
+			// body modifier: accounts for "sticky" hospitality footer.
+			.has-hospitality & {
+				@include bb-size($min-height: 100%);
+				padding-bottom: $footer-hospitality-height-px;
+			}
+
+			// body modifier
+			.has-mobi-footer &:after {
+				display: none;
+			}
+		}
+	}
+}

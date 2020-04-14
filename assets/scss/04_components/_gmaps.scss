@@ -1,0 +1,77 @@
+////
+/// @group components-gmaps
+/// @access public
+//// 
+
+// ============================================================================================================
+// =============== GMAPS : VARS ===============================================================================
+// ============================================================================================================
+/// Background color to apply below the Google Map. This is useful to provide the user with some spatial 
+/// feedback by showing a *placeholder* that is visible until the Google Map has loaded.
+/// @type Color
+$gmaps-bg-color: $body-bg !default;
+
+/// Sizing rules to apply to `.gmaps` per breakpoint. Please note, each key must match an available key in 
+/// `$grid-breakpoints`. Each value is a map of css rules. At a minimum, you should provide a value at the `xs` 
+/// breakpoint.
+/// 
+/// ** Pro Tip:** The intention of this variable is to add some flexibility in the sizing of `.gmaps`, however, 
+/// any valid css can be added to the Map breakpoint values. For example, adding borders.
+/// 
+/// @type Map
+$gmaps-rules-breakpoints: (
+	xs: (height: 20rem),
+	md: (
+		padding-top: 56.25%, // 16:9
+		height: auto
+	)
+) !default;
+
+/// Margin-bottom to apply to a `.gmaps__directions-btn`. By default, the button is horizontally centered and 
+/// assumes you will be aligning its vertical position relative to the bottom.
+/// @type Number
+$gmaps-direction-btn-margin-bottom: 4rem !default;
+
+// ============================================================================================================
+// =============== GMAPS : EXPORT =============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-gmaps() {
+
+	// block
+	.gmaps {
+		@include bb-position($z-index: 0);
+		background-color: $gmaps-bg-color;
+
+		@each $breakpoint, $rules in $gmaps-rules-breakpoints {
+			@if map-has-key($grid-breakpoints, $breakpoint) {
+				@include media-breakpoint-up($breakpoint) {
+					@each $prop, $value in $rules {
+						#{$prop}: $value;
+					}
+				}
+			}
+		}
+
+		// element: .gmaps__container (wraps .gmaps)
+		&__container {
+			@include bb-position($position: relative, $z-index: 0);
+		}
+
+		// element: .gmaps__directions-btn
+		&__directions-btn {
+			@include bb-position($position: absolute, $bottom: 0, $left: 50%, $z-index: 1);
+			@include bb-prefix-transform(translateX(-50%));
+			margin-bottom: $gmaps-direction-btn-margin-bottom;
+		}
+
+		// immediate child: google element
+		& > div {
+			@include bb-position($top: 0);
+		}
+	
+		&__static-image {
+			max-width: 100%;
+		}
+	}
+}

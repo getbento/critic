@@ -1,0 +1,21 @@
+{# ============================================================================
+================== BREADCRUMB =================================================
+============================================================================= #}
+{#
+	Creates a simple "back to *" breadrumb typically used at the top of an 
+	entry page.
+	
+	@access public
+	@param {String} label 			- The visible text of the button.
+	@param {String} url 			- The url to assign to the button.
+	@param {String} tag 			- The html tag to use for the breadcrumb.
+	@param {Boolean} revealable 	- Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro back(label, url, tag="div", revealable=true) %}
+	{%- if label and url %}
+		<{{ tag }} class="breadcrumb content container{% if revealable %} revealable{% endif %}">
+			<a href="{{ url }}">{{ label }}</a>
+		</{{ tag }}>
+	{%- endif %}
+{% endmacro %}

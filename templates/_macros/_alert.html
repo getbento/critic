@@ -1,0 +1,51 @@
+{# ============================================================================
+================== ALERTS =====================================================
+============================================================================= #}
+{#
+	Creates a simple alert that is typically added to the top of a landing page.
+
+	@access public
+	@param {String} content 		- Primary content to show in the alert.
+	@param {Boolean} is_warning 	- True if this explicitly represents and error/warning. False if general notification.
+	@param {String} tag 			- The html tag to use for the alert.
+	@param {Boolean} revealable 	- Whether this should have its own transition in.
+	@returns {HTML}
+#}
+{% macro simple(content, is_warning=false, tag="div", revealable=false) %}
+	{%- if content %}
+		<{{ tag }} class="alert{% if is_warning %} alert--warning{% endif %}{% if revealable %} revealable{% endif %}">
+	        <button type="button" class="close" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+	        <div class="alert__content">
+	            {{ content }}
+	        </div>
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Creates a popup alert that is typically added as an overlay on a landing page.
+
+	@access public
+	@param {String} content 		- Primary content to show in the alert.
+	@param {Array} imgs 			- A list of image file paths.
+	@param {String} id 				- An id so other buttons can trigger this popup.
+	@param {Boolean} autoopen		- Should this popup open automatically after page load?
+	@param {String} tag 			- The html tag to use for the alert.
+	@returns {HTML}
+#}
+{% macro popup(content, imgs, id="popup-alert", autoopen=true, tag="div") %}
+	{%- if content %}
+		<{{ tag }} id="{{ id }}" class="popup popup--modal mfp-hide" data-bb-track-label="Alert"{% if autoopen %}data-popup-auto-open="modal"{% endif %}>
+			<div class="popup__content">
+				{{ content }}
+			</div>
+			{%-if imgs and imgs|length > 0 %}
+				<div class="popup__media">
+					{%- for item in imgs %}
+						<img {{ bbImage.alt_text(item, None, True) }} src="{{ item|image_url }}" />
+					{%- endfor %}
+				</div>
+			{%- endif %}
+		</{{ tag }}>
+	{%- endif %}
+{% endmacro %}

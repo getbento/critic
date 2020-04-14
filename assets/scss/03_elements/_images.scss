@@ -1,0 +1,49 @@
+////
+/// @group elements-images
+/// @access public
+////
+
+// ============================================================================================================
+// =============== IMAGES : VARS ==============================================================================
+// ============================================================================================================
+/// Image thumbnail height percentage relative to the image thumbnail width. Applies to all `.image-thumbnail`
+/// instances by default. (100px wide X 70% = 70px high)
+/// @type Number
+$image-thumbnail-aspect-ratio: 70% !default;
+
+/// Image thumbnail margin button. Applies to all `.image-thumbnail` instances by default.
+/// @type Number
+$image-thumbnail-margin-bottom: 1.625rem !default;
+
+/// Image thumbnail background color. The background color is intended to act as a placeholder and only visible
+/// before the image loads, or if it fails to load or doesn't exist. Applies to all `.image-thumbnail` instances
+/// by default.
+/// @type Color
+$image-thumbnail-bg-color: $hidden-bg-color !default;
+
+// ============================================================================================================
+// =============== IMAGES : EXPORT ============================================================================
+// ============================================================================================================
+
+@mixin bb-export-classes-images() {
+	// Note: do not use this on an <img> tag.
+	.image-thumbnail {
+		@include bb-size($width: 100%);
+		@include bb-background-cover-base;
+		background-color: $image-thumbnail-bg-color;
+		padding-top: $image-thumbnail-aspect-ratio;
+		margin-bottom: $image-thumbnail-margin-bottom;
+	}
+
+	.swipeable-image-thumbnail {
+		margin-bottom: $image-thumbnail-margin-bottom;
+	}
+
+	// Note: use them when the element is an <img> and you don't care about aspect ratio.
+	.image,
+	.thumbnail {
+		@include bb-size($width: 100%, $height: auto);
+		display: block;
+		margin: 0 auto $image-thumbnail-margin-bottom;
+	}
+}

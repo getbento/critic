@@ -1,0 +1,123 @@
+////
+/// @access public
+//// 
+
+
+/// Removes the unit label from a number.
+/// @parameter {Number} $number - A number with or without unit.
+/// @return {Number} unitless
+/// @example scss
+/// 	bb-strip-unit(5em); // 5	
+@function bb-strip-unit($number) {
+  @if type-of($number) == 'number' and not unitless($number) {
+    @return $number / ($number * 0 + 1);
+  }
+  @return $number;
+}
+
+/// Converts numbers with PX units to REM units.
+/// @parameter {Number} $px - A number with or without unit.
+/// @return {Number} rem
+/// @example scss
+/// 	bb-px-to-rem(16px); // 1rem
+@function bb-px-to-rem($px) {
+	@return (bb-strip-unit($px) / bb-strip-unit($font-size-root)) * 1rem;
+}
+
+/// Converts numbers with REM units to PX units. Useful in places where REM units may be buggy,
+/// such as border weights or `:before, :after { line-height: ... }` in Internet Explorer.
+/// @parameter {Number} $rem - A number with or without unit.
+/// @return {Number} px
+/// @example scss
+/// 	bb-rem-to-px(1rem); // 16px
+@function bb-rem-to-px($rem) {
+	@return (bb-strip-unit($rem) * bb-strip-unit($font-size-root)) * 1px;
+}
+
+/// Gets a gutter value at a specified breakpoint. Typically, gutters are the sum of the touching 
+/// left/right padding from two touching columns. So, by default, we divide the result in half using
+/// the `$divisor` parameter to give the expected value that can be applied to `padding-left` and
+/// `padding-right`.
+/// @parameter {String} $breakpoint [null] - A breakpoint key defined in `$grid-gutter-width`.
+/// @parameter {Number} $divisor [2] - Divides the full gutter value.
+/// @return {Number}
+/// @example scss
+/// 	bb-calc-gutter($breakpoint: sm, $divisor: 2); // 3.75rem/2 = 1.875rem
+@function bb-calc-gutter($breakpoint: null, $divisor: 2) {
+	$vartype: type-of($grid-gutter-width);
+	@if $vartype == "number" {
+		@return ($grid-gutter-width / $divisor);
+	}
+	@else {
+		@if $breakpoint != null and map-has-key($grid-gutter-width, $breakpoint) {
+			@return (map-get($grid-gutter-width, $breakpoint) / $divisor);
+		}
+		@else {
+			@error "You must specific $breakpoint when $grid-gutter-width is a list.";
+		}
+	}
+}
+
+/// Resizes the `$gutter` value(s) based on the `$divisor`. If the `$gutter` parameter is a number, 
+/// we divide it and return the single number. However, if `$gutter` is a map, this function will 
+/// iterate and copy over every key and divide its current value by the `$divisor`, and then return 
+/// the new map. Typically, gutters are the sum of the touching left/right padding from two touching 
+/// columns. So, by default, we divide the result in half using the `$divisor` parameter to give the 
+/// expected value that can be applied to `padding-left` and `padding-right`.
+/// @parameter {Number | Map} $gutter [$grid-gutter-width] - If using a map, the keys must match a `$grid-breakpoints` key.
+/// @parameter {Number} $divisor [2] - Divides the full gutter value.
+/// @return {Number | Map}
+@function bb-divide-gutters($gutter: $grid-gutter-width, $divisor: 2) {
+	@if type-of($gutter) == "number" {
+		@return ($gutter / 2);
+	}
+	@else {
+		$divided-map: ();
+		@each $key, $val in $grid-gutter-width {
+			$divided-map: map-merge($divided-map, (#{$key}: ($val / 2)));
+		}
+		@return $divided-map;
+	}
+}
+
+/// This is a pseudo- str_replace function that runs on an svg data uri string change values marked with
+/// specific flags/placeholders. This allows us to do things like – provide a single SVG icon, but change
+/// the color to create any number of new icons. Please note, SVG data uris must be url-encoded for 
+/// maximum browser compatibility.
+/// @parameter {String} $icon-uri - Haystack. The url-encoded SVG data uri with an embedded placeholder/flag.
+/// @parameter {Color} $color - The (hex color) value to replace `$str-replace` with.
+/// @parameter {String} $str-replace ["HEXCOLOR"] - Needle. The placeholder/flag to replace. The actual default 
+/// 	value is `"[[HEXCOLOR]]"`, but SassDoc doesn't like the square brackets for some reason.
+/// @return {String}
+/// @example scss
+/// 	bb-arrow-data-uri($icon-uri: "data:image/svg+xml...[[HEXCOLOR]]...", $color: #FF0000, $str-replace:"[[HEXCOLOR]]"); // "data:image/svg+xml...#FF0000..."
+/// @link https://codepen.io/yoksel/details/JDqvs/ URL-encode SVG Data URIs
+@function bb-arrow-data-uri($icon-uri, $color, $str-replace:"[[HEXCOLOR]]") {
+    // cast hex color to string and remove the leading #
+    $color-str: inspect($color);
+    $color-str: if(str_index($color-str, "#") == 1, str_slice($color-str, 2), $color-str);
+ 
+    // find $str-replace in the $icon-uri and save the starting index and length
+    $str-replace-length: str_length($str-replace);
+    $str-replace-start-index: str_index($icon-uri, $str-replace);
+    
+    // break $icon-uri into pieces – before the $str-replace starts and after it ends.
+    $str-icon-before: str_slice($icon-uri, 0, ($str-replace-start-index - 1));
+    $str-icon-after: str_slice($icon-uri, ($str-replace-start-index + $str-replace-length));
+
+    // piece it back together with the color crammed in between!
+    @return ($str-icon-before + $color-str + $str-icon-after);
+}
+
+/// Creates a path to a resource (image file, font, etc) that should be stored in the `/assets` directory. 
+/// Please note, if SCSS is compiled on the server, we have to use Jinja2's `static()` method to resolve the
+/// url properly.
+/// @parameter {String} $file - The resource path, name, and extension with no leading or trailing slashes.
+/// @parameter {String} $str-replace - Needle. The placeholder/flag to replace.
+/// @return {String}
+/// @example scss
+/// 	bb-path-images($file: "image.jpg"); // "/assets/images/image.jpg"
+@function bb-path-images($file) {
+	@return $path-to-images + $file;
+}
+

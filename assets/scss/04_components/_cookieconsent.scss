@@ -1,0 +1,36 @@
+.cookieConsent {
+  button {
+    display: block;
+    position: static;
+    padding: 0 1em;
+    border: 0px;
+    box-shadow: none;
+    border-radius: 0px;
+    background: none;
+    text-decoration: underline;
+    color: $link-color;
+    margin: 0 auto;
+  }
+
+  z-index: 999;
+  padding: 1em;
+  background: #ffffff;
+  position: fixed;
+  width: 100%;
+  text-align: center;
+  left: 0;
+
+  .cookieConsentMessage {
+    display: inline-block;
+  }
+
+  @include bb-mobi-breakpoint-up() {
+    text-align: left;
+    line-height: 35px;
+    button {
+      display: inline-block;
+      position: absolute;
+      right: 30px;
+    }
+  }
+}

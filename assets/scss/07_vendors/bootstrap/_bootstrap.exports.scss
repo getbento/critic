@@ -1,0 +1,65 @@
+// ============================================================================================================
+// =============== BOOTSTRAP EXPORTS ONLY =====================================================================
+// ============================================================================================================
+// BentoBox: 
+// - This file is derived from bower_components/bootstrap/scss/bootstrap.scss.
+// 			 
+// Intended use: 
+// - Override the default Bootstrap imports and re-path to use our /assets/bower_components/ directory instead.
+// - Only @import files that export classes directly. DO NOT @import variables, function, mixins, etc.
+
+/*!
+ * Bootstrap v4.0.0-alpha.2 (http://getbootstrap.com)
+ * Copyright 2011-2015 Twitter, Inc.
+ * Licensed under MIT (https://github.com/twbs/bootstrap/blob/master/LICENSE)
+ */
+
+// Core variables and mixins
+// BentoBox: These @imports are moved to ./_boostrap.imports.scss because they have no immediate output.
+
+// Reset and dependencies
+@import "../../bower_components/bootstrap/normalize";
+@import "../../bower_components/bootstrap/print";
+
+// Core CSS
+@import "../../bower_components/bootstrap/reboot";
+@import "../../bower_components/bootstrap/type";
+@import "../../bower_components/bootstrap/images";
+// @import "../../bower_components/bootstrap/code";
+@import "../../bower_components/bootstrap/grid";
+@import "../../bower_components/bootstrap/tables";
+@import "../../bower_components/bootstrap/forms";
+@import "../../bower_components/bootstrap/buttons";
+
+// Components
+// @import "../../bower_components/bootstrap/animation";
+// @import "../../bower_components/bootstrap/dropdown";
+// @import "../../bower_components/bootstrap/button-group";
+// @import "../../bower_components/bootstrap/input-group";
+// @import "../../bower_components/bootstrap/custom-forms";
+// @import "../../bower_components/bootstrap/nav";
+// @import "../../bower_components/bootstrap/navbar";
+// @import "../../bower_components/bootstrap/card";
+// @import "../../bower_components/bootstrap/breadcrumb";
+// @import "../../bower_components/bootstrap/pagination";
+// @import "../../bower_components/bootstrap/pager";
+// @import "../../bower_components/bootstrap/labels";
+// @import "../../bower_components/bootstrap/jumbotron";
+// @import "../../bower_components/bootstrap/alert";
+// @import "../../bower_components/bootstrap/progress";
+// @import "../../bower_components/bootstrap/media";
+// @import "../../bower_components/bootstrap/list-group";
+@import "../../bower_components/bootstrap/responsive-embed";
+@import "../../bower_components/bootstrap/close";
+
+// Components w/ JavaScript
+// @import "../../bower_components/bootstrap/modal";
+// @import "../../bower_components/bootstrap/tooltip";
+// @import "../../bower_components/bootstrap/popover";
+// @import "../../bower_components/bootstrap/carousel";
+
+// Utility classes
+@import "../../bower_components/bootstrap/utilities";
+// @import "../../bower_components/bootstrap/utilities-background";
+// @import "../../bower_components/bootstrap/utilities-spacing";
+// @import "../../bower_components/bootstrap/utilities-responsive";

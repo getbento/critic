@@ -1,0 +1,62 @@
+{# ============================================================================
+================== SOCIAL =====================================================
+============================================================================= #}
+{#
+	Creates a list of social media accounts (icons). The output is based on
+	which platforms are currently supported, so if you need more, please add
+	them to the "supports" dict.
+
+	IMPORTANT: The accounts parameter expects a single dict with key/value
+	(platform/url) pairs. For example:
+	accounts: {"facebook": "facebook.com", "twitter": "twitter.com", ...}
+
+	IMPORTANT: "social_icon_email_address" is a special type. Its url should be
+	obfuscated and its target should open in the same browser window. All other
+	types use their straight values and open in a new window.
+
+	@access public
+	@param {Dict} accounts 			- Platform key/value (platform/url) pairs.
+	@param {String} classlist 		- Additional classes to add to the <ul>.
+	@param {Boolean} track 			- Whether we should track the social button clicks.
+	@param {String} track_placement - GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+#}
+{% macro accounts(accounts, classlist="", track=false, track_placement="") %}
+	{#- we need to make sure we have an icon assigned to each type. -#}
+	{%- set supports = {
+			"facebook": 					{"name": "Facebook", 	"icon": "fa-facebook", 		"priority": 1},
+			"twitter": 						{"name": "Twitter", 	"icon": "fa-twitter",		"priority": 2},
+			"instagram": 					{"name": "Instagram", 	"icon": "fa-instagram",		"priority": 3},
+			"foursquare": 					{"name": "Foursquare", 	"icon": "fa-foursquare",	"priority": 4},
+			"yelp": 						{"name": "Yelp", 		"icon": "fa-yelp",			"priority": 5},
+			"google_plus": 					{"name": "Google+", 	"icon": "fa-google",		"priority": 6},
+			"tripadvisor": 					{"name": "TripAdvisor",	"icon": "fa-tripadvisor",	"priority": 7},
+			"youtube": 						{"name": "Youtube", 		"icon": "fa-youtube-play",			"priority": 8},
+			"spotify": 						{"name": "spotify", 	"icon": "fa-spotify",		"priority": 9},
+			"linkedin": 					{"name": "LinkedIn", 	"icon": "fa-linkedin",		"priority": 10},
+			"pinterest": 					{"name": "Pinterest", 	"icon": "fa-pinterest",		"priority": 11},
+			"social_icon_email_address":	{"name": "Email",		"icon": "fa-envelope",		"priority": 12}
+		}
+	-%}
+	{#- iterate over all the objects in accounts. if we support the type and the value is defined
+	    we can push it into a valid_accounts list as a tuple. The reason for the tuple is, we can
+	    check the length a little easier than a dictionary.
+    -#}
+	{%- set valid_accounts = [] -%}
+	{%- for key, value in accounts.iteritems() -%}
+		{%- if supports[key] and value -%}{%- do valid_accounts.append((key, value, supports[key].priority)) -%}{%- endif -%}
+	{%- endfor -%}
+	{#- if we have at least one valid account, its ok to render our component. -#}
+	{%- if valid_accounts|length > 0 -%}
+		<ul class="social-accounts{% if classlist %} {{ classlist }}{% endif %}">
+			{#- note: we're sorting the list of tuples by the tuple's "priority" number – which is attribute=2 #}
+			{%- for key, value, priority in valid_accounts|sort(attribute=2) %}
+				{%- set tracking = bbTrack.button(category="Social Icons", label=(supports[key].name ~ ((", " ~ track_placement) if track_placement else ""))) if track else "" %}
+				{%- set url = value if (key != "social_icon_email_address") else ("mailto:" ~ value)|obfuscate_string %}
+				{%- set target = "_blank" if (key != "social_icon_email_address") else "_self" %}
+				{%- set noopener = "rel=\"noopener\"" if target == "_blank" else "" %}
+				<li><a href="{{ url }}" target="{{ target }}" {{ noopener }}{{ tracking }}><span class="fa {{ supports[key].icon }}" aria-hidden="true"></span><span class="sr-only">{{ supports[key].name }}</span></a></li>
+			{%- endfor %}
+		</ul>
+	{%- endif -%}
+{% endmacro %}

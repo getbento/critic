@@ -1,0 +1,30 @@
+// ============================================================================================================
+// =============== SLICK CAROUSEL EXPORTS ONLY ================================================================
+// ============================================================================================================
+// BentoBox:
+// - This file is derived from bower_components/slick-carousel/slick/
+//
+// Intended use:
+// - Override the default Slick Carousel imports and re-path to use our /assets/bower_components/ directory instead.
+// - Slick Carousel structures its SCSS a bit differently and does not separate out its variables, mixins, functions,
+//   etc – so, we can't use our standard import/export mechanism here.
+
+/*
+     _ _      _       _
+ ___| (_) ___| | __  (_)___
+/ __| | |/ __| |/ /  | / __|
+\__ \ | | (__|   < _ | \__ \
+|___/_|_|\___|_|\_(_)/ |___/
+                   |__/
+
+ Version: 1.6.0
+  Author: Ken Wheeler
+ Website: http://kenwheeler.github.io
+    Docs: http://kenwheeler.github.io/slick
+    Repo: http://github.com/kenwheeler/slick
+  Issues: http://github.com/kenwheeler/slick/issues
+
+ */
+
+@import "../../bower_components/slick-carousel/slick";
+@import "../../bower_components/slick-carousel/slick-theme";

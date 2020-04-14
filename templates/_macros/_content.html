@@ -1,0 +1,513 @@
+{# ============================================================================
+================== INTRO : PROXY ==============================================
+============================================================================= #}
+{#
+    Decides what type of intro to render based on the available parameters and
+    calls the corresponding/appropriate macro. Should this be a single column
+    intro? Or a 2-column intro?
+
+    IMPORTANT: Generally, we only want one <h1> tag on a page. For this reason,
+    intros need to be informed of whether or not their primary heading (first
+    column when applicable) should use an <h1>. This makes the second column
+    heading an <h2>. If use_h1 is false, both first and second column headings
+    will render as an <h2>. BUT...both column headings will have the .h1 class
+    applied to keep the visual rendering consistent.
+
+    @access public
+    @param {String} title           - Heading assigned to first column (if applicable)
+    @param {String} content         - Content assigned to first column (if applicable)
+    @param {Dict} multibutton       - Multibutton opts assigned to first column (if applicable)
+    @param {String} append			- Additional content assigned to first column (if applicable)
+	@param {String} title2          - Heading assigned to second column (if applicable)
+    @param {String} content2        - Content assigned to second column (if applicable)
+    @param {Dict} multibutton2      - Multibutton opts assigned to second column (if applicable)
+    @param {String} append2			- Additional content assigned to second column (if applicable)
+    @param {Boolean} use_h1			- Should the primary heading use an h1 tag?
+	@param {String} tag             - The html tag to use for the intro.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro intro(title, content, multibutton, append, title2, content2, multibutton2, append2, use_h1=false, tag="section", revealable=true) %}
+	{%- if (title or content) %}
+		{%- if (title2 or content2) %}
+			{{ intro_two_columns(
+					title1=title,
+					content1=content,
+					multibutton1=multibutton,
+					append1=append,
+					title2=title2,
+					content2=content2,
+					multibutton2=multibutton2,
+					append2=append2,
+					use_h1=use_h1,
+					tag=tag,
+					revealable=revealable
+				)
+			}}
+		{%- else %}
+			{{ intro_one_column(
+					title=title,
+					content=content,
+					multibutton=multibutton,
+					append=append,
+					use_h1=use_h1,
+					tag=tag,
+					revealable=revealable
+				)
+			}}
+		{%- endif %}
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== INTRO : ONE COLUMN =========================================
+============================================================================= #}
+{#
+    Renders a single column intro.
+
+    IMPORTANT: Generally, we only want one <h1> tag on a page. For this reason,
+    intros need to be informed of whether or not their primary heading (first
+    column when applicable) should use an <h1>. If use_h1 is false, this intro
+    will render as <h2 class="h1"> instead.
+
+    Ex:
+    	<section class="content c-intro container-sm revealable">
+    		<h2 class="h1">Intro Single</h2>
+    		<p>...</p>
+    		<a href="#" class="btn btn-brand">Button1</a>
+        	<a href="#" class="btn btn-brand">Button2</a>
+        </section>
+
+    @access public
+    @param {String} title           - Heading.
+    @param {String} content         - Content.
+    @param {Dict} multibutton       - Multibutton opts. (See bbButton._multi() for parameters)
+    @param {String} append			- Additional content added below multibutton.
+    @param {Boolean} use_h1			- Should the heading use an h1 tag?
+	@param {String} tag             - The html tag to use for the intro.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro intro_one_column(title, content, multibutton, append, use_h1=false, tag="section", revealable=true) %}
+	{%- if (title or content) %}
+		<{{ tag }} id="intro" class="content c-intro container-sm{% if revealable %} revealable{% endif %}">
+	        {%- if title %}
+	        	{%- if use_h1 %}<h1>{{ title }}</h1>
+	        	{%- else %}<h2 class="h1">{{ title }}</h2>
+	        	{%- endif %}
+	        {%- endif %}
+	        {% if content %}{{ content }}{% endif %}
+	        {{ bbButton.multi(multibutton) }}
+	        {{ append }}
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== INTRO : TWO COLUMNS ========================================
+============================================================================= #}
+{#
+    Renders a two-column intro. Please note, if title1 is defined and title2
+    is not, title1 will render centered above both columns.
+
+    IMPORTANT: Generally, we only want one <h1> tag on a page. For this reason,
+    intros need to be informed of whether or not their primary heading (first
+    column when applicable) should use an <h1>. This makes the second column
+    heading an <h2>. If use_h1 is false, both first and second column headings
+    will render as an <h2>. BUT...both column headings will have the .h1 class
+    applied to keep the visual rendering consistent.
+
+    HACKY WORKAROUND: In some cases, there is no title field for column two and
+    an admin may embed an <h1> tag inside the WYSIWIG for column two. Its pretty
+    predictable (per template) when this will happen, so the workaround is – we
+    pass title2=true. This will allow all of our jinja validation to work and
+    pass. But, when it gets to actually rendering title2, it checks for
+    (title2 != true)....allowing our wysiwyg to use its header instead.
+
+    Ex:
+    	<section class="content c-intro container revealable">
+		    <div class="row">
+		        <div class="col-md-6">
+		            <h2 class="h1">Intro One</h2>
+		            <p>...</p>
+		            <a href="#" class="btn btn-brand">Button1</a>
+		        </div>
+		        <div class="col-md-6">
+		            <h1>Intro Two</h1>
+		            <p>...</p>
+		        </div>
+		    </div>
+		</section>
+
+    @access public
+    @param {String} title1           - Heading assigned to first column.
+    @param {String} content1         - Content assigned to first column.
+    @param {Dict} multibutton1       - Multibutton opts assigned to first column.
+    @param {String} append1			- Additional content assigned to first column.
+	@param {String} title2          - Heading assigned to second column.
+    @param {String} content2        - Content assigned to second column.
+    @param {Dict} multibutton2      - Multibutton opts assigned to second column.
+    @param {String} append2			- Additional content assigned to second column.
+    @param {Boolean} use_h1			- Should the primary heading use an h1 tag?
+	@param {String} tag             - The html tag to use for the intro.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro intro_two_columns(title1, content1, multibutton1, append1, title2, content2, multibutton2, append2, use_h1=false, tag="section", revealable=true) %}
+	{%- if title1 or (content1 or content2) %}
+		<{{ tag }} id="intro" class="content c-intro container{% if revealable %} revealable{% endif %}">
+			{%- if title1 and not title2 %}
+				{%- if use_h1 %}<h1>{{ title1 }}</h1>
+	        	{%- else %}<h2 class="h1">{{ title1 }}</h2>
+	        	{%- endif %}
+			{%- endif %}
+	        <div class="row">
+	            <div class="col-md-6">
+	                {%- if title1 and title2 %}
+						{%- if use_h1 %}<h1>{{ title1 }}</h1>
+			        	{%- else %}<h2 class="h1">{{ title1 }}</h2>
+			        	{%- endif %}
+					{%- endif %}
+	                {% if content1 %}{{ content1 }}{% endif %}
+                	{{ bbButton.multi(multibutton1) }}
+                	{{ append1 }}
+	            </div>
+	            <div class="col-md-6">
+	                {% if title2 and (title2 != true) %}<h2 class="h1">{{ title2 }}</h2>{% endif %}
+	                {% if content2 %}{{ content2 }}{% endif %}
+                	{{ bbButton.multi(multibutton2) }}
+                	{{ append2 }}
+	            </div>
+	        </div>
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== EMBED ======================================================
+============================================================================= #}
+{#
+    Renders an embed block wrapped in a container.
+
+    IMPORTANT: We don't know what will be placed in these containers or how
+    they are intended to display. In most blocks, the container's width is
+    limited by adding a `.container-*`. This might not be suitable for any/all
+    uses, so we aren't adding it here – however, we should keep an eye on this.
+
+    Ex:
+    	<div class="...">
+			{{ code here }}
+    	</div>
+
+    @access public
+    @param {String} code            - Embed code.
+	@param {String} tag             - The html tag to use for the embed container.
+	@param {String} classlist		- Additional classes (space separated) to add to the container.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro embed(code, tag="div", classlist="", revealable=false) %}
+	{%-if code %}
+		{%- set classes = [] -%}
+		{%- if revealable -%}{%- do classes.append("revealable") -%}{%- endif -%}
+		{%- if classlist -%}{%- set classes = [classlist] + classes -%}{%- endif -%}
+		{#- render it! #}
+		<{{ tag }}{% if classes|length > 0 %} class="{{ classes|join(" ") }}"{% endif %}>
+			{{ code }}
+		</{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== OVERLAY TOUT : FULL WIDTH ==================================
+============================================================================= #}
+{#
+    Renders a full width overlay tout – an image with overlaid text. Please
+    note, this content block is intended to maintain a 16:9 aspect ratio –
+    however, JavaScript will add `.c-tout-overlay--fit` when the content is
+    taller than the container so the text does not get clipped or overflow out
+    of the container.
+
+    Ex:
+    	<section class="c-tout-overlay c-tout-overlay--dimmed revealable" style="background-image: url('...');">
+	        <div class="container">
+	            <h2 class="h1">Title Fermentum Lorem Parturient Lorem</h2>
+	            <h3>Subheadline here</h3>
+	            <p>...</p>
+	            <a href="#" class="btn btn-brand">Button1</a>
+	        </div>
+	    </section>
+
+    @access public
+    @param {String} title           - Primary heading.
+    @param {String} subtitle        - Subheading displayed below the primary heading.
+    @param {String} content         - Content.
+    @param {String} image           - File path to the image background.
+	@param {Dict} multibutton       - Multibutton opts. (See bbButton._multi() for parameters)
+	@param {Boolean} dimmed			- True dims the image so text is more visible.
+	@param {String} tag             - The html tag to use for the overlay tout element.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro overlay_tout(title, subtitle, content, image, multibutton, dimmed=true, tag="section", revealable=true) %}
+	{%- set has_content = (title or subtitle or content) %}
+	{%- if has_content or image %}
+		{%- set classes = [] -%}
+		{%- if dimmed -%}{%- do classes.append("c-tout-overlay--dimmed") -%}{%- endif -%}
+		{%- if revealable -%}{%- do classes.append("revealable") -%}{%- endif -%}
+
+	    <{{ tag }} class="c-tout-overlay{% if classes|length > 0 %} {{ classes|join(' ') }}{% endif %}"{% if image %} style="background-image: url('{{ image|image_url }}');" {% endif %}>
+	    	{%- if (has_content) %}
+		        <div class="container">
+		            {% if title %}<h2 class="h1">{{ title }}</h2>{% endif %}
+		            {% if subtitle %}<h3>{{ subtitle }}</h3>{% endif %}
+		            {% if content %}{{ content }}{% endif %}
+		            {{ bbButton.multi(multibutton) }}
+		        </div>
+			{%- endif %}
+	    </{{ tag }}>
+    {%- endif %}
+{% endmacro %}
+
+
+{# ============================================================================
+================== SPLIT OVERLAY ==============================================
+============================================================================= #}
+{#
+	Renders side-by-side overlays – an image with optional overlaid text. Please
+	note, when side-by-side, this content block is intended to have the two
+	columns' height match each other exactly. Meaning, if one column is taller
+	than the other, the shorter column is expanded to make sure its height
+	matches. This is not entirely via CSS and no JavaScript is required.
+
+	Also, when `.c-split--alternate` is enabled, the column order should be
+	reversed on mobile. However, the best way to achieve this is to swap the
+	actually order on mobile, and then on desktop adjust the order via CSS.
+
+	Ex:
+		<section class="c-split">
+			<div class="c-split__col c-split__col--populated c-split__col--dimmed" style="background-image: url('...');">
+				<div class="c-split__content content">
+					<h2 class="h2 s-split__heading">Split Title</h2>
+					<p>...</p>
+				</div>
+			</div>
+			<div class="s-split__col s-spit__col--empty" style="background-image: url('...');"></div>
+		</section>
+
+	@access public
+    @param {String} title1           - Heading assigned to first column.
+    @param {String} content1         - Body content assigned to first column.
+    @param {String} image1         	 - Background image assigned to first column.
+    @param {Dict} multibutton1       - Multibutton opts assigned to first column. (See bbButton._multi() for parameters)
+	@param {Boolean} dimmed1		 - True dims the image (in first column) so text is more visible.
+	@param {Boolean} use_alt_colors1 - True uses alternate color schema for color one. False uses default body styles.
+	@param {String} title2           - Heading assigned to second column.
+    @param {String} content2         - Body content assigned to second column.
+    @param {String} image2         	 - Background image assigned to second column.
+    @param {Dict} multibutton2       - Multibutton opts assigned to second column. (See bbButton._multi() for parameters)
+	@param {Boolean} dimmed2		 - True dims the image (in second column) so text is more visible.
+	@param {Boolean} use_alt_colors2 - True uses alternate color schema for color two. False uses default body styles.
+	@param {Boolean} alternate		 - True will reverse the column order when stacked/mobile. False outputs columns in order.
+	@param {Boolean} vcenter		 - True vertically centers column content when side-by-side. False top aligns content.
+	@param {String} tag              - The html tag to use for the split overlay element.
+	@param {String} htag             - The html tag to use for the column headings.
+	@param {Boolean} revealable      - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro overlay_split(title1, content1, image1, multibutton1, dimmed1, use_alt_colors1, title2, content2, image2, multibutton2, dimmed2, use_alt_colors2, alternate=false, vcenter=false, tag="section", htag="h2", revealable=true) %}
+	{%- set has_column1 = true if (title1 or content1 or multibutton1 or image1) else false %}
+	{%- set has_column2 = true if (title2 or content2 or multibutton2 or image2) else false %}
+	{%- if has_column1 or has_column2 %}
+		{%- set column1_rendered = _overlay_split_column(title=title1, content=content1, image=image1, multibutton=multibutton1, dimmed=dimmed1, use_alt_colors=use_alt_colors1, htag=htag) %}
+		{%- set column2_rendered = _overlay_split_column(title=title2, content=content2, image=image2, multibutton=multibutton2, dimmed=dimmed2, use_alt_colors=use_alt_colors2, htag=htag) %}
+		{#- render it! #}
+		<{{ tag }} class="c-split{% if vcenter %} c-split--vcenter{% endif %}{% if alternate %} c-split--alternate{% endif %}{% if revealable %} revealable{% endif %}">
+				{%- if not alternate %}
+					{{ column1_rendered }}
+					{{ column2_rendered }}
+				{%- else %}
+					{{ column2_rendered }}
+					{{ column1_rendered }}
+				{%- endif %}
+		</{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Private. For convenience, this macro renders a single column in the `.c-split`
+	element. By the point this macro is run, we already know that at least one
+	column exists – which is the only criteria for rendering both columns. So, we
+	don't have any additional checks here that would result in the column NOT
+	being rendered. It can be completely empty, but we are still going to render it!
+
+	@access private
+    @param {String} title           - Heading.
+    @param {String} content         - Body content.
+    @param {String} image         	- Background image.
+    @param {Dict} multibutton       - Multibutton opts. (See bbButton._multi() for parameters)
+	@param {Boolean} dimmed		 	- True dims the image so text is more visible.
+	@param {Boolean} use_alt_colors - True uses alternate color schema. False uses default body styles.
+	@param {String} htag            - The html tag to use for the column headings.
+#}
+{% macro _overlay_split_column(title, content, image, multibutton, dimmed=false, use_alt_colors=false, htag="h2") %}
+	{%- set classes = ["c-split__col"] %}
+	{%- do classes.append("" if (title or content or (multibutton and multibutton.button_type != "none")) else "c-split__col--empty") %}
+	{%- if dimmed %}{% do classes.append("c-split__col--dimmed") %}{% endif %}
+	{%- if use_alt_colors %}{% do classes.append("c-split__col--alt") %}{% endif %}
+
+	<div class="{{ classes|join(' ') }}">
+		<div class="c-split__col-inner">
+			{%- if title or content or (multibutton and multibutton.button_type != "none") %}
+				<div class="c-split__content content">
+					{% if title %}<{{ htag }} class="h2 c-split__heading">{{ title }}</{{ htag }}>{% endif %}
+					{% if content %}{{ content }}{% endif %}
+					{{ bbButton.multi(multibutton) }}
+				</div>
+			{%- endif %}
+			{%- if image|image_url %}
+				<div class="c-split__image" {{ bbImage.alt_text(image, title, False) }} style="background-image: url('{{ image|image_url }}');"></div>
+			{%- endif %}
+		</div>
+	</div>
+{% endmacro %}
+
+{# ============================================================================
+================== ONE COLUMN : TEXT ONLY =====================================
+============================================================================= #}
+{#
+    Renders a one-column text section with optional heading.
+
+    Ex:
+    	<section class="content container revealable">
+	        <h2>One Column</h2>
+	        <p>...</p>
+	    </section>
+
+    @access public
+    @param {String} title           - Heading.
+    @param {String} content         - Content.
+    @param {String} classlist		- Additional classes (space separated) to add to the container.
+	@param {String} tag             - The html tag to use for the container.
+	@param {String} htag            - The html tag to use for the heading.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro one_column(title, content, classlist="", tag="section", htag="h2", revealable=true) %}
+	{%- if title or content %}
+		{%- set classes = ["content", "container"] %}
+		{%- if revealable %}{% do classes.append("revealable") %}{% endif %}
+		{%- if classlist %}{% set classes = [classlist] + classes %}{% endif %}
+		{#- render it! #}
+		<{{ tag }} class="{{ classes|join(" ") }}">
+			{% if title %}<{{ htag }}>{{ title }}</{{ htag }}>{% endif %}
+	        {% if content %}{{ content }}{% endif %}
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+
+{# ============================================================================
+================== TWO COLUMNS : TEXT AND THUMBNAIL ===========================
+============================================================================= #}
+{#
+    Renders a two-column text section with optional headings, content, and
+    thumbnails per column. Please note, if title1 is defined and title2 is not,
+    title1 will rendered centered above both columns.
+
+    IMPORTANT: When only one thumbnail exists, we have to "assume" they both
+    exist so the layout is consistent.
+
+    Ex:
+    	<section class="content container">
+	        <h2>Two Columns</h2>
+	        <div class="row">
+	            <div class="col-md-6">
+	            	...or...<h2>Two Columns</h2>
+	                <p>...</p>
+	            </div>
+	            <div class="col-md-6">
+	            	...or...<h2>Two Columns</h2>
+	                <p>...</p>
+	            </div>
+	        </div>
+	    </section>
+
+    @access public
+    @param {String} title1          - Heading assigned to first column (if applicable)
+    @param {String} column1         - Content assigned to first column.
+    @param {String} thumbnail1		- File path to image thumbnail assigned to first column.
+    @param {Dict} multibutton1      - Multibutton opts assigned to first column (if applicable)
+    @param {String} title2          - Heading assigned to second column.
+    @param {String} column2         - Content assigned to second column.
+    @param {String} thumbnail2		- File path to image thumbnail assigned to second column.
+    @param {Dict} multibutton2      - Multibutton opts assigned to second column.
+    @param {String} classlist		- Additional classes (space separated) to add to the container.
+    @param {String} tag             - The html tag to use for the container.
+	@param {Boolean} revealable     - Whether this should have its own transition in.
+    @returns {HTML}
+#}
+{% macro two_columns(
+			title1,
+			column1,
+			thumbnail1,
+			multibutton1,
+			title2,
+			column2,
+			thumbnail2,
+			multibutton2,
+			classlist="",
+			tag="section",
+			revealable=true
+		)
+	%}
+	{%- if column1 or column2 %}
+		{%- set has_thumbnails = (thumbnail1 or thumbnail2) -%}
+		{%- set has_centered_title1 = [] %}
+		{%- set classes = ["content", "container"] -%}
+		{%- if has_thumbnails -%}{%- do classes.append("c-two-col-thumbs") -%}{%- endif -%}
+		{%- if revealable -%}{%- do classes.append("revealable") -%}{%- endif -%}
+		{%- if classlist -%}{%- set classes = [classlist] + classes -%}{%- endif -%}
+		{# output #}
+		<{{ tag }} class="{{ classes|join(" ") }}">
+			{% if title1 and not title2 %}
+				{%- do has_centered_title1.append(1) %}
+				<h2>{{ title1 }}</h2>
+			{%- endif %}
+	        <div class="row">
+	            <div class="col-md-6">
+	            	{%- if has_thumbnails %}
+                {#
+                    Removed role='image'/aria-label={alt_text} (bbImage.alttext) because it is strictly decorative,
+                    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+                  #}
+	                	<div class="image-thumbnail"{% if thumbnail1 %} style="background-image: url('{{ thumbnail1|image_url }}');"{% endif %}>
+											{% if thumbnail1 %}
+												<img class="sr-only" {{ bbImage.alt_text(thumbnail1, img=True) }}>
+											{% endif %}
+										</div>
+	                {%- endif %}
+	                {% if title1 and (has_centered_title1|length == 0) %}<h2>{{ title1 }}</h2>{% endif %}
+	                {% if column1 %}{{ column1 }}{% endif %}
+	                {{ bbButton.multi(multibutton1) }}
+	            </div>
+	            <div class="col-md-6">
+	                {%- if has_thumbnails %}
+                  {#
+                    Removed role='image'/aria-label={alt_text} because it is strictly decorative,
+                    recommended by NCAM's audit to avoid confusion for users who use screen readers.
+                  #}
+	                	<div class="image-thumbnail"{% if thumbnail2 %} style="background-image: url('{{ thumbnail2|image_url }}');"{% endif %}>
+											{% if thumbnail2 %}
+												<img class="sr-only" {{ bbImage.alt_text(thumbnail2, img=True) }}>
+											{% endif %}
+										</div>
+	                {%- endif %}
+	                {% if title2 %}<h2>{{ title2 }}</h2>{% endif %}
+	                {% if column2 %}{{ column2 }}{% endif %}
+                	{{ bbButton.multi(multibutton2) }}
+	            </div>
+	        </div>
+	    </{{ tag }}>
+	{%- endif %}
+{% endmacro %}
+

@@ -1,0 +1,674 @@
+{# ============================================================================
+================== NOTES ======================================================
+============================================================================= #}
+{#
+	It is important to understand that we are rendering separate elements for
+	the desktop header and mobile header, however, there are a lot of items
+	they share in common. For this reason, we are creating (and caching)
+	variables ahead of time. The intention is – hopefully this will speed up
+	the rendering and limit the amount of duplication that happens. This should
+	allow us to focus solely on the differences between the two.
+
+	There is also quite a bit of logic and "decision-making" going on based on
+	numerous factors – including theme options settings. Again, the entire
+	structure and reasoning behind this file is to attempt to squeeze out a
+	little extra speed and performance...hopefully.
+
+	Also important – why aren't we creating the header in an "include" instead
+	of a macro? It is true that Jinja2 caches includes and not macros. However,
+	there is so much processing that needs to happen here (and twice), that
+	it makes more sense to break it down into smaller, digestable, and easier
+	to understand macros. In the future, BentoBox may implement full page
+	caching, which would make "includes" essentially obsolete.
+#}
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{#
+	Notes: The below variables are created, parsed, and cached exactly one time –
+	and reused in multiple places when neccessary. Speed.
+#}
+{#
+	Social Accounts
+    ===========================================================================
+    We are only looking for social platforms that an admin can add via CMS > Social
+    even though our social macro handles a few more platform types.
+#}
+{% set _site_social_accounts = {} %}
+{% with %}
+	{% set services = account.services %}
+	{% set supported = ["facebook", "twitter", "linkedin", "youtube", "spotify", "instagram", "foursquare", "yelp", "google_plus", "tripadvisor", "social_icon_email_address"] %}
+	{% for platform in supported %}
+		{% if services[platform] and services[platform].url %}
+			{% do _site_social_accounts.update({ platform : services[platform].url }) %}
+		{% endif %}
+	{% endfor %}
+{% endwith %}
+{% set _site_social_accounts_rendered = bbSocial.accounts(_site_social_accounts, track=true, track_placement="Header")|trim %}
+
+{#
+	Logos / Word Marks
+	===========================================================================
+	Two <img>s are used for the logo – the primary account logo and a collapsed
+	version (set via theme options) that is displayed in the mobile header when
+	a user scrolls down the page. The order of the <img>s is very important. If
+	only one image resolves, that image will be used as the primary logo
+	throughout. Please note, images set in Theme Options should be served as
+	their uncompressed versions.
+
+	UPDATE: 02.28.17
+	If the mobile logo is provided, it is always shown in both expanded and
+	collapsed states. If it is not provided, it will use the standard/default
+	logo as the expanded state (if applicable) and the "desktop" collapsed
+	version for the collapsed state.
+
+	UPDATE: 05.09.17
+	If no logos exist, a word mark will be used instead. Please note, this does
+	not follow the same conventions as logos – most notably, it will not expand
+	or contract on scroll.
+#}
+{% set _site_logo_mobi_rendered %}
+	{%- if (theme.options.navigation.mobile.logo and theme.options.navigation.mobile.logo.url) or account.logo or (theme.options.navigation.logo.desktop_collapsed_logo and theme.options.navigation.logo.desktop_collapsed_logo.url) %}
+		<div class="site-logo">
+	        <a class="site-logo__btn" href="/">
+	        	{#- if mobile logo is provided, it is always shown on mobile regardless of state  #}
+	        	{%- if theme.options.navigation.mobile.logo and theme.options.navigation.mobile.logo.url %}
+	        		<img src="{{ theme.options.navigation.mobile.logo|image_url|raw_image  }}" {{ bbImage.alt_text(theme.options.navigation.mobile.logo, account.name, True) }} />
+	        	{#- if mobile logo is not provided, show the default logo and collapsed "desktop" logo if provided #}
+	        	{%- else %}
+	        		{#- expanded logo  #}
+		            {% if account.logo %}
+                  {%- if account.name %}
+                    {%- set logo_alt_text = account.name + ' Home' %}
+                  {%- else%}
+                    {%- set logo_alt_text = '' %}
+                  {%- endif %}
+                  <img src="{{ account.logo|image_url|raw_image  }}" {{ bbImage.alt_text(account.logo, logo_alt_text, True) }} />
+                {% endif %}
+		            {#- collapsed logo #}
+		            {% if theme.options.navigation.logo.desktop_collapsed_logo and theme.options.navigation.logo.desktop_collapsed_logo.url %}<img src="{{ theme.options.navigation.logo.desktop_collapsed_logo|image_url|raw_image  }}" {{ bbImage.alt_text(theme.options.navigation.logo.desktop_collapsed_logo, account.name, True) }} />{% endif %}
+	        	{%- endif %}
+	        </a>
+	    </div>
+	{%- else %}
+		<div class="site-wordmark">
+	        <a class="site-wordmark__btn" href="/">{{ account.site.title }}</a>
+	    </div>
+	{%- endif %}
+{% endset %}
+
+{% set _site_logo_desktop_rendered %}
+	{%- if account.logo or (theme.options.navigation.logo.desktop_collapsed_logo and theme.options.navigation.logo.desktop_collapsed_logo.url) %}
+		<div class="site-logo">
+	        <a class="site-logo__btn" href="/">
+	            {#- expanded logo  #}
+	            {% if account.logo %}
+                {%- if account.name %}
+                  {%- set logo_alt_text = account.name + ' Home' %}
+                {%- else%}
+                  {%- set logo_alt_text = '' %}
+                {%- endif %}
+                <img class="site-logo__expanded" src="{{ account.logo|image_url|raw_image  }}" {{ bbImage.alt_text(account.logo, logo_alt_text, True) }} />
+              {% endif %}
+	            {#- collapsed logo #}
+	            {% if theme.options.navigation.logo.desktop_collapsed_logo and theme.options.navigation.logo.desktop_collapsed_logo.url %}<img class="site-logo__collapsed" src="{{ theme.options.navigation.logo.desktop_collapsed_logo|image_url|raw_image  }}" {{ bbImage.alt_text(theme.options.navigation.logo.desktop_collapsed_logo, account.name, True) }} />{% endif %}
+	        </a>
+	    </div>
+	{%- else %}
+		{#- if no logo is available, render the site name wordmark instead #}
+		<div class="site-wordmark">
+	        <a class="site-wordmark__btn" href="/">{{ account.site.title }}</a>
+	    </div>
+	{%- endif %}
+{% endset %}
+
+
+{#
+	Powered By BentoBox
+	===========================================================================
+#}
+{% set _site_powered_by_rendered %}
+	<div class="site-powered-by">
+	    <a href="http://getbento.com/?utm_source=header&amp;utm_campaign={{ account.site.domain|urlencode }}" target="_blank" rel="noopener">powered by BentoBox</a>
+	</div>
+{% endset %}
+
+{#
+	Primary and Secondary Buttons
+	===========================================================================
+	When a Primary and/or Secondary Button is added it can be rendered in the
+	following locations.
+		- Primary Buttons are always rendered in the desktop navigation.
+		- Secondary Buttons are always rendered in the desktop footer. (not in
+		  this file)
+		- The can be added directly to the navigation on mobile.
+		- And then can be added to the mobile footer.
+
+	There are a lot of checks (if/elses) that need to happen for us to render
+	these buttons appropriately and in the appropriate locations. The final
+	check is done by the bbButton.multi() function itself – ensure that a
+	"service" button (ie...chownow) won't actually be rendered if that service
+	is not enabled. Adding "trim" ad the end of our bbButton.multi() macro calls
+	allows us to see if the button was actually created.
+
+	Also, some Multi Buttons are tracked via Google Analytics by our proxy
+	ButtonTracker.js. All we need to do here to configure that properly is to set
+	the bbButton.multi(track_placement="Callout, Header") and the macro will
+	decide internally which button types should be tracked and which should not.
+#}
+{% set _site_primary_button = {
+		"desktop_header_rendered": false,
+		"mobi_header_rendered": false
+	}
+%}
+{% set _site_secondary_button = {
+		"desktop_header_rendered": false,
+		"mobi_header_rendered": false
+	}
+%}
+{% with navbtns = theme.options.layout %}
+	{% set primary = navbtns.multibutton_primary if (navbtns.multibutton_primary and navbtns.multibutton_primary.button_type != "none") %}
+	{% set secondary = navbtns.multibutton_secondary if (navbtns.multibutton_secondary and navbtns.multibutton_secondary.button_type != "none") %}
+	{# if the primary button exists #}
+	{% if primary %}
+		{# render our default desktop version and cache #}
+		{% do _site_primary_button.update({ "desktop_header_rendered" : bbButton.multi(opts=primary, track_placement="Callout, Header")|trim }) %}
+		{# is it supposed to be added to the top nav or both top nav and mobi footer? If so, create and cache a single text-link version. #}
+		{% if primary.mobile_position == "top" or primary.mobile_position == "topbottom" %}
+			{% do _site_primary_button.update({ "mobi_header_rendered" : bbButton.multi(opts=primary, brand=false, track_placement="Callout, Header")|trim }) %}
+		{% endif %}
+	{% endif %}
+	{# if the secondary button exists #}
+	{% if secondary %}
+		{# render our default desktop version and cache #}
+		{% do _site_secondary_button.update({ "desktop_header_rendered" : bbButton.multi(opts=secondary, track_placement="Callout, Header")|trim }) %}
+		{# is it supposed to be added to the top nav or both top nav and mobi footer? If so, create and cache a single text-link version. #}
+		{% if secondary.mobile_position == "top" or secondary.mobile_position == "topbottom" %}
+			{% do _site_secondary_button.update({ "mobi_header_rendered" : bbButton.multi(opts=secondary, brand=false, track_placement="Callout, Header")|trim }) %}
+		{% endif %}
+	{% endif %}
+{% endwith %}
+
+{#
+	Main and Footer Navigation
+	===========================================================================
+	Very important: Before we render our navigation, we are going to do some
+	pre-processing, checking, and updating of the navs.main and navs.footer
+	items themselves!
+
+	Very important: The reason we are also updating the footer nav items is
+	because the footer nav is hidden on mobile and the items are appended to
+	the mobi nav.
+
+	There are two critical updates we are making...
+
+	1. Internal Link Nav Item's URLs can be entered into the CMS in any format
+	   an admin chooses – with leading and trailing slashes, without, or any
+	   combination. This makes it impossible to check if the current url matches
+	   the link's url (ie.... if current.url == nav.url). Using the new
+	   `normalize_internal_url` filter ensures that all URLs follow the same
+	   schema and allows us to use the "if condition" that was otherwise impossible.
+	2. We are also checking if any top-level or child items' URLs match the
+	   current.url – with one catch. Multiple child items are allowed to have
+	   .is-active. And, multiple top-level items are allowed to have .is-active.
+	   BUT...ONLY ONE TOP-LEVEL ITEM WITH CHILDREN can have .is-active. This is
+	   because our javascript only allows a single dropdown (on mobile) to be open
+	   at any given time. So, our parent_active = [] array acts as a lock – only
+	   allowing a parent nav item to add .is-active if parent_active|length == 0.
+	   As soon as it has at least one item, it means no other top-level item with
+	   children can set themselves to .is-active.
+	** Please note, #2 does not apply to footer navigation items because they
+	   CANNOT have children...and therefore, CANNOT have a dropdown submenu!
+#}
+{# This block ONLY updates our navs.main items. It does not render anything! #}
+{% with parent_active = [] %}
+	{% for nav in navs.main if not nav.homepage %}
+		{# normalize internal links with leading and trailing slashes #}
+		{% if nav.type == "link" and nav.internal %}
+			{% do nav.update({ "url": nav.url|normalize_internal_url }) %}
+		{% endif %}
+
+		{# if our top-level item is the current url, or the nav.template is marked active by the current template... #}
+		{% if (nav.url == current.url) or (page_active_template and (page_active_template == nav.template)) %}
+			{# we can only have one top-level item open at a time, so we need to
+			check our lock #}
+			{% if nav.children %}
+				{# if parent_active is empty, we haven't found a top-level item with
+				children that is active yet so its ok to set it #}
+				{% if parent_active|length == 0 %}
+					{% do nav.update({ "active": true }) %}
+					{% do parent_active.append(1) %}
+				{% endif %}
+			{# top-level item does not have children, its ok to mark as active #}
+			{% else %}
+				{% do nav.update({ "active": true }) %}
+			{% endif %}
+		{% endif %}
+
+		{# if nav has children #}
+		{% if nav.children %}
+			{# loop over children #}
+			{% for child in nav.children %}
+				{# normalize internal links with leading and trailing slashes #}
+				{% if child.type == "link" and child.internal %}
+					{% do child.update({ "url": child.url|normalize_internal_url }) %}
+				{% endif %}
+				{# if child item is current url, or the child.template is marked active by the current template, add active to the child #}
+				{% if (child.url == current.url) or (page_active_template and (page_active_template == child.template)) %}
+					{% do child.update({ "active": true }) %}
+					{# again, we can only have one top-level item open at time, so if we
+					haven't set one yet, add it now. #}
+					{% if parent_active|length == 0 %}
+						{% do parent_active.append(1) %}
+						{% do nav.update({ "active": true }) %}
+					{% endif %}
+				{% endif %}
+			{% endfor %}
+		{% endif %}
+	{% endfor %}
+
+	{# footer navigation #}
+	{% for nav in navs.footer %}
+		{# normalize internal links with leading and trailing slashes #}
+		{% if nav.type == "link" and nav.internal %}
+			{% do nav.update({ "url": nav.url|normalize_internal_url }) %}
+		{% endif %}
+
+		{# if our top-level item is the current url, or the nav.template is marked active by the current template... #}
+		{% if (nav.url == current.url) or (page_active_template and (page_active_template == nav.template)) %}
+			{% do nav.update({ "active": true }) %}
+		{% endif %}
+	{% endfor %}
+{% endwith %}
+
+
+{#
+	This block renders our footer navigation items that will be appended to
+	the mobi navigation only!
+#}
+{% set _site_footer_navigation_rendered %}
+	{%- for nav in navs.footer %}
+		<li{% if nav.active %} class="is-active" {% endif %}>
+			<a class="site-nav-link" href="{{ nav.url }}"{% if nav.type == "link" and not nav.internal %}target="_blank" rel="noopener"{% endif %}>{{ nav.name }}</a>
+		</li>
+	{%- endfor %}
+{% endset %}
+
+
+{#
+	Single Location Address and Phone Number
+	===========================================================================
+	There are a couple of factors that contribute to whether or not and how
+	we display the location info including:
+		- The option to include it needs to be select in theme options.
+		- There has to be exactly one location because otherwise we don't know
+		  which location's details to use.
+		- That single location has to have either a phone number or an address.
+
+	Please note, we do not show the phone number on mobile because the phone
+	number can be included and displayed promenently in the .mobi-footer instead.
+
+	EXTREMELY IMPORTANT:
+
+    This logic is duplicated in bbFooter. Unfortunately, we need to change
+    "just enough" in the two versions which makes it impossible to use this logic
+    for both versions. This is less than ideal, but definitely necessary without
+    refactoring a lot of code. Please be aware, if you make a change to this logic,
+    you ABSOLUTELY SHOULD CHANGE THE LOGIC IN BBFOOTER TO MATCH!!!
+#}
+{% set _site_location = {
+		"rendered": false
+	}
+%}
+{% with %}
+	{% if theme.options.navigation.address.display %}
+		{% set display_phone_number = theme.options.navigation.address.display_phone_number %}
+		{# if exactly one location, try and parse the address into a pretty format #}
+		{% set loc = boxes.location.all.0 if (boxes.location.all|length == 1) %}
+		{% set address_segments = [] %}
+		{% if loc and loc.address %}
+			{% set addr = loc.address|replace((loc.street ~ ","), (loc.street ~ ",<br>")) %}
+			{% for seg in addr.split("<br>") if seg %}
+				{% do address_segments.append("<span>" ~ seg ~ "</span>") %}
+			{% endfor %}
+		{% endif %}
+
+		{# if either a phone number or address exists render our pretty versions #}
+		{% if loc and (loc.address or (loc.phone_number and display_phone_number)) %}
+			{# set the google maps href #}
+			{% set gmaps_href = bbLocation.get_gmaps_href(
+					name=loc.name,
+					address=loc.address,
+					google_place_url=(loc.google_place_url if loc.use_gmaps_advanced else false)
+				)
+			%}
+			{% set rendered %}
+				{%- if address_segments|length > 0 %}
+					<a href="{{ gmaps_href }}" class="site-location__address" target="_blank" rel="noopener"{{ bbTrack.button_address(placement="Header") }}>{{ address_segments|join(" ") }}</a>
+				{%- endif %}
+				{%- if loc.phone_number and display_phone_number %}
+					<a class="site-location__tel" href="tel:{{ loc.phone_number }}"{{ bbTrack.button_phone(placement="Header") }}>{{ loc.phone_number }}</a>
+				{%- endif %}
+			{% endset %}
+			{# if the rendering was successful, update our variable #}
+			{% do _site_location.update({ "rendered" : rendered|trim }) %}
+			{# push the modifier class to the `<body>` element so other elements can know it exists! #}
+			{% if body_classes is defined %}{% do body_classes.append("has-nav-address-bar") %}{% endif %}
+		{% endif %}
+	{% endif %}
+{% endwith %}
+
+
+{#
+	Desktop Stickables
+	===========================================================================
+	The desktop header can be configured to be fixed/stickable in a number of
+	ways. This variable helps us predetermine which classes and data-attributes
+	should be added and where so we don't have big chunks of if/elses in our
+	rendering block below.
+
+	The possible configurations are:
+		1. Neither the Primary (navigation) or Secondary (address bar) are set
+		   to be fixed. In this scenario, the desktop container will be static
+		   and the Primary (navigation) does not have a collapsed state. If
+		   applicable, a shadow will be applied to the entire container.
+
+		2. Only the Primary (navigation) is set to be fixed, and will have a
+		   collapsed state. The Secondary (address bar) will be static. If
+		   applicable, a shadow will be applied to only the Primary (navigation).
+
+		3. Only the Secondary (address bar) is set to be fixed. The Primary
+		   (navigation) is static and does not have a collapsed state. If
+		   applicable, a shadow will be applied to only the Secondary (address bar).
+		4. Both the Primary (navigation) and Secondary (address bar) are set to
+
+		   be fixed. In this scenario, the main container is set to be fixed
+		   instead of the individual elements and the Primary (navigation) will
+		   have a collapsed state. If applicable, a shadow will be applied to the
+		   entire container.
+#}
+{% set _site_header_desktop_stickables = {
+		"primary": theme.options.navigation.fixed_on_desktop,
+		"secondary": theme.options.navigation.address.fixed_on_desktop,
+		"either": true if (theme.options.navigation.fixed_on_desktop or theme.options.navigation.address.fixed_on_desktop) else false,
+		"both": true if (theme.options.navigation.fixed_on_desktop and theme.options.navigation.address.fixed_on_desktop) else false
+	}
+%}
+
+
+{#
+	Desktop Secondary Renderables
+	===========================================================================
+	There are a few things that factor in to whether or not we can render our
+	desktop secondary container. We should only render the container if any of
+	the following criteria are met:
+		- The location is available. (single location sites only)
+		- Or, the page is a store page that includes a `.btn-cart`.
+		- Or, social is set to be displayed in the address bar AND the social
+		  accounts have rendered something other than an empty string.
+
+	Also, we need to meet the following criteria to decide whether or not to
+	render the desktop secondary container's action group including the social
+	accounts and the cart buttons. Its ok to render the actions container if
+	the following subset of criteria are met:
+		- The page is a store page that includes a `.btn-cart`.
+		- Or, social is set to be displayed in the address bar AND the social
+		  accounts have rendered something other than an empty string.
+#}
+{% set _site_header_desktop_secondary = {
+		"renderable": true if (_site_location.rendered or page_is_store or (theme.options.navigation.address.display_on_desktop and _site_social_accounts_rendered)) else false,
+		"actions_renderable": true if (page_is_store or (theme.options.navigation.address.display_on_desktop and _site_social_accounts_rendered)) else false
+	}
+%}
+
+{# ============================================================================
+================== MACROS : PUBLIC GETTERS ====================================
+============================================================================= #}
+{#
+	Notes: The below macros are an attempt at keeping things as DRY as possible.
+	Other elements (such as our desktop footer) use these rendered elements in
+	almost exactly the same state – with the exception that the tracking labels
+	will be different. For this reason, we are providing simple public proxies
+	to the internal variables. The alternative would be to refactor all of the
+	rendering code completely to abstract and encapsulate it from its actual
+	implementations...but we don't want to go there yet.
+#}
+{#
+	Gets the rendered footer navigation <li> items without the inclusion of
+	any primary or secondary elements.
+
+	@access public
+	@returns {HTML}
+ #}
+{% macro get_site_footer_navigation_rendered() %}
+	{{ _site_footer_navigation_rendered }}
+{% endmacro %}
+
+{#
+	Gets the rendered powered_by element and replaces the `utm_source` attribute
+	value in the url/href.
+
+	@access public
+	@param {String} utm_source 		- The utm_source value to use instead of "header".
+	@returns {HTML}
+ #}
+{% macro get_site_powered_by_rendered(utm_source) %}
+	{{ _site_powered_by_rendered|replace("header", utm_source) }}
+{% endmacro %}
+
+{#
+	Gets the rendered social accounts list and replaces "Header" in the
+	`data-bb-track-label` value.
+
+	@access public
+	@param {String} track_placement - GA tracking label correspond to the placement (where) the button is on the page.
+	@returns {HTML}
+ #}
+{% macro get_site_social_accounts_rendered(track_placement) %}
+	{{ _site_social_accounts_rendered|replace("Header", track_placement) }}
+{% endmacro %}
+
+
+{# ============================================================================
+================== MACROS : PUBLIC ============================================
+============================================================================= #}
+{#
+	Note: the render() macro is our single public macro that renders both our
+	desktop and mobile headers in their entirety. As much as possible, we are
+	leveraging all of the pre-cached variables we created earlier (...above).
+	Only a few of our elements allow for variation – which are passed through
+	our private macros below.
+
+	@access public
+	@returns {HTML}
+ #}
+{% macro render() %}
+	<header class="site-header">
+		<a href="#main-content" class="skip">Skip to main content</a>
+		{#- desktop header  #}
+		<div class="site-header-desktop{% if not _site_header_desktop_stickables.either %} site-header-desktop--static{% endif %}{% if theme.options.navigation.logo.desktop_logo_centered %} site-header-desktop--centered{% endif %}"{% if _site_header_desktop_stickables.both %} data-header-sticky{% endif %}>
+			{#- only render the secondary address bar if – location or #}
+			{%- if _site_header_desktop_secondary.renderable %}
+				{#- desktop secondary: sticky check #}
+				<div class="site-header-desktop-secondary"{% if _site_header_desktop_stickables.secondary and not _site_header_desktop_stickables.both %} data-header-sticky{% endif %}>
+					<div class="container">
+						<div class="row">
+							{#- address/phone #}
+							{{ _location(bordered=false) }}
+
+							{#- actions: only render if it has social accounts and/or cart button  #}
+							{%- if _site_header_desktop_secondary.actions_renderable %}
+								<div class="site-header-desktop-secondary__actions">
+									{#- social #}
+									{%- if theme.options.navigation.address.display_on_desktop %}{{ _social(bordered=false) }}{%-endif %}
+
+									{#- cart button: desktop #}
+					        {%- if page_is_store %}{{ bbButton.cart() }}{%- endif %}
+					      </div>
+					    {%- endif %}
+			      </div>
+		      </div>
+				</div>
+			{%- endif %}
+
+			{#- desktop primary: sticky check, floatable check (if a valid hero exists and the nav should float) #}
+			<div class="site-header-desktop-primary{% if page_has_hero_intent and theme.options.navigation.desktop_floatable %} site-header-desktop-primary--floatable{% endif %}"{% if _site_header_desktop_stickables.primary and not _site_header_desktop_stickables.both %} data-header-sticky{% endif %}>
+				<div class="container">
+					{#- site logos  #}
+					{{ _site_logo_desktop_rendered }}
+
+					{#- main navigation - including primary button if applicable  #}
+				    {{ _navigation(primarybtn=_site_primary_button.desktop_header_rendered) }}
+				</div>
+			</div>
+		</div>
+
+	  {#- mobi header  #}
+	  <div class="site-header-mobi">
+	    {#- site logos  #}
+	    {{ _site_logo_mobi_rendered }}
+
+	    {#- cart button: mobile collapsed #}
+	    {%- if page_is_store %}{{ bbButton.cart() }}{%- endif %}
+
+			{#- address/phone: we don't need bordered on mobile  #}
+			{{ _location(bordered=false) }}
+			
+	    <button type="button" class="nav-toggle-btn" aria-controls="SiteHeaderMobilePanel" aria-expanded="false">
+	      <span class="sr-only">Toggle Navigation</span>
+	      <span class="nav-toggle-btn__line"></span>
+	      <span class="nav-toggle-btn__line"></span>
+	      <span class="nav-toggle-btn__line"></span>
+	    </button>			
+
+	    <div id="SiteHeaderMobilePanel" class="site-header-mobi-panel" role="dialog" aria-modal="true" aria-label="Navigation Menu Modal">
+	      <div class="site-header-mobi-panel__inner">
+				{#- main navigation: add primary/secondary buttons if they exist, and add the footer nav items!  #}
+					{{ _navigation(
+						primarybtn=_site_primary_button.mobi_header_rendered,
+						secondarybtn=_site_secondary_button.mobi_header_rendered,
+						is_mobi=true
+						)
+					}}
+
+	        {#- social is always bordered on mobile #}
+	        {{ _social(bordered=true) }}
+
+					{#- address/phone: we don't need bordered on mobile  #}
+        	{{ _location(bordered=false) }}
+	      </div>
+
+				{#- powered by  #}
+	      {{ _site_powered_by_rendered }}
+	    </div>
+	  </div>
+	</header>
+{% endmacro %}
+
+{# ============================================================================
+================== MACROS : PRIVATE ===========================================
+============================================================================= #}
+{#
+	Notes: The following macros are used to wrap cached variables/fragments
+	because these sections can render differently based on a few potential
+	factors including:
+		– Are we rendering different versions for mobile and desktop?
+		- Does this preceed or follow an element that might require us to alter
+		  this element's appearance?
+		- Do we potentially need to append items to one rendered version and not
+		  the other? (ie...primary/secondary buttons IN the mobile nav)
+
+
+	Renders our site social media accounts.
+
+	@access private
+	@param {Boolean} bordered 		- True adds borders. false omits borders.
+	@returns {HTML}
+#}
+{% macro _social(bordered=true) %}
+    {%- if _site_social_accounts|length > 0 %}
+        <div class="site-social{% if bordered %} site-social--bordered{% endif %}">
+            {{ _site_social_accounts_rendered }}
+        </div>
+    {%- endif %}
+{% endmacro %}
+
+{#
+	Renders our site location.
+
+	@access private
+	@param {Boolean} bordered 		- True adds borders. false omits borders.
+	@returns {HTML}
+#}
+{% macro _location(bordered=true) %}
+	{% if _site_location.rendered %}
+		<div class="site-location{% if bordered %} site-location--bordered{% endif %}">
+			{{ _site_location.rendered }}
+	    </div>
+	{%- endif %}
+{% endmacro %}
+
+{#
+	Renders our navigation's items.
+
+	@access private
+	@param {Boolean} is_mobi 		- True prepends "Mobile" to "SubMenu". False does nothing.
+	@returns {HTML}
+#}
+{% macro _navigation_items(is_mobi=false) %}
+	{%- set sub_menu_base_id = "MobileSubMenu" if is_mobi else "SubMenu" %}
+	{%- for nav in navs.main if not nav.homepage %}
+		{#- if top-level item has children  #}
+		{%- if nav.children %}
+			<li class="site-nav-submenu{% if nav.active %} is-active{% endif %}">
+				<button type="button" class="site-nav-link site-nav-submenu-toggle" aria-expanded="false" aria-controls="{{ sub_menu_base_id }}-{{ loop.index }}">
+					{{ nav.name }}
+				</button>
+				<div id="{{ sub_menu_base_id }}-{{ loop.index }}" class="sub-menu">
+					<ul>
+						{#- if our parent item has a real url, we need to render it as an "overview" button for mobile.  #}
+						{%- if nav.url and nav.url != "#" %}
+							<li class="site-nav-submenu-overview{% if nav.url == current.url %} is-active{% endif %}">
+								<a href="{{ nav.url }}" {% if nav.type == "link" and nav.classes %}class="{{ nav.classes }}"{% endif %} {% if nav.type == "link" and not nav.internal %}target="_blank" rel="noopener"{% endif %}>Overview</a>
+							</li>
+						{%- endif %}
+						{#- loop through and add our child items.  #}
+						{%- for child in nav.children %}
+							<li{% if child.active %} class="is-active" {% endif %}>
+								<a href="{{ child.url }}" {% if nav.type == "link" and nav.classes %}class="{{ nav.classes }}"{% endif %}{% if child.type == "link" and not child.internal %}target="_blank" rel="noopener"{% endif %}>{{ child.name }}</a>
+							</li>
+						{%- endfor %}
+					</ul>
+				</div>
+			</li>
+		{#- if top-level item doesn't have any children  #}
+		{%- else %}
+			<li{% if nav.active %} class="is-active" {% endif %}>
+				<a class="site-nav-link {% if nav.type == "link" %} {{ nav.classes }} {% endif %}" href="{{ nav.url }}"{% if nav.type == "link" and not nav.internal %}target="_blank" rel="noopener"{% endif %}>{{ nav.name }}</a>
+			</li>
+		{%- endif %}
+	{%- endfor %}
+{% endmacro %}
+
+{#
+	Renders our navigation. Please note, the desktop navigation can only have a
+	Primary callout button (at most). However, the mobile navigation can have both
+	Primary and Secondary callout buttons.
+
+	@access private
+	@param {String} primarybtn		- Rendered _site_primary_button.mobi_header_rendered
+	@param {String} secondarybtn	- Rendered _site_secondary_button.mobi_header_rendered
+	@param {Bool} is_mobi			- True if rendering the mobi header, false if not.
+	@returns {HTML}
+ #}
+{% macro _navigation(primarybtn, secondarybtn, is_mobi=false) %}
+	<nav class="site-nav"{% if is_mobi %} aria-label="Navigation Menu"{% endif %}>
+    <ul class="site-nav-menu" data-menu-type="{% if is_mobi %}mobile{% else %}desktop{% endif %}">
+			{{ _navigation_items(is_mobi) }}
+			{%- if is_mobi %}{{ _site_footer_navigation_rendered }}{%- endif %}
+			{%- if primarybtn %}<li>{{ primarybtn }}</li>{%- endif %}
+			{%- if secondarybtn %}<li>{{ secondarybtn }}</li>{%- endif %}
+		</ul>
+  </nav>
+{% endmacro %}
+

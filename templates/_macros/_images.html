@@ -1,0 +1,33 @@
+
+{# ============================================================================
+================== Alt Text Macro =============================================
+============================================================================= #}
+{#
+  Outputs
+
+  @access public
+  @param {Dict} image         - An "image" object straight from the context
+  @param {String} fallback    - A string to use as fallback if the image does not have alt_text
+  @param {Boolean} img        - Pass True if this alt text is going inside an img element and
+    False if it is going inside a div with a background-image-url. It will force the macro to use the appropriate
+    "alt" tag or "aria-label" and role="img".
+  @returns {HTML}
+#}
+
+{% macro alt_text(image, fallback=None, img=False) %}
+  {% set alt_text = fallback %}
+
+  {% if image.alt_text %}
+    {% set alt_text = image.alt_text %}
+  {% endif %}
+
+  {% if alt_text %}
+    {% if img %}
+      alt="{{ alt_text }}"
+    {% else %}
+      role="img" aria-label="{{ alt_text }}"
+    {% endif %}
+  {% else %}
+    alt=""
+  {% endif %}
+{% endmacro %}
