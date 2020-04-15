@@ -1,0 +1,89 @@
+{% extends "_layouts/_basic.html" %}
+
+{# ============================================================================
+================== MACROS =====================================================
+============================================================================= #}
+{#
+	We need this set of macros before the macros in `_layouts._base.html` have
+	had an opportunity to load...so, we are adding them manually here.
+#}
+{% import "_macros/_tracking.html" as bbTrack with context %}
+
+{# ============================================================================
+================== VARIABLES ==================================================
+============================================================================= #}
+{# overrides #}
+{% set autorender_intro = false %}
+
+{# shortcuts #}
+{% set form = current.fields.form %}
+
+{# form id: This needs to be applied to the trigger buttons and the popup, so
+   we are declaring it here...once. #}
+{% set form_id = "popup-catering-form" %}
+
+{# inquire button #}
+{# Note: default() seems redundent, but just in case. Also, for some reason the
+   actual inquirebutton needs to be applied as a string. I'm not sure why it
+   won't let me do a block set/endset, but it won't. Not a big deal.
+#}
+{% set inquire_cta_label = form.inquire_cta_label|default("Inquire Now") if (form and form.inquire_cta_label) else "Inquire Now" %}
+{% set tracking = bbTrack.button(label='Catering', category='Inquire Trigger Button') %}
+{% set inquirebutton = "<button type=\"button\" class=\"btn btn-brand\" data-popup=\"inline\" data-popup-src=\"#" ~ form_id ~ "\"" ~ tracking ~ ">" ~ inquire_cta_label ~ "</button>" %}
+{# ============================================================================
+================== BLOCK : MAIN PREPEND =======================================
+============================================================================= #}
+{#
+	Note: We need to add an "inquire now" button that opens our popup form. By
+	default, our bbContent.intro() macro that is called in _layouts/_basic.html
+	does not look for elements/content to "append", so we need to add and render
+	it ourselves here.
+#}
+{% block main_prepend %}
+	{{ super() }}
+	{%- if intro %}
+		{{ bbContent.intro(
+				title=intro.title,
+				content=intro.content,
+				multibutton=intro.multibutton,
+				append=inquirebutton,
+				use_h1=(false if h1_used_in_hero else true)
+			)
+		}}
+	{%- endif %}
+{% endblock %}
+
+{# ============================================================================
+================== BLOCK : POPUPS =============================================
+============================================================================= #}
+{#
+	Our Popup Catering form can be either a BentoBox Form or a Custom Embed
+	Form. When a custom form is used, a .form-custom class is added to the
+	container with the intention of making a useable css selecor available.
+
+	Please note, our form types are currently ONLY set up to be included as a
+	popup – however, it wouldn't be difficult to abstract the macro to allow
+	for an in-page or popup based on admin preference.
+#}
+{% block popups %}
+	{{ super() }}
+	{#- bentobox form  #}
+	{%- if not form.use_custom %}
+		{{ bbForms.catering(
+				id=form_id,
+				title=form.title,
+				content=form.content,
+				button_label=form.button_label,
+				success_message=form.success_message|default("Thank you for your inquiry. We’ll be in touch shortly."),
+				use_alt_colors=form.use_alt_colors
+			)
+		}}
+	{#- custom form  #}
+	{%- else %}
+		<div id="{{ form_id }}" class="popup popup--form mfp-hide">
+			<div class="form-custom container-sm">
+				{{ form.embed }}
+			</div>
+		</div>
+	{%- endif %}
+{% endblock %}
