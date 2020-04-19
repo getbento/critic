@@ -1,341 +1,1113 @@
 {
-    "theme": {
-        "name": "Critic (A theme for testing new Sushi UI)",
-        "author": "The BentoBox Team"
-    },
     "box_slugs": {
         "dumbphones": "smartphones",
         "phones": "smartphones"
     },
     "fields": {},
-    "navs": [
+    "forms": [
         {
-          "name": "Main Navigation",
-          "slug": "main"
+            "fields": [
+                {
+                    "name": "Name",
+                    "required": true,
+                    "slug": "name",
+                    "type": "text"
+                },
+                {
+                    "editable": false,
+                    "name": "Email",
+                    "removable": false,
+                    "required": true,
+                    "slug": "email",
+                    "type": "email"
+                },
+                {
+                    "name": "Phone Number",
+                    "required": true,
+                    "slug": "phone",
+                    "type": "phone"
+                },
+                {
+                    "choices": [
+                        "General Inquiry",
+                        "Press Inquiry"
+                    ],
+                    "name": "What are you getting in touch about?",
+                    "required": false,
+                    "slug": "reason",
+                    "type": "dropdown"
+                },
+                {
+                    "name": "Your Message",
+                    "required": true,
+                    "slug": "message",
+                    "type": "textarea"
+                }
+            ],
+            "name": "Contact",
+            "slug": "contact"
         },
         {
-          "name": "Footer Navigation",
-          "slug": "footer"
-        }
-    ],
-    "forms": [
-    	{
-    		"name": "Contact",
-    		"slug": "contact",
+            "additional_field_types": [
+                "jobs"
+            ],
             "fields": [
                 {
-                    "slug": "name",
+                    "editable": false,
                     "name": "Name",
-                    "type": "text",
-                    "required": true
-                },
-                {
-                    "slug": "email",
-                    "name": "Email",
-                    "type": "email",
-                    "required": true,
                     "removable": false,
-                    "editable": false
-                },
-                {
-                    "slug": "phone",
-                    "name": "Phone Number",
-                    "type": "phone",
-                    "required": true
-                },
-                {
-                    "slug": "reason",
-                    "name": "What are you getting in touch about?",
-                    "type": "dropdown",
-                    "choices": ["General Inquiry", "Press Inquiry"],
-                    "required": false
-                },
-                {
-                    "slug": "message",
-                    "name": "Your Message",
-                    "type": "textarea",
-                    "required": true
-                }
-            ]
-    	},
-    	{
-    		"name": "Careers",
-    		"slug": "careers",
-            "additional_field_types": ["jobs"],
-            "fields": [
-                {
+                    "required": true,
                     "slug": "name",
-                    "name": "Name",
-                    "type": "name",
-                    "required": true,
-                    "removable": false,
-                    "editable": false
+                    "type": "name"
                 },
                 {
-                    "slug": "email",
+                    "editable": false,
                     "name": "Email",
-                    "type": "email",
+                    "removable": false,
                     "required": true,
-                    "removable": false,
-                    "editable": false
+                    "slug": "email",
+                    "type": "email"
                 },
                 {
-                    "slug": "phone",
                     "name": "Phone Number",
-                    "type": "phone",
                     "removable": false,
-                    "required": true
+                    "required": true,
+                    "slug": "phone",
+                    "type": "phone"
                 },
                 {
-                    "slug": "position",
                     "name": "Position",
-                    "type": "jobs",
-                    "required": false
+                    "required": false,
+                    "slug": "position",
+                    "type": "jobs"
                 },
                 {
-                    "slug": "cover_letter",
                     "name": "Cover Letter",
-                    "type": "textarea",
                     "removable": false,
-                    "required": true
+                    "required": true,
+                    "slug": "cover_letter",
+                    "type": "textarea"
                 },
                 {
-                    "slug": "resume",
-                    "name": "Resumé",
-                    "type": "file",
+                    "name": "Resumu00e9",
                     "removable": false,
-                    "required": true
+                    "required": true,
+                    "slug": "resume",
+                    "type": "file"
                 }
-            ]
-    	},
-    	{
-    		"name": "Newsletter",
-    		"slug": "newsletter",
-            "engine": "newsletter",
+            ],
+            "name": "Careers",
+            "slug": "careers"
+        },
+        {
             "can_add_new_fields": false,
+            "engine": "newsletter",
             "fields": [
                 {
-                    "slug": "first_name",
+                    "editable": false,
                     "name": "First Name",
-                    "type": "first_name",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "first_name",
+                    "type": "first_name"
                 },
                 {
-                    "slug": "last_name",
+                    "editable": false,
                     "name": "Last Name",
-                    "type": "last_name",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "last_name",
+                    "type": "last_name"
                 },
                 {
-                    "slug": "email",
+                    "editable": false,
                     "name": "Email",
-                    "type": "email",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "email",
+                    "type": "email"
                 }
-            ]
-    	},
-    	{
-    		"name": "Private Events",
-    		"slug": "private-dining-inquiry",
-            "engine": "private_events",
-            "field_options": [{
-                "label": "Half-Width",
-                "slug": "half-width"
-            }],
+            ],
+            "name": "Newsletter",
+            "slug": "newsletter"
+        },
+        {
             "additional_field_types": [
                 "event_type",
                 "venues"
             ],
-            "fields": [
+            "engine": "private_events",
+            "field_options": [
                 {
-                    "slug": "email",
-                    "name": "Email",
-                    "type": "email",
-                    "required": true,
-                    "removable": false,
-                    "editable": false
-                },
-                {
-                    "slug": "first_name",
-                    "name": "First Name",
-                    "type": "first_name",
-                    "required": true,
-                    "removable": false,
-                    "editable": false
-                },
-                {
-                    "slug": "last_name",
-                    "name": "Last Name",
-                    "type": "last_name",
-                    "required": true,
-                    "removable": false,
-                    "editable": false
-                },
-                {
-                    "slug": "phone",
-                    "name": "Phone Number",
-                    "type": "phone",
-                    "required": true
-                },
-                {
-                    "slug": "company",
-                    "name": "Company",
-                    "type": "text",
-                    "required": true
-                },
-                {
-                    "slug": "venue",
-                    "name": "Which space are you interested in?",
-                    "type": "venues",
-                    "required": true,
-                    "removable": false,
-                    "editable": false
-                },
-                {
-                    "slug": "event_date",
-                    "name": "Event Date",
-                    "type": "date",
-                    "required": true,
-                    "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
-                },
-                {
-                    "slug": "time",
-                    "name": "Time",
-                    "type": "time",
-                    "required": true,
-                    "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
-                },
-                {
-                    "slug": "event_type",
-                    "name": "Type of Event",
-                    "type": "event_type",
-                    "required": true,
-                    "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
-                },
-                {
-                    "slug": "number_people",
-                    "name": "Number of People",
-                    "type": "number",
-                    "required": true,
-                    "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
-                },
-                {
-                    "slug": "additional_information",
-                    "name": "Additional Information",
-                    "type": "textarea",
-                    "required": false,
-                    "removable": false,
-                    "editable": false
+                    "label": "Half-Width",
+                    "slug": "half-width"
                 }
-            ]
-    	},
-        {
-            "name": "Catered Events",
-            "slug": "catering-inquiry",
-            "engine": "catered_events",
-            "field_options": [{
-                "label": "Half-Width",
-                "slug": "half-width"
-            }],
-            "additional_field_types": [
-                "event_type"
             ],
             "fields": [
                 {
-                    "slug": "email",
+                    "editable": false,
                     "name": "Email",
-                    "type": "email",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "email",
+                    "type": "email"
                 },
                 {
-                    "slug": "first_name",
+                    "editable": false,
                     "name": "First Name",
-                    "type": "first_name",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "first_name",
+                    "type": "first_name"
                 },
                 {
-                    "slug": "last_name",
+                    "editable": false,
                     "name": "Last Name",
-                    "type": "last_name",
-                    "required": true,
                     "removable": false,
-                    "editable": false
+                    "required": true,
+                    "slug": "last_name",
+                    "type": "last_name"
                 },
                 {
-                    "slug": "phone",
                     "name": "Phone Number",
-                    "type": "phone",
-                    "required": true
+                    "required": true,
+                    "slug": "phone",
+                    "type": "phone"
                 },
                 {
-                    "slug": "company",
                     "name": "Company",
-                    "type": "text",
-                    "required": true
+                    "required": true,
+                    "slug": "company",
+                    "type": "text"
                 },
                 {
-                    "slug": "event_date",
+                    "editable": false,
+                    "name": "Which space are you interested in?",
+                    "removable": false,
+                    "required": true,
+                    "slug": "venue",
+                    "type": "venues"
+                },
+                {
+                    "default_option": "half-width",
+                    "editable": false,
                     "name": "Event Date",
-                    "type": "date",
-                    "required": true,
                     "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
+                    "required": true,
+                    "slug": "event_date",
+                    "type": "date"
                 },
                 {
-                    "slug": "time",
+                    "default_option": "half-width",
+                    "editable": false,
                     "name": "Time",
-                    "type": "time",
-                    "required": true,
                     "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
+                    "required": true,
+                    "slug": "time",
+                    "type": "time"
                 },
                 {
-                    "slug": "event_type",
+                    "default_option": "half-width",
+                    "editable": false,
                     "name": "Type of Event",
-                    "type": "event_type",
-                    "required": true,
                     "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
+                    "required": true,
+                    "slug": "event_type",
+                    "type": "event_type"
                 },
                 {
-                    "slug": "number_people",
+                    "default_option": "half-width",
+                    "editable": false,
                     "name": "Number of People",
-                    "type": "number",
-                    "required": true,
                     "removable": false,
-                    "editable": false,
-                    "default_option": "half-width"
+                    "required": true,
+                    "slug": "number_people",
+                    "type": "number"
                 },
                 {
-                    "slug": "additional_information",
+                    "editable": false,
                     "name": "Additional Information",
-                    "type": "textarea",
-                    "required": false,
                     "removable": false,
-                    "editable": false
+                    "required": false,
+                    "slug": "additional_information",
+                    "type": "textarea"
                 }
-            ]
+            ],
+            "name": "Private Events",
+            "slug": "private-dining-inquiry"
+        },
+        {
+            "additional_field_types": [
+                "event_type"
+            ],
+            "engine": "catered_events",
+            "field_options": [
+                {
+                    "label": "Half-Width",
+                    "slug": "half-width"
+                }
+            ],
+            "fields": [
+                {
+                    "editable": false,
+                    "name": "Email",
+                    "removable": false,
+                    "required": true,
+                    "slug": "email",
+                    "type": "email"
+                },
+                {
+                    "editable": false,
+                    "name": "First Name",
+                    "removable": false,
+                    "required": true,
+                    "slug": "first_name",
+                    "type": "first_name"
+                },
+                {
+                    "editable": false,
+                    "name": "Last Name",
+                    "removable": false,
+                    "required": true,
+                    "slug": "last_name",
+                    "type": "last_name"
+                },
+                {
+                    "name": "Phone Number",
+                    "required": true,
+                    "slug": "phone",
+                    "type": "phone"
+                },
+                {
+                    "name": "Company",
+                    "required": true,
+                    "slug": "company",
+                    "type": "text"
+                },
+                {
+                    "default_option": "half-width",
+                    "editable": false,
+                    "name": "Event Date",
+                    "removable": false,
+                    "required": true,
+                    "slug": "event_date",
+                    "type": "date"
+                },
+                {
+                    "default_option": "half-width",
+                    "editable": false,
+                    "name": "Time",
+                    "removable": false,
+                    "required": true,
+                    "slug": "time",
+                    "type": "time"
+                },
+                {
+                    "default_option": "half-width",
+                    "editable": false,
+                    "name": "Type of Event",
+                    "removable": false,
+                    "required": true,
+                    "slug": "event_type",
+                    "type": "event_type"
+                },
+                {
+                    "default_option": "half-width",
+                    "editable": false,
+                    "name": "Number of People",
+                    "removable": false,
+                    "required": true,
+                    "slug": "number_people",
+                    "type": "number"
+                },
+                {
+                    "editable": false,
+                    "name": "Additional Information",
+                    "removable": false,
+                    "required": false,
+                    "slug": "additional_information",
+                    "type": "textarea"
+                }
+            ],
+            "name": "Catered Events",
+            "slug": "catering-inquiry"
         }
-    ]
+    ],
+    "navs": [
+        {
+            "name": "Main Navigation",
+            "slug": "main"
+        },
+        {
+            "name": "Footer Navigation",
+            "slug": "footer"
+        }
+    ],
+    "theme": {
+        "author": "The BentoBox Team",
+        "name": "Critic (A theme for testing new Sushi UI)",
+        "fields": {
+            "typography": {
+                "title": "Typography",
+                "icon": "text_fields",
+                "type": "section",
+                "items": {
+                    "general": {
+                        "title": "Body & General Text Styles",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "raleway"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "typography.general.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "size": {
+                                "type": "text",
+                                "default": "14px",
+                                "helper": "Please provide value in px units. (Default: 14px)"
+                            },
+                            "weight": {
+                                "type": "text",
+                                "helper": "(Default: 300)"
+                            },
+                            "letter_spacing": "text",
+                            "line_height": {
+                                "type": "text",
+                                "helper": "Please provide a unitless value. (Default: 1.5)"
+                            },
+                            "color": "color"
+                        }
+                    },
+                    "h1": {
+                        "title": "H1 Text Styles",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "raleway"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "typography.h1.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "size": {
+                                "type": "text",
+                                "helper": "Please provide value in rem units. (Default: 4rem)"
+                            },
+                            "weight": {
+                                "type": "text",
+                                "helper": "Optional. (Default: 700)"
+                            },
+                            "uppercase": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "letter_spacing": "text",
+                            "color": "color"
+                        }
+                    },
+                    "h2": {
+                        "title": "H2 Text Styles",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    {
+                                        "none": "Inherit"
+                                    },
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "none"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "typography.h2.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "size": {
+                                "type": "text",
+                                "helper": "Please provide value in rem units. (Default: 2rem)"
+                            },
+                            "weight": {
+                                "type": "text",
+                                "helper": "Optional. Defaults to H1 Weight."
+                            },
+                            "uppercase": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "letter_spacing": "text",
+                            "color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to H1 Color."
+                            }
+                        }
+                    },
+                    "h3": {
+                        "title": "H3 Text Styles",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    {
+                                        "none": "Inherit"
+                                    },
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "none"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "typography.h3.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "size": {
+                                "type": "text",
+                                "helper": "Please provide value in rem units. (Default: 1.75rem)"
+                            },
+                            "weight": {
+                                "type": "text",
+                                "helper": "Optional. Defaults to H2 Weight."
+                            },
+                            "uppercase": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "letter_spacing": "text",
+                            "color": "color"
+                        }
+                    },
+                    "links": {
+                        "title": "Inline Text Link Styles",
+                        "type": "section",
+                        "items": {
+                            "color": {
+                                "type": "color"
+                            },
+                            "underline": {
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "hover_color": "color",
+                            "hover_underline": {
+                                "type": "boolean",
+                                "default": true
+                            }
+                        }
+                    },
+                    "customfonts": {
+                        "title": "Custom Fonts",
+                        "type": "repeater",
+                        "items": {
+                            "fonttype": {
+                                "title": "Type",
+                                "type": "dropdown",
+                                "options": [
+                                    "google",
+                                    "typekit",
+                                    {
+                                        "fontscom": "Fonts.com"
+                                    },
+                                    "fontdeck",
+                                    {
+                                        "selfhosted": "Self Hosted"
+                                    }
+                                ],
+                                "default": "google"
+                            },
+                            "googlefamilies": {
+                                "title": "Google Font Reference",
+                                "type": "text",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "google"
+                                    }
+                                },
+                                "helper": "Instructions: https://bentobox.zendesk.com/hc/en-us/articles/220056727"
+                            },
+                            "typekitid": {
+                                "title": "Typekit ID",
+                                "type": "text",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "typekit"
+                                    }
+                                },
+                                "helper": "For more information: http://help.getbento.com/hc/en-us/articles/225272828"
+                            },
+                            "fontdeckid": {
+                                "title": "Fontdeck ID",
+                                "type": "text",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "fontdeck"
+                                    }
+                                }
+                            },
+                            "fontscomid": {
+                                "title": "Fonts.com Project ID",
+                                "type": "text",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "fontscom"
+                                    }
+                                }
+                            },
+                            "selfhosted_name": {
+                                "title": "Font Family",
+                                "type": "text",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_eot": {
+                                "title": "EOT",
+                                "type": "file",
+                                "helper": "Optional. Browser Support: IE6-9",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_woff2": {
+                                "title": "WOFF2",
+                                "type": "file",
+                                "helper": "Optional. Browser Support: Chrome 36.0+, Firefox 35.0+, Opera 26.0+",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_woff": {
+                                "title": "WOFF",
+                                "type": "file",
+                                "helper": "Recommended. Browser Support: Chrome 5.0+, IE9+, Firefox 3.6+, Safari 5.1+, Opera 11.1+",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_ttf": {
+                                "title": "TTF",
+                                "type": "file",
+                                "helper": "Recommended. Browser Support: Chrome 4.0+, IE9+, Firefox, 4.5+, Safari 3.1+, Opera 10.0+, iOS, Android",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_otf": {
+                                "title": "OTF",
+                                "type": "file",
+                                "helper": "Optional. Browser Support: Chrome 4.0+, IE9+, Firefox, 4.5+, Safari 3.1+, Opera 10.0+",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_style": {
+                                "title": "Font Style",
+                                "type": "text",
+                                "helper": "Optional. Inaccurate values may cause the font to fail to load. If you are unsure, leave this blank.",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            },
+                            "selfhosted_weight": {
+                                "title": "Font Weight",
+                                "type": "text",
+                                "helper": "Optional. Inaccurate values may cause the font to fail to load. If you are unsure, leave this blank.",
+                                "display_logic": {
+                                    "fonttype": {
+                                        "value": "selfhosted"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "navigation": {
+                "type": "section",
+                "icon": "menu",
+                "items": {
+                    "mobile": {
+                        "title": "Mobile",
+                        "type": "section",
+                        "items": {
+                            "logo": {
+                                "type": "image",
+                                "helper": "Optional. If provided, shown instead of the site logo and sticky logo (if applicable)."
+                            },
+                            "logo_max_width": {
+                                "type": "text",
+                                "helper": "Optional. Max width in expanded header. Defaults to 25% larger than Logo Collapsed Max Width."
+                            },
+                            "logo_max_height": {
+                                "type": "text",
+                                "helper": "Optional. Max height in expanded header. Defaults to 25% larger than Logo Collapsed Max Height."
+                            },
+                            "logo_collapsed_max_width": {
+                                "type": "text",
+                                "helper": "Max width in collapsed header. (Default: 90px)"
+                            },
+                            "logo_collapsed_max_height": {
+                                "type": "text",
+                                "helper": "Max height in collapsed header. (Default: 30px)"
+                            },
+                            "display_phone_number": {
+                                "type": "boolean",
+                                "default": true,
+                                "helper": "Displays on single location sites only."
+                            }
+                        }
+                    },
+                    "logo": {
+                        "title": "Logo",
+                        "type": "section",
+                        "items": {
+                            "desktop_collapsed_logo": {
+                                "title": "Sticky Logo",
+                                "type": "image",
+                                "helper": "Optional. Smaller logo that replaces the site logo when a user begins to scroll."
+                            },
+                            "desktop_logo_centered": {
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "desktop_logo_max_width": {
+                                "type": "text",
+                                "helper": "Max width in expanded header. (Default: 214px)"
+                            },
+                            "desktop_logo_max_height": {
+                                "type": "text",
+                                "helper": "Max height in expanded header. (Default: 65px)"
+                            },
+                            "desktop_logo_collapsed_max_width": {
+                                "title": "Desktop Sticky Logo Max Width",
+                                "type": "text",
+                                "helper": "Max width in sticky header. Defaults to desktop logo max width."
+                            },
+                            "desktop_logo_collapsed_max_height": {
+                                "title": "Desktop Sticky Logo Max Height",
+                                "type": "text",
+                                "helper": "Max height in sticky header. (Default: 50px)"
+                            },
+                            "image_fill_color": {
+                                "title": "Social Sharing Background Color",
+                                "type": "color",
+                                "helper": "Optional. Applies to the background color of the og:image used when shared via social media. Defaults to grey.",
+                                "default": "#EDEDF1"
+                            }
+                        }
+                    },
+                    "fixed_on_desktop": {
+                        "title": "Sticky",
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "desktop_floatable": {
+                        "title": "Overlays Hero Image",
+                        "type": "boolean",
+                        "default": false,
+                        "helper": "Applied to Desktop Navigation Only."
+                    },
+                    "desktop_floatable_expanded_bg_color": {
+                        "title": "Expanded Overlay Background Color",
+                        "type": "color",
+                        "helper": "Defaults to transparent. [Reference](/docs/sass/#components-site-header-variable-site-header-desktop-primary-floatable-expanded-bg-color)",
+                        "display_logic": {
+                            "navigation.desktop_floatable": {
+                                "value": true
+                            }
+                        }
+                    },
+                    "desktop_floatable_collapsed_bg_color": {
+                        "title": "Collapsed Overlay Background Color",
+                        "type": "color",
+                        "helper": "Defaults to Expanded Overlay Background Color. [Reference](/docs/sass/#components-site-header-variable-site-header-desktop-primary-floatable-collapsed-bg-color)",
+                        "display_logic": {
+                            "navigation.desktop_floatable": {
+                                "value": true
+                            }
+                        }
+                    },
+                    "background_color": "color",
+                    "background_image": "image",
+                    "add_shadow": {
+                        "title": "Add Drop Shadow",
+                        "type": "boolean",
+                        "default": false,
+                        "helper": "Sticky/Fixed elements will be prioritized when applying the shadow."
+                    },
+                    "fontpreset": {
+                        "title": "Font Family",
+                        "type": "dropdown",
+                        "options": [
+                            "raleway",
+                            "montserrat",
+                            "josefin_sans",
+                            "playfair_display",
+                            "arvo",
+                            "custom"
+                        ],
+                        "default": "raleway"
+                    },
+                    "font": {
+                        "title": "Custom Font",
+                        "type": "text",
+                        "display_logic": {
+                            "navigation.fontpreset": {
+                                "value": "custom"
+                            }
+                        }
+                    },
+                    "size": {
+                        "type": "text",
+                        "helper": "Please provide value in rem units. (Default: 0.8rem)"
+                    },
+                    "weight": "text",
+                    "uppercase": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "letter_spacing": "text",
+                    "color": {
+                        "type": "color",
+                        "helper": "Optional. Defaults to Primary Color."
+                    },
+                    "hover_color": {
+                        "type": "color",
+                        "helper": "Optional. Defaults to Accent Color."
+                    },
+                    "active_color": {
+                        "type": "color",
+                        "helper": "Optional. Defaults to Hover Color."
+                    },
+                    "sticky_header": {
+                        "type": "section",
+                        "display_logic": {
+                            "navigation.fixed_on_desktop": {
+                                "value": true
+                            }
+                        },
+                        "items": {
+                            "color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Color."
+                            },
+                            "hover_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Hover Color."
+                            },
+                            "active_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Active Color."
+                            }
+                        }
+                    },
+                    "address": {
+                        "type": "section",
+                        "items": {
+                            "display": {
+                                "title": "Display Address",
+                                "type": "boolean",
+                                "default": true,
+                                "helper": "Displays on single location sites only."
+                            },
+                            "display_phone_number": {
+                                "type": "boolean",
+                                "default": true,
+                                "helper": "Displays on single location sites only.",
+                                "display_logic": {
+                                    "navigation.address.display": {
+                                        "value": true
+                                    }
+                                }
+                            },
+                            "fixed_on_desktop": {
+                                "title": "Sticky",
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "background_color": "color",
+                            "background_image": "image",
+                            "font_color": "color",
+                            "font_hover_color": "color",
+                            "display_on_desktop": {
+                                "title": "Display Social Icons in Address Bar",
+                                "type": "boolean",
+                                "default": true
+                            }
+                        }
+                    },
+                    "divider": {
+                        "type": "section",
+                        "items": {
+                            "color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Accent Color."
+                            },
+                            "weight": "text",
+                            "double": {
+                                "type": "boolean",
+                                "default": true
+                            }
+                        }
+                    }
+                }
+            },
+            "button_styles": {
+                "title": "Buttons",
+                "icon": "touch_app",
+                "type": "section",
+                "items": {
+                    "main": {
+                        "title": "Main Styles",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "raleway"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "button_styles.main.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "font_size": {
+                                "type": "text",
+                                "helper": "Please provide value in rem units. (Default: 0.8rem)"
+                            },
+                            "font_color": "color",
+                            "font_weight": {
+                                "type": "text",
+                                "helper": "Optional. (Default: 300)"
+                            },
+                            "letter_spacing": "text",
+                            "font_uppercase": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "background_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Accent Color."
+                            },
+                            "stroke_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Background Color."
+                            },
+                            "stroke_weight": {
+                                "type": "text",
+                                "helper": "This will be applied to main and alternative styles."
+                            },
+                            "hover_font_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Font Color."
+                            },
+                            "hover_background_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Primary Color."
+                            },
+                            "hover_stroke_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Hover Background Color."
+                            }
+                        }
+                    },
+                    "alternate": {
+                        "title": "Alternate Styles",
+                        "type": "section",
+                        "items": {
+                            "font_color": "color",
+                            "background_color": "color",
+                            "stroke_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Background Color."
+                            },
+                            "hover_font_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults To Font Color."
+                            },
+                            "hover_background_color": "color",
+                            "hover_stroke_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Hover Background Color."
+                            }
+                        }
+                    }
+                }
+            },
+            "footer": {
+                "title": "Footer Styles",
+                "icon": "call_to_action",
+                "type": "section",
+                "items": {
+                    "credit": {
+                        "title": "Credit",
+                        "type": "section",
+                        "items": {
+                            "display": {
+                                "title": "Powered By BentoBox",
+                                "type": "boolean",
+                                "default": "true"
+                            },
+                            "sticky": {
+                                "title": "Make Powered By BentoBox Sticky",
+                                "type": "boolean",
+                                "default": false
+                            },
+                            "background_color": {
+                                "type": "color",
+                                "helper": "Optional. Defaults to Primary Color."
+                            },
+                            "text_color": "color",
+                            "text_hover_color": "color"
+                        }
+                    },
+                    "sticky": {
+                        "type": "boolean",
+                        "default": true
+                    },
+                    "background_color": {
+                        "type": "color",
+                        "helper": "Optional. Defaults to Navigation > Background Color."
+                    },
+                    "background_image": "image",
+                    "display_social": {
+                        "title": "Display Social Media",
+                        "type": "boolean",
+                        "default": true,
+                        "helper": "If applicable, this will replace address information on single location sites."
+                    },
+                    "display_address": {
+                        "type": "boolean",
+                        "default": true,
+                        "helper": "Displays on single location sites only.",
+                        "display_logic": {
+                            "footer.display_social": {
+                                "value": false
+                            }
+                        }
+                    },
+                    "nav": {
+                        "title": "Footer Navigation",
+                        "type": "section",
+                        "items": {
+                            "fontpreset": {
+                                "title": "Font Family",
+                                "type": "dropdown",
+                                "options": [
+                                    "raleway",
+                                    "montserrat",
+                                    "josefin_sans",
+                                    "playfair_display",
+                                    "arvo",
+                                    "custom"
+                                ],
+                                "default": "raleway"
+                            },
+                            "font": {
+                                "title": "Custom Font",
+                                "type": "text",
+                                "display_logic": {
+                                    "footer.nav.fontpreset": {
+                                        "value": "custom"
+                                    }
+                                }
+                            },
+                            "size": {
+                                "type": "text",
+                                "helper": "Please provide value in rem units. (Default: 0.8rem)"
+                            },
+                            "weight": "text",
+                            "uppercase": {
+                                "type": "boolean",
+                                "default": true
+                            },
+                            "letter_spacing": "text",
+                            "color": "color",
+                            "hover_color": "color",
+                            "active_color": "color"
+                        }
+                    }
+                }
+            }
+        }
+    }
 }
