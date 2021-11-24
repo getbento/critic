@@ -55,8 +55,8 @@
                     "display_logic": [
                         { "all_the_fields.toggler": { "value" : "select" } },
                         { "all_the_fields.toggler": { "value" : "all" } }
-                    ]                    
-                },                
+                    ]
+                },
                 "textarea": {
                     "title": "Textarea",
                     "type": "textarea",
@@ -145,7 +145,7 @@
                     "items": {
                         "repeater_field_dropdown": {
                             "title": "Dropdown",
-                            "type": "dropdown", 
+                            "type": "dropdown",
                             "default": "one",
                             "options": [
                                 {"option-1": "Option 1"},
@@ -209,7 +209,7 @@
                                 }
                             },
                             "items": {
-                                "title": "text", 
+                                "title": "text",
                                 "content": "wysiwyg"
                             }
                         },
@@ -221,7 +221,7 @@
                                 }
                             },
                             "items": {
-                                "video_title": "text", 
+                                "video_title": "text",
                                 "video_id": "text"
                             }
                         },
@@ -233,7 +233,7 @@
                                 }
                             },
                             "items": {
-                                "video_title": "text", 
+                                "video_title": "text",
                                 "video_id": "text"
                             }
                         },
@@ -272,7 +272,7 @@
                                 "text": "wysiwyg",
                                 "image": "image",
                                 "add_overlay": {
-                                    "type": "boolean", 
+                                    "type": "boolean",
                                     "default": "true"
                                 },
                                 "multibutton": {
@@ -280,15 +280,15 @@
                                     "title": "Multi Button",
                                     "items": {
                                         "button_type": {
-                                            "type": "dropdown", 
-                                            "default": "none", 
+                                            "type": "dropdown",
+                                            "default": "none",
                                             "options": [
-                                                "none", 
-                                                "url", 
-                                                "file", 
-                                                "email_signup", 
-                                                "reservations", 
-                                                "online_ordering", 
+                                                "none",
+                                                "url",
+                                                "file",
+                                                "email_signup",
+                                                "reservations",
+                                                "online_ordering",
                                                 "scroll_page"
                                             ]
                                         },
@@ -297,7 +297,7 @@
                                             "type": "text",
                                             "display_logic": {
                                                 "full_overlay.multibutton.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -362,7 +362,7 @@
                                             "default": false,
                                             "display_logic": {
                                                 "full_overlay.multibutton.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -380,7 +380,7 @@
                             },
                             "items": {
                                 "alternate": {
-                                    "title": "Alternate on Mobile", 
+                                    "title": "Alternate on Mobile",
                                     "type": "boolean"
                                 },
                                 "left_add_overlay": "boolean",
@@ -393,15 +393,15 @@
                                     "title": "Left MultiButton",
                                     "items": {
                                         "button_type": {
-                                            "type": "dropdown", 
-                                            "default": "none", 
+                                            "type": "dropdown",
+                                            "default": "none",
                                             "options": [
                                                 "none",
                                                 "url",
                                                 "file",
                                                 "email_signup",
                                                 "reservations",
-                                                "online_ordering", 
+                                                "online_ordering",
                                                 "scroll_page"
                                             ]
                                         },
@@ -410,7 +410,7 @@
                                             "type": "text",
                                             "display_logic": {
                                                 "split_overlay.multibutton_left.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -475,7 +475,7 @@
                                             "default": false,
                                             "display_logic": {
                                                 "split_overlay.multibutton_left.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -509,7 +509,7 @@
                                             "type": "text",
                                             "display_logic": {
                                                 "split_overlay.multibutton_right.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -574,7 +574,7 @@
                                             "default": false,
                                             "display_logic": {
                                                 "split_overlay.multibutton_right.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -592,12 +592,12 @@
                             },
                             "items": {
                                 "title_one": {
-                                    "type": "text", 
+                                    "type": "text",
                                     "helper": "Optional."
                                 },
                                 "column_one": "wysiwyg",
                                 "title_two": {
-                                    "type": "text", 
+                                    "type": "text",
                                     "helper": "Optional."
                                 },
                                 "column_two": "wysiwyg"
@@ -612,12 +612,12 @@
                             },
                             "items": {
                                 "title_one": {
-                                    "type": "text", 
+                                    "type": "text",
                                     "helper": "Optional."
                                 },
                                 "column_one": "wysiwyg",
                                 "image_one": {
-                                    "type": "image", 
+                                    "type": "image",
                                     "helper": "Optional."
                                 },
                                 "multibutton_one": {
@@ -642,7 +642,7 @@
                                             "type": "text",
                                             "display_logic": {
                                                 "two_column_freeform_thumbnails.multibutton_one.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -707,7 +707,7 @@
                                             "default": false,
                                             "display_logic": {
                                                 "two_column_freeform_thumbnails.multibutton_one.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -715,12 +715,12 @@
                                     }
                                 },
                                 "title_two": {
-                                    "type": "text", 
+                                    "type": "text",
                                     "helper": "Optional."
                                 },
                                 "column_two": "wysiwyg",
                                 "image_two": {
-                                    "type": "image", 
+                                    "type": "image",
                                     "helper": "Optional."
                                 },
                                 "multibutton_two": {
@@ -745,7 +745,7 @@
                                             "type": "text",
                                             "display_logic": {
                                                 "two_column_freeform_thumbnails.multibutton_two.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -810,7 +810,7 @@
                                             "default": false,
                                             "display_logic": {
                                                 "two_column_freeform_thumbnails.multibutton_two.button_type": {
-                                                    "value": "none", 
+                                                    "value": "none",
                                                     "operator": "!="
                                                 }
                                             }
@@ -829,7 +829,7 @@
                             },
                             "items": {
                                 "box_type": {
-                                    "type": "dropdown", 
+                                    "type": "dropdown",
                                     "options": [
                                         "press",
                                         "news",
@@ -847,7 +847,7 @@
                                 },
                                 "button_label": {
                                     "title": "Link Label",
-                                    "type": "text", 
+                                    "type": "text",
                                     "helper": "Optional. If items are clickable, provide a link label such as 'Read More.'"
                                 }
                             }
@@ -881,12 +881,12 @@
         "section-header",
         {
             "boxes-location": {
-                width: "columns-6"
+                "width": "columns-6"
             }
         },
         {
             "box-location-mcdonalds": {
-                width: "columns-12"
+                "width": "columns-12"
             }
         },
         {
@@ -895,15 +895,15 @@
                 "contents": [
                     {
                         "placeholder-description": {
-                            width: "columns-6"
-                        },                        
+                            "width": "columns-6"
+                        },
                         "boxes-news": {
                             "width": "columns-6",
                             "height": "600px"
                         }
                     }
                 ]
-            }            
+            }
         },
         "placeholder-title",
         "link-location",
