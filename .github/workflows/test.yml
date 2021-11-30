@@ -1,0 +1,33 @@
+name: Test
+
+on: push
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - uses: actions/setup-python@v2
+      with:
+        python-version: '3.x'
+
+    - name: Test json syntax
+      shell: python
+      run: |
+        import glob
+        import json
+        import unittest
+
+        class TestJsonSyntax(unittest.TestCase):
+          def test_json_syntax(self):
+            fs = ['./config.json']
+            fs += glob.glob('./config/**/*.json', recursive=True)
+            for f in fs:
+              with self.subTest(json_file=f):
+                with open(f) as input:
+                  json.load(input)
+
+        unittest.main()
