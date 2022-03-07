@@ -1,7 +1,8 @@
 {
     "theme": {
         "name": "Critic (A theme for testing new Sushi UI)",
-        "author": "The BentoBox Team"
+        "author": "The BentoBox Team",
+        "is_single_page": false
     },
     "box_slugs": {
         "dumbphones": "smartphones",
